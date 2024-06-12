@@ -92,11 +92,11 @@ void CoreDebug::loadFunctionPointers(VkInstance instance) {
 	std::cout << std::endl << "Load DebugUtilsMessengerExt Function Pointers" <<
 		"\n'''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
 
-	vrt::Tools::loadFunctionPointer(
+	gtp::Utilities_EngCore::loadFunctionPointer(
 		reinterpret_cast<PFN_vkVoidFunction&>(debugpFunctions.vkCreateDebugUtilsMessengerEXT),
 		instance, "vkCreateDebugUtilsMessengerEXT");
 
-	vrt::Tools::loadFunctionPointer(
+	gtp::Utilities_EngCore::loadFunctionPointer(
 		reinterpret_cast<PFN_vkVoidFunction&>(debugpFunctions.vkDestroyDebugUtilsMessengerEXT),
 		instance, "vkDestroyDebugUtilsMessengerEXT");
 

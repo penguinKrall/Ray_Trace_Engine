@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Tools.hpp>
+#include <Utilities_EngCore.hpp>
 #include <Buffer.hpp>
 
 // -- shader binding table class
-class ShaderBindingTable : public vrt::Buffer {
+class ShaderBindingTable : public gtp::Buffer {
 public:
 
 	VkStridedDeviceAddressRegionKHR stridedDeviceAddressRegion{};

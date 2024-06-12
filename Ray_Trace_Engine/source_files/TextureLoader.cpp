@@ -1,32 +1,32 @@
-#include "Texture.hpp"
+#include "TextureLoader.hpp"
 
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
-namespace vrt {
+namespace gtp {
 
-	Texture::Texture() {
+	TextureLoader::TextureLoader() {
 
 	}
 
-	Texture::Texture(CoreBase* coreBase) {
-		InitTexture(coreBase);
-		//loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/textures/gratefloor_rgba.ktx",
+	TextureLoader::TextureLoader(EngineCore* coreBase) {
+		InitTextureLoader(coreBase);
+		//loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/textures/gratefloor_rgba.ktx",
 		//	VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		}
 
-	void Texture::InitTexture(CoreBase* coreBase) {
-		this->pCoreBase = coreBase;
+	void TextureLoader::InitTextureLoader(EngineCore* coreBase) {
+		this->pEngineCore = coreBase;
 	}
 
-	void Texture::updateDescriptor() {
+	void TextureLoader::updateDescriptor() {
 		descriptor.sampler = sampler;
 		descriptor.imageView = view;
 		descriptor.imageLayout = imageLayout;
 	}
 
-	ktxResult Texture::loadKTXFile(std::string filename, ktxTexture** target) {
+	ktxResult TextureLoader::loadKTXFile(std::string filename, ktxTexture** target) {
 		ktxResult result = KTX_SUCCESS;
 
 		result = ktxTexture_CreateFromNamedFile(filename.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, target);
@@ -34,7 +34,7 @@ namespace vrt {
 		return result;
 	}
 
-	void Texture::loadFromFile(std::string filename, VkFormat format, VkImageUsageFlags imageUsageFlags, VkImageLayout imageLayout, bool forceLinear) {
+	void TextureLoader::loadFromFile(std::string filename, VkFormat format, VkImageUsageFlags imageUsageFlags, VkImageLayout imageLayout, bool forceLinear) {
 
 		//ktx texture pointer
 		ktxTexture* ktxTexture;
@@ -71,7 +71,7 @@ namespace vrt {
 
 		//get device properties for the requested texture format
 		VkFormatProperties formatProperties;
-		vkGetPhysicalDeviceFormatProperties(pCoreBase->devices.physical, format, &formatProperties);
+		vkGetPhysicalDeviceFormatProperties(pEngineCore->devices.physical, format, &formatProperties);
 
 		// Only use linear tiling if requested (and supported by the device)
 		// Support for linear tiling is mostly limited, so prefer to use
@@ -88,7 +88,7 @@ namespace vrt {
 		VkMemoryRequirements bufferMemoryRequirements;
 
 		// Use a separate command buffer for texture loading
-		VkCommandBuffer copyCmd = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+		VkCommandBuffer copyCmd = pEngineCore->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 		if (useStaging) {
 
@@ -109,26 +109,26 @@ namespace vrt {
 
 			//create staging buffer
 			//add handle id and name to map
-			pCoreBase->add([this, &bufferCreateInfo, &stagingBuffer]()
-				{return pCoreBase->objCreate.VKCreateBuffer(&bufferCreateInfo,
+			pEngineCore->add([this, &bufferCreateInfo, &stagingBuffer]()
+				{return pEngineCore->objCreate.VKCreateBuffer(&bufferCreateInfo,
 					nullptr, &stagingBuffer);}, "ktxLoadImageStagingBuffer" + extractedFilename);
 
 			//get memory requirements for the staging buffer (alignment, memory type bits)
-			vkGetBufferMemoryRequirements(pCoreBase->devices.logical, stagingBuffer, &bufferMemoryRequirements);
+			vkGetBufferMemoryRequirements(pEngineCore->devices.logical, stagingBuffer, &bufferMemoryRequirements);
 			bufferMemoryAllocateInfo.allocationSize = bufferMemoryRequirements.size;
 
 			//get memory type index for a host visible buffer
-			bufferMemoryAllocateInfo.memoryTypeIndex = pCoreBase->getMemoryType(bufferMemoryRequirements.memoryTypeBits,
+			bufferMemoryAllocateInfo.memoryTypeIndex = pEngineCore->getMemoryType(bufferMemoryRequirements.memoryTypeBits,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 			//allocate staging buffer memory
 			//add handle and id to map
-			pCoreBase->add([this, &bufferMemoryAllocateInfo, &stagingMemory]()
-				{return pCoreBase->objCreate.VKAllocateMemory(&bufferMemoryAllocateInfo,
+			pEngineCore->add([this, &bufferMemoryAllocateInfo, &stagingMemory]()
+				{return pEngineCore->objCreate.VKAllocateMemory(&bufferMemoryAllocateInfo,
 					nullptr, &stagingMemory);}, "ktxLoadImageStagingBufferMemory" + extractedFilename);
 
 			//bind staging buffer and memory
-			if (vkBindBufferMemory(pCoreBase->devices.logical, stagingBuffer, stagingMemory, 0) != VK_SUCCESS) {
+			if (vkBindBufferMemory(pEngineCore->devices.logical, stagingBuffer, stagingMemory, 0) != VK_SUCCESS) {
 				throw std::invalid_argument("failed to ");
 			}
 
@@ -136,7 +136,7 @@ namespace vrt {
 			uint8_t* data;
 
 			//map memory
-			if (vkMapMemory(pCoreBase->devices.logical, stagingMemory, 0, bufferMemoryRequirements.size, 0, (void**)&data) != VK_SUCCESS) {
+			if (vkMapMemory(pEngineCore->devices.logical, stagingMemory, 0, bufferMemoryRequirements.size, 0, (void**)&data) != VK_SUCCESS) {
 				throw std::invalid_argument("failed to ");
 			}
 
@@ -144,7 +144,7 @@ namespace vrt {
 			memcpy(data, ktxTextureData, ktxTextureSize);
 
 			//unmap memory
-			//vkUnmapMemory(pCoreBase->devices.logical, stagingMemory);
+			//vkUnmapMemory(pEngineCore->devices.logical, stagingMemory);
 
 			// Setup buffer copy regions for each mip level
 			std::vector<VkBufferImageCopy> bufferCopyRegions;
@@ -189,8 +189,8 @@ namespace vrt {
 
 			//create image
 			//add handle and name to map
-			pCoreBase->add([this, &imageCreateInfo]()
-				{return pCoreBase->objCreate.VKCreateImage(&imageCreateInfo,
+			pEngineCore->add([this, &imageCreateInfo]()
+				{return pEngineCore->objCreate.VKCreateImage(&imageCreateInfo,
 					nullptr, &image);}, "ktxTextureImage" + extractedFilename);
 
 			//image memory allocate info
@@ -201,23 +201,23 @@ namespace vrt {
 			VkMemoryRequirements imageMemoryRequirements;
 
 			//get image memory requirements
-			vkGetImageMemoryRequirements(pCoreBase->devices.logical, image, &imageMemoryRequirements);
+			vkGetImageMemoryRequirements(pEngineCore->devices.logical, image, &imageMemoryRequirements);
 
 			//update memory allocate info
 			imageMemoryAllocateInfo.allocationSize = imageMemoryRequirements.size;
-			imageMemoryAllocateInfo.memoryTypeIndex = pCoreBase->getMemoryType(imageMemoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+			imageMemoryAllocateInfo.memoryTypeIndex = pEngineCore->getMemoryType(imageMemoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 			//allocate image memory
 			//add handle and name to map
-			//if (vkAllocateMemory(pCoreBase->devices.logical, &imageMemoryAllocateInfo, nullptr, &imageMemory) != VK_SUCCESS) {
+			//if (vkAllocateMemory(pEngineCore->devices.logical, &imageMemoryAllocateInfo, nullptr, &imageMemory) != VK_SUCCESS) {
 			//	throw std::invalid_argument("failed to ");
 			//}
 
-			pCoreBase->add([this, &imageMemoryAllocateInfo]()
-				{return pCoreBase->objCreate.VKAllocateMemory(&imageMemoryAllocateInfo,
+			pEngineCore->add([this, &imageMemoryAllocateInfo]()
+				{return pEngineCore->objCreate.VKAllocateMemory(&imageMemoryAllocateInfo,
 					nullptr, &imageMemory);}, "ktxTextureImageMemory" + extractedFilename);
 
-			if (vkBindImageMemory(pCoreBase->devices.logical, image, imageMemory, 0) != VK_SUCCESS) {
+			if (vkBindImageMemory(pEngineCore->devices.logical, image, imageMemory, 0) != VK_SUCCESS) {
 				throw std::invalid_argument("failed to ");
 			}
 
@@ -229,7 +229,7 @@ namespace vrt {
 
 			// Image barrier for optimal image (target)
 			// Optimal image will be used as destination for the copy
-			vrt::Tools::setImageLayout(
+			gtp::Utilities_EngCore::setImageLayout(
 				copyCmd,
 				image,
 				VK_IMAGE_LAYOUT_UNDEFINED,
@@ -248,18 +248,18 @@ namespace vrt {
 
 			// Change texture image layout to shader read after all mip levels have been copied
 			this->imageLayout = imageLayout;
-			vrt::Tools::setImageLayout(
+			gtp::Utilities_EngCore::setImageLayout(
 				copyCmd,
 				image,
 				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 				imageLayout,
 				subresourceRange);
 
-			pCoreBase->FlushCommandBuffer(copyCmd, pCoreBase->queue.graphics, pCoreBase->commandPools.graphics, true);
+			pEngineCore->FlushCommandBuffer(copyCmd, pEngineCore->queue.graphics, pEngineCore->commandPools.graphics, true);
 
 			// Clean up staging resources
-			vkFreeMemory(pCoreBase->devices.logical, stagingMemory, nullptr);
-			vkDestroyBuffer(pCoreBase->devices.logical, stagingBuffer, nullptr);
+			vkFreeMemory(pEngineCore->devices.logical, stagingMemory, nullptr);
+			vkDestroyBuffer(pEngineCore->devices.logical, stagingBuffer, nullptr);
 		}
 
 		else {
@@ -292,8 +292,8 @@ namespace vrt {
 			imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 			//create mappable image
-			pCoreBase->add([this, &imageCreateInfo, &mappableImage]()
-				{return pCoreBase->objCreate.VKCreateImage(&imageCreateInfo,
+			pEngineCore->add([this, &imageCreateInfo, &mappableImage]()
+				{return pEngineCore->objCreate.VKCreateImage(&imageCreateInfo,
 					nullptr, &mappableImage);}, "ktxTextureImageMappable" + extractedFilename);
 
 			//image memory allocate info
@@ -304,24 +304,24 @@ namespace vrt {
 			VkMemoryRequirements imageMemoryRequirements;
 
 			//get memory requirements for this image
-			vkGetImageMemoryRequirements(pCoreBase->devices.logical, mappableImage, &imageMemoryRequirements);
+			vkGetImageMemoryRequirements(pEngineCore->devices.logical, mappableImage, &imageMemoryRequirements);
 
 			//set memory allocation size to required memory size
 			imageMemoryAllocateInfo.allocationSize = imageMemoryRequirements.size;
 
 			//get memory type that can be mapped to host memory
-			imageMemoryAllocateInfo.memoryTypeIndex = pCoreBase->getMemoryType(
+			imageMemoryAllocateInfo.memoryTypeIndex = pEngineCore->getMemoryType(
 				imageMemoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 			//allocate mappable image memory
 			//add handle id and name to map
-			pCoreBase->add([this, &imageMemoryAllocateInfo, &mappableMemory]()
-				{return pCoreBase->objCreate.VKAllocateMemory(&imageMemoryAllocateInfo,
+			pEngineCore->add([this, &imageMemoryAllocateInfo, &mappableMemory]()
+				{return pEngineCore->objCreate.VKAllocateMemory(&imageMemoryAllocateInfo,
 					nullptr, &mappableMemory);}, "ktxTextureImageMemoryMappable" + extractedFilename);
 
 
 			// Bind allocated image for use
-			if (vkBindImageMemory(pCoreBase->devices.logical, mappableImage, mappableMemory, 0) != VK_SUCCESS) {
+			if (vkBindImageMemory(pEngineCore->devices.logical, mappableImage, mappableMemory, 0) != VK_SUCCESS) {
 				throw std::invalid_argument("failed to ");
 			}
 
@@ -336,10 +336,10 @@ namespace vrt {
 
 			// Get sub resources layout 
 			// Includes row pitch, size offsets, etc.
-			vkGetImageSubresourceLayout(pCoreBase->devices.logical, mappableImage, &subRes, &subResLayout);
+			vkGetImageSubresourceLayout(pEngineCore->devices.logical, mappableImage, &subRes, &subResLayout);
 
 			//map image memory
-			if (vkMapMemory(pCoreBase->devices.logical, mappableMemory, 0, imageMemoryRequirements.size, 0, &data) != VK_SUCCESS) {
+			if (vkMapMemory(pEngineCore->devices.logical, mappableMemory, 0, imageMemoryRequirements.size, 0, &data) != VK_SUCCESS) {
 				throw std::invalid_argument("failed to ");
 			}
 
@@ -347,7 +347,7 @@ namespace vrt {
 			memcpy(data, ktxTextureData, imageMemoryRequirements.size);
 
 			//unmap image memory
-			vkUnmapMemory(pCoreBase->devices.logical, mappableMemory);
+			vkUnmapMemory(pEngineCore->devices.logical, mappableMemory);
 
 			// Linear tiled images don't need to be staged
 			// and can be directly used as textures
@@ -364,7 +364,7 @@ namespace vrt {
 
 			//set image layout
 			this->imageLayout = imageLayout;
-			vrt::Tools::setImageLayout(
+			gtp::Utilities_EngCore::setImageLayout(
 				copyCmd,
 				image,
 				VK_IMAGE_LAYOUT_UNDEFINED,
@@ -372,7 +372,7 @@ namespace vrt {
 				subresourceRange);
 
 			//end, submit, and free allocated command buffer
-			pCoreBase->FlushCommandBuffer(copyCmd, pCoreBase->queue.graphics, pCoreBase->commandPools.graphics, true);
+			pEngineCore->FlushCommandBuffer(copyCmd, pEngineCore->queue.graphics, pEngineCore->commandPools.graphics, true);
 		}
 
 		ktxTexture_Destroy(ktxTexture);
@@ -394,14 +394,14 @@ namespace vrt {
 		samplerCreateInfo.maxLod = (useStaging) ? (float)mipLevels : 0.0f;
 
 		//only enable anisotropic filtering if enabled on the device
-		samplerCreateInfo.maxAnisotropy = pCoreBase->deviceData.features.samplerAnisotropy ? pCoreBase->deviceProperties.physicalDevice.limits.maxSamplerAnisotropy : 1.0f;
-		samplerCreateInfo.anisotropyEnable = pCoreBase->deviceData.features.samplerAnisotropy;
+		samplerCreateInfo.maxAnisotropy = pEngineCore->deviceData.features.samplerAnisotropy ? pEngineCore->deviceProperties.physicalDevice.limits.maxSamplerAnisotropy : 1.0f;
+		samplerCreateInfo.anisotropyEnable = pEngineCore->deviceData.features.samplerAnisotropy;
 		samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
 		//create sampler
 		//adds sampler handle id and name to map
-		pCoreBase->add([this, &samplerCreateInfo]()
-			{return pCoreBase->objCreate.VKCreateSampler(&samplerCreateInfo,
+		pEngineCore->add([this, &samplerCreateInfo]()
+			{return pEngineCore->objCreate.VKCreateSampler(&samplerCreateInfo,
 				nullptr, &sampler);}, "ktxTextureImageSampler" + extractedFilename);
 
 
@@ -416,24 +416,24 @@ namespace vrt {
 
 		//create image view
 		//adds imageview handle id and name to map
-		pCoreBase->add([this, &viewCreateInfo]()
-			{return pCoreBase->objCreate.VKCreateImageView(&viewCreateInfo,
+		pEngineCore->add([this, &viewCreateInfo]()
+			{return pEngineCore->objCreate.VKCreateImageView(&viewCreateInfo,
 				nullptr, &view);}, "ktxTextureImageView" + extractedFilename);
 
 		// Update descriptor image info member that can be used for setting up descriptor sets
 		updateDescriptor();
 	}
 
-	void Texture::DestroyTexture() {
-		if (this->pCoreBase) {
-			vkDestroyImageView(pCoreBase->devices.logical, view, nullptr);
-			vkDestroyImage(pCoreBase->devices.logical, image, nullptr);
-			vkFreeMemory(pCoreBase->devices.logical, imageMemory, nullptr);
-			vkDestroySampler(pCoreBase->devices.logical, sampler, nullptr);
+	void TextureLoader::DestroyTextureLoader() {
+		if (this->pEngineCore) {
+			vkDestroyImageView(pEngineCore->devices.logical, view, nullptr);
+			vkDestroyImage(pEngineCore->devices.logical, image, nullptr);
+			vkFreeMemory(pEngineCore->devices.logical, imageMemory, nullptr);
+			vkDestroySampler(pEngineCore->devices.logical, sampler, nullptr);
 		}
 	}
 
-	void Texture::fromglTfImage(tinygltf::Image& gltfimage, std::string path, CoreBase* coreBase, VkQueue copyQueue) {
+	void TextureLoader::fromglTfImage(tinygltf::Image& gltfimage, std::string path, EngineCore* coreBase, VkQueue copyQueue) {
 
 		bool isKtx = false;
 
@@ -485,7 +485,7 @@ namespace vrt {
 			height = gltfimage.height;
 			mipLevels = static_cast<uint32_t>(floor(log2(std::max(width, height))) + 1.0);
 
-			vkGetPhysicalDeviceFormatProperties(pCoreBase->devices.physical, format, &formatProperties);
+			vkGetPhysicalDeviceFormatProperties(pEngineCore->devices.physical, format, &formatProperties);
 			assert(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT);
 			assert(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_DST_BIT);
 
@@ -502,30 +502,30 @@ namespace vrt {
 			bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 			bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-			if (vkCreateBuffer(pCoreBase->devices.logical, &bufferCreateInfo, nullptr, &stagingBuffer) != VK_SUCCESS) {
+			if (vkCreateBuffer(pEngineCore->devices.logical, &bufferCreateInfo, nullptr, &stagingBuffer) != VK_SUCCESS) {
 				throw std::invalid_argument("failed to create staging buffer");
 			}
 
-			vkGetBufferMemoryRequirements(pCoreBase->devices.logical, stagingBuffer, &memReqs);
+			vkGetBufferMemoryRequirements(pEngineCore->devices.logical, stagingBuffer, &memReqs);
 			memAllocInfo.allocationSize = memReqs.size;
-			memAllocInfo.memoryTypeIndex = pCoreBase->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			memAllocInfo.memoryTypeIndex = pEngineCore->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-			if (vkAllocateMemory(pCoreBase->devices.logical, &memAllocInfo, nullptr, &stagingMemory) != VK_SUCCESS) {
+			if (vkAllocateMemory(pEngineCore->devices.logical, &memAllocInfo, nullptr, &stagingMemory) != VK_SUCCESS) {
 				throw std::invalid_argument("failed to allocate staging buffer memory");
 			}
 
-			if (vkBindBufferMemory(pCoreBase->devices.logical, stagingBuffer, stagingMemory, 0) != VK_SUCCESS) {
+			if (vkBindBufferMemory(pEngineCore->devices.logical, stagingBuffer, stagingMemory, 0) != VK_SUCCESS) {
 				throw std::invalid_argument("failed to bind staging buffer and memory");
 			}
 
 			uint8_t* data;
 
-			if (vkMapMemory(pCoreBase->devices.logical, stagingMemory, 0, memReqs.size, 0, (void**)&data) != VK_SUCCESS) {
+			if (vkMapMemory(pEngineCore->devices.logical, stagingMemory, 0, memReqs.size, 0, (void**)&data) != VK_SUCCESS) {
 				throw std::invalid_argument("failed to map staging buffer memory");
 			}
 
 			memcpy(data, buffer, bufferSize);
-			vkUnmapMemory(pCoreBase->devices.logical, stagingMemory);
+			vkUnmapMemory(pEngineCore->devices.logical, stagingMemory);
 
 			VkImageCreateInfo imageCreateInfo{};
 			imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -541,24 +541,24 @@ namespace vrt {
 			imageCreateInfo.extent = { width, height, 1 };
 			imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
-			if (vkCreateImage(pCoreBase->devices.logical, &imageCreateInfo, nullptr, &image) != VK_SUCCESS) {
+			if (vkCreateImage(pEngineCore->devices.logical, &imageCreateInfo, nullptr, &image) != VK_SUCCESS) {
 				throw std::invalid_argument("failed to create texture image");
 			}
 
-			vkGetImageMemoryRequirements(pCoreBase->devices.logical, image, &memReqs);
+			vkGetImageMemoryRequirements(pEngineCore->devices.logical, image, &memReqs);
 
 			memAllocInfo.allocationSize = memReqs.size;
-			memAllocInfo.memoryTypeIndex = pCoreBase->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+			memAllocInfo.memoryTypeIndex = pEngineCore->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-			if (vkAllocateMemory(pCoreBase->devices.logical, &memAllocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
+			if (vkAllocateMemory(pEngineCore->devices.logical, &memAllocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
 				throw std::invalid_argument("failed to allocate texture image memory");
 			}
 
-			if (vkBindImageMemory(pCoreBase->devices.logical, image, imageMemory, 0) != VK_SUCCESS) {
+			if (vkBindImageMemory(pEngineCore->devices.logical, image, imageMemory, 0) != VK_SUCCESS) {
 				throw std::invalid_argument("failed to bind texture image and memory");
 			}
 
-			VkCommandBuffer copyCmd = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+			VkCommandBuffer copyCmd = pEngineCore->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 			VkImageSubresourceRange subresourceRange = {};
 			subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -600,13 +600,13 @@ namespace vrt {
 				vkCmdPipelineBarrier(copyCmd, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 			}
 
-			pCoreBase->FlushCommandBuffer(copyCmd, copyQueue, pCoreBase->commandPools.graphics, true);
+			pEngineCore->FlushCommandBuffer(copyCmd, copyQueue, pEngineCore->commandPools.graphics, true);
 
-			vkFreeMemory(pCoreBase->devices.logical, stagingMemory, nullptr);
-			vkDestroyBuffer(pCoreBase->devices.logical, stagingBuffer, nullptr);
+			vkFreeMemory(pEngineCore->devices.logical, stagingMemory, nullptr);
+			vkDestroyBuffer(pEngineCore->devices.logical, stagingBuffer, nullptr);
 
 			// Generate the mip chain (glTF uses jpg and png, so we need to create this manually)
-			VkCommandBuffer blitCmd = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+			VkCommandBuffer blitCmd = pEngineCore->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 			for (uint32_t i = 1; i < mipLevels; i++) {
 				VkImageBlit imageBlit{};
 
@@ -676,7 +676,7 @@ namespace vrt {
 				delete[] buffer;
 			}
 
-			pCoreBase->FlushCommandBuffer(blitCmd, copyQueue, pCoreBase->commandPools.graphics, true);
+			pEngineCore->FlushCommandBuffer(blitCmd, copyQueue, pEngineCore->commandPools.graphics, true);
 
 		}
 
@@ -712,10 +712,10 @@ namespace vrt {
 
 			//device properties for the requested texture format
 			VkFormatProperties formatProperties;
-			vkGetPhysicalDeviceFormatProperties(pCoreBase->devices.physical, format, &formatProperties);
+			vkGetPhysicalDeviceFormatProperties(pEngineCore->devices.physical, format, &formatProperties);
 
 			//command buffer create data for memory copy
-			VkCommandBuffer copyCmd = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+			VkCommandBuffer copyCmd = pEngineCore->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 			//staging buffer and memory
 			VkBuffer stagingBuffer;
@@ -731,7 +731,7 @@ namespace vrt {
 			bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 			//create staging buffer
-			if (vkCreateBuffer(pCoreBase->devices.logical, &bufferCreateInfo, nullptr, &stagingBuffer) != VK_SUCCESS) {
+			if (vkCreateBuffer(pEngineCore->devices.logical, &bufferCreateInfo, nullptr, &stagingBuffer) != VK_SUCCESS) {
 				throw std::invalid_argument("failed to create gltx texture staging buffer");
 			}
 
@@ -741,17 +741,17 @@ namespace vrt {
 
 			//staging buffer memory requirements
 			VkMemoryRequirements memReqs;
-			vkGetBufferMemoryRequirements(pCoreBase->devices.logical, stagingBuffer, &memReqs);
+			vkGetBufferMemoryRequirements(pEngineCore->devices.logical, stagingBuffer, &memReqs);
 			memAllocInfo.allocationSize = memReqs.size;
-			memAllocInfo.memoryTypeIndex = pCoreBase->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			memAllocInfo.memoryTypeIndex = pEngineCore->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 			//allocate staging buffer memory
-			if (vkAllocateMemory(pCoreBase->devices.logical, &memAllocInfo, nullptr, &stagingMemory) != VK_SUCCESS) {
+			if (vkAllocateMemory(pEngineCore->devices.logical, &memAllocInfo, nullptr, &stagingMemory) != VK_SUCCESS) {
 				throw std::invalid_argument("failed to allocate gltx texture staging buffer memory");
 			}
 
 			//bind staging buffer and memory
-			if (vkBindBufferMemory(pCoreBase->devices.logical, stagingBuffer, stagingMemory, 0) != VK_SUCCESS) {
+			if (vkBindBufferMemory(pEngineCore->devices.logical, stagingBuffer, stagingMemory, 0) != VK_SUCCESS) {
 				throw std::invalid_argument("failed to bind gltx texture staging buffer and memory");
 			}
 
@@ -759,7 +759,7 @@ namespace vrt {
 			uint8_t* data;
 
 			//map buffer memory
-			if (vkMapMemory(pCoreBase->devices.logical, stagingMemory, 0, memReqs.size, 0, (void**)&data) != VK_SUCCESS) {
+			if (vkMapMemory(pEngineCore->devices.logical, stagingMemory, 0, memReqs.size, 0, (void**)&data) != VK_SUCCESS) {
 				throw std::invalid_argument("failed to bind gltx texture staging buffer and memory");
 			}
 
@@ -767,7 +767,7 @@ namespace vrt {
 			memcpy(data, ktxTextureData, ktxTextureSize);
 
 			//unmap 
-			vkUnmapMemory(pCoreBase->devices.logical, stagingMemory);
+			vkUnmapMemory(pEngineCore->devices.logical, stagingMemory);
 
 			std::vector<VkBufferImageCopy> bufferCopyRegions;
 
@@ -802,18 +802,18 @@ namespace vrt {
 			imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
 			//create optimal tiled target image
-			if (vkCreateImage(pCoreBase->devices.logical, &imageCreateInfo, nullptr, &image) != VK_SUCCESS) {
+			if (vkCreateImage(pEngineCore->devices.logical, &imageCreateInfo, nullptr, &image) != VK_SUCCESS) {
 				throw std::invalid_argument("failed to create gltx texture image");
 			}
 
-				vkGetImageMemoryRequirements(pCoreBase->devices.logical, image, &memReqs);
+				vkGetImageMemoryRequirements(pEngineCore->devices.logical, image, &memReqs);
 				memAllocInfo.allocationSize = memReqs.size;
-				memAllocInfo.memoryTypeIndex = pCoreBase->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-				if (vkAllocateMemory(pCoreBase->devices.logical, &memAllocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
+				memAllocInfo.memoryTypeIndex = pEngineCore->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+				if (vkAllocateMemory(pEngineCore->devices.logical, &memAllocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
 					throw std::invalid_argument("failed to allocate gltx texture image memory");
 				}
 
-				if (vkBindImageMemory(pCoreBase->devices.logical, image, imageMemory, 0) != VK_SUCCESS) {
+				if (vkBindImageMemory(pEngineCore->devices.logical, image, imageMemory, 0) != VK_SUCCESS) {
 					throw std::invalid_argument("failed to bind gltx texture image and memory");
 				}
 			
@@ -823,19 +823,19 @@ namespace vrt {
 				subresourceRange.levelCount = mipLevels;
 				subresourceRange.layerCount = 1;
 			
-				vrt::Tools::setImageLayout(copyCmd, image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
+				gtp::Utilities_EngCore::setImageLayout(copyCmd, image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
 
 				vkCmdCopyBufferToImage(copyCmd, stagingBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 					static_cast<uint32_t>(bufferCopyRegions.size()), bufferCopyRegions.data());
 
-				vrt::Tools::setImageLayout(copyCmd, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
+				gtp::Utilities_EngCore::setImageLayout(copyCmd, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
 
-				pCoreBase->FlushCommandBuffer(copyCmd, copyQueue, this->pCoreBase->commandPools.graphics, true);
+				pEngineCore->FlushCommandBuffer(copyCmd, copyQueue, this->pEngineCore->commandPools.graphics, true);
 
 				this->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			
-				//vkFreeMemory(pCoreBase->devices.logical, stagingMemory, nullptr);
-				//vkDestroyBuffer(pCoreBase->devices.logical, stagingBuffer, nullptr);
+				//vkFreeMemory(pEngineCore->devices.logical, stagingMemory, nullptr);
+				//vkDestroyBuffer(pEngineCore->devices.logical, stagingBuffer, nullptr);
 			
 				ktxTexture_Destroy(ktxTexture);
 		}
@@ -855,7 +855,7 @@ namespace vrt {
 		samplerInfo.maxLod = (float)mipLevels;
 		samplerInfo.maxAnisotropy = 8.0f;
 		samplerInfo.anisotropyEnable = VK_TRUE;
-		if (vkCreateSampler(pCoreBase->devices.logical, &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
+		if (vkCreateSampler(pEngineCore->devices.logical, &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
 			throw std::invalid_argument("failed to create gltx texture sampler");
 		}
 
@@ -867,7 +867,7 @@ namespace vrt {
 		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		viewInfo.subresourceRange.layerCount = 1;
 		viewInfo.subresourceRange.levelCount = mipLevels;
-		if (vkCreateImageView(pCoreBase->devices.logical, &viewInfo, nullptr, &view) != VK_SUCCESS) {
+		if (vkCreateImageView(pEngineCore->devices.logical, &viewInfo, nullptr, &view) != VK_SUCCESS) {
 			throw std::invalid_argument("failed to create gltx image view");
 
 			descriptor.sampler = sampler;

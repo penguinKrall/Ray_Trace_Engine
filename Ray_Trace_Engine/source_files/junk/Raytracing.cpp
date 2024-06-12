@@ -11,7 +11,7 @@ void Raytracing::InitRaytracing(CoreBase* coreBase) {
 
 	//load texture
 	texture = vrt::Texture(this->pCoreBase);
-	texture.loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/textures/gratefloor_rgba.ktx",
+	texture.loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/textures/gratefloor_rgba.ktx",
 		VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	//std::cout << "\nloaded vrt texture" << std::endl;

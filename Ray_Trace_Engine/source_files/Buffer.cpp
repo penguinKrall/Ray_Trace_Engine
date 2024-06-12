@@ -1,6 +1,6 @@
 #include "Buffer.hpp"
 
-namespace vrt {
+namespace gtp {
 
 	Buffer::Buffer() {
 

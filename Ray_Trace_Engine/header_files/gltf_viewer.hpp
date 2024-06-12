@@ -1,17 +1,19 @@
 #pragma once
 
-#include <CoreBase.hpp>
+#include <EngineCore.hpp>
 #include <Shader.hpp>
-#include <gltf_viewer_model.hpp>
-#include <gltf_viewer_compute.hpp>
-#include <gltf_viewer_rt_utils.hpp>
-#include <Texture.hpp>
+#include <glTFModel.hpp>
+#include <ComputeVertex.hpp>
+#include <Utilities_AS.hpp>
+#include <TextureLoader.hpp>
+
+#define VK_GLTF_MATERIAL_IDS
 
 class gltf_viewer {
 public:
 
-	std::vector<gltf_viewer_rt_utils::GeometryNode> geometryNodeBuf;
-	std::vector<gltf_viewer_rt_utils::GeometryIndex> geometryIndexBuf;
+	std::vector<Utilities_AS::GeometryNode> geometryNodeBuf;
+	std::vector<Utilities_AS::GeometryIndex> geometryIndexBuf;
 
 	// -- uniform data struct
 	struct UniformData {
@@ -27,45 +29,45 @@ public:
 
 	// -- buffers
 	struct Buffers {
-		vrt::Buffer transformBuffer{};
-		vrt::Buffer g_nodes_buffer{};
-		vrt::Buffer g_nodes_indices{};
-		vrt::Buffer blas_scratch{};
-		vrt::Buffer second_blas_scratch{};
-		vrt::Buffer tlas_scratch{};
-		vrt::Buffer tlas_instancesBuffer;
-		vrt::Buffer ubo;
+		gtp::Buffer transformBuffer{};
+		gtp::Buffer g_nodes_buffer{};
+		gtp::Buffer g_nodes_indices{};
+		gtp::Buffer blas_scratch{};
+		gtp::Buffer second_blas_scratch{};
+		gtp::Buffer tlas_scratch{};
+		gtp::Buffer tlas_instancesBuffer;
+		gtp::Buffer ubo;
 	};
 
 	// -- assets data struct
 	struct Assets {
 
 		//models
-		std::vector<GVM::Model*> models;
+		std::vector<gtp::Model*> models;
 
 		//animation model
-		GVM::Model* animatedModel;
+		gtp::Model* animatedModel;
 
 		////static/scene model
-		//GVM::Model helmetModel;
+		//gtp::Model helmetModel;
 		//
 		////static/scene model
-		//GVM::Model reflectionSceneModel;
+		//gtp::Model reflectionSceneModel;
 		//
 		////static/scene model
-		GVM::Model* testScene;
+		gtp::Model* testScene;
 		//
 		////static/scene model
-		//GVM::Model directionCube;
+		//gtp::Model directionCube;
 		//
 		////building glass model
-		GVM::Model* waterSurface;
+		gtp::Model* waterSurface;
 		//
 		//colored glass texture
-		vrt::Texture coloredGlassTexture;
+		gtp::TextureLoader coloredGlassTexture;
 		//
 		////gondola model
-		//GVM::Model* gondola;
+		//gtp::Model* gondola;
 
 	};
 
@@ -79,28 +81,28 @@ public:
 	};
 
 	// -- raytracing ray generation shader binding table
-	vrt::Buffer raygenShaderBindingTable;
+	gtp::Buffer raygenShaderBindingTable;
 	VkStridedDeviceAddressRegionKHR raygenStridedDeviceAddressRegion{};
 
 	// -- raytracing miss shader binding table
-	vrt::Buffer missShaderBindingTable;
+	gtp::Buffer missShaderBindingTable;
 	VkStridedDeviceAddressRegionKHR missStridedDeviceAddressRegion{};
 
 	// -- raytracing hit shader binding table
-	vrt::Buffer hitShaderBindingTable;
+	gtp::Buffer hitShaderBindingTable;
 	VkStridedDeviceAddressRegionKHR hitStridedDeviceAddressRegion{};
 
 	// -- shader groups
 	std::vector<VkRayTracingShaderGroupCreateInfoKHR> shaderGroups{};
 
 	// -- top level acceleration structure
-	gltf_viewer_rt_utils::AccelerationStructure TLAS{};
+	Utilities_AS::AccelerationStructure TLAS{};
 
 	// -- core pointer
-	CoreBase* pCoreBase = nullptr;
+	EngineCore* pEngineCore = nullptr;
 
 	// -- storage image
-	gltf_viewer_rt_utils::StorageImage storageImage{};
+	Utilities_AS::StorageImage storageImage{};
 
 	// -- uniform data
 	UniformData uniformData{};
@@ -109,19 +111,19 @@ public:
 	StorageBufferData storageBufferData{};
 
 	// -- bottom level acceleration structures
-	std::vector<gltf_viewer_rt_utils::BLASData> bottomLevelAccelerationStructures;
+	std::vector<Utilities_AS::BLASData> bottomLevelAccelerationStructures;
 
 	//// -- BLAS data 
-	//gltf_viewer_rt_utils::BLASData blasData{};
+	//Utilities_AS::BLASData blasData{};
 	//
 	//// -- BLAS data 
-	//gltf_viewer_rt_utils::BLASData secondBlasData{};
+	//Utilities_AS::BLASData secondBlasData{};
 	//
 	//// -- BLAS data 
-	//gltf_viewer_rt_utils::BLASData thirdBlasData{};
+	//Utilities_AS::BLASData thirdBlasData{};
 
 	// -- TLAS data
-	gltf_viewer_rt_utils::TLASData tlasData{};
+	Utilities_AS::TLASData tlasData{};
 
 	// -- Buffers
 	Buffers buffers;
@@ -133,19 +135,19 @@ public:
 	PipelineData pipelineData{};
 
 	// -- shader
-	Shader shader;
+	gtp::Shader shader;
 
 	// -- compute
-	gltf_viewer_compute gltfCompute;
+	ComputeVertex gltfCompute;
 
 	// -- constructor
 	gltf_viewer();
 
 	// -- init constructor
-	gltf_viewer(CoreBase* coreBase);
+	gltf_viewer(EngineCore* coreBase);
 
 	// -- init class function
-	void Init_gltf_viewer(CoreBase* coreBase);
+	void Init_gltf_viewer(EngineCore* coreBase);
 
 	// -- load assets
 	void LoadAssets();

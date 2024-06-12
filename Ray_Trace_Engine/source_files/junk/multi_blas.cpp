@@ -1,16 +1,17 @@
-#include "Build_Scene.hpp"
+#include "multi_blas.hpp"
 
-Build_Scene::Build_Scene()
+
+multi_blas::multi_blas()
 {
 }
 
-Build_Scene::Build_Scene(CoreBase* coreBase) {
+multi_blas::multi_blas(CoreBase* coreBase) {
 
-	Init_Build_Scene(coreBase);
+	Init_multi_blas(coreBase);
 
 }
 
-void Build_Scene::Init_Build_Scene(CoreBase* coreBase) {
+void multi_blas::Init_multi_blas(CoreBase* coreBase) {
 
 	//init core pointer
 	this->pCoreBase = coreBase;
@@ -61,46 +62,39 @@ void Build_Scene::Init_Build_Scene(CoreBase* coreBase) {
 
 }
 
-void Build_Scene::LoadAssets() {
+void multi_blas::LoadAssets() {
 
 	const uint32_t glTFLoadingFlags =
 		vkglTF::FileLoadingFlags::PreTransformVertices |
 		vkglTF::FileLoadingFlags::PreMultiplyVertexColors;
 
 	this->assets.animatedModel = new vkglTF::Model(pCoreBase);
-	this->assets.animatedModel->loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/CesiumMan/glTF/CesiumMan.gltf",
+	this->assets.animatedModel->loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/CesiumMan/glTF/CesiumMan.gltf",
 		pCoreBase, pCoreBase->queue.graphics);
 
 	this->assets.models.push_back(this->assets.animatedModel);
 
-	this->assets.sampleBuildingModel = new vkglTF::Model(pCoreBase);
-	this->assets.sampleBuildingModel->loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/reflection_scene.gltf",
-		pCoreBase, pCoreBase->queue.graphics, glTFLoadingFlags, 1.0f);
-	
-	this->assets.models.push_back(this->assets.sampleBuildingModel);
-
-	this->assets.buildingGlass = new vkglTF::Model(pCoreBase);
-	this->assets.buildingGlass->loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/samplebuilding_glass.gltf",
-		pCoreBase, pCoreBase->queue.graphics, glTFLoadingFlags, 1.0f);
-	
-	this->assets.models.push_back(this->assets.buildingGlass);
-
-	std::cout << "this->assets.buildingGlass->textures.size(): " << this->assets.buildingGlass->textures.size() << std::endl;
-
-	this->assets.coloredClassTexture = vrt::Texture(this->pCoreBase);
-	this->assets.coloredClassTexture.loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/textures/colored_glass_rgba.ktx",
-		VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-	this->assets.gondola = new vkglTF::Model(pCoreBase);
-	this->assets.gondola->loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/gondola_model/gondola_model.gltf",
+	this->assets.helmetModel = new vkglTF::Model(pCoreBase);
+	this->assets.helmetModel->loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/FlightHelmet/glTF/FlightHelmet.gltf",
 		pCoreBase, pCoreBase->queue.graphics, glTFLoadingFlags, 1.0f);
 
-	this->assets.models.push_back(this->assets.gondola);
+	this->assets.models.push_back(this->assets.helmetModel);
 
-	
+	this->assets.reflectionSceneModel = new vkglTF::Model(pCoreBase);
+	this->assets.reflectionSceneModel->loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/reflection_scene.gltf",
+		pCoreBase, pCoreBase->queue.graphics, glTFLoadingFlags, 1.0f);
+
+	this->assets.models.push_back(this->assets.reflectionSceneModel);
+
+	//this->assets.sampleBuildingModel = new vkglTF::Model(pCoreBase);
+	//this->assets.sampleBuildingModel->loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/samplebuilding.gltf",
+	//	pCoreBase, pCoreBase->queue.graphics, glTFLoadingFlags, 1.0f);
+	//
+	//this->assets.models.push_back(this->assets.sampleBuildingModel);
+
 }
 
-void Build_Scene::CreateBottomLevelAccelerationStructures() {
+void multi_blas::CreateBottomLevelAccelerationStructures() {
 
 	//texture offset - imperative to index textures via geometries in ray trace shaders
 	uint32_t textureOffset = 0;
@@ -125,7 +119,7 @@ void Build_Scene::CreateBottomLevelAccelerationStructures() {
 
 }
 
-void Build_Scene::CreateTLAS() {
+void multi_blas::CreateTLAS() {
 
 	// -- instances transform matrix
 	VkTransformMatrixKHR transformMatrix = {
@@ -150,8 +144,8 @@ void Build_Scene::CreateTLAS() {
 	}
 
 	// -- create instances buffer
-	buffers.tlas_instancesBuffer.bufferData.bufferName = "Build_Scene_TLASInstancesBuffer";
-	buffers.tlas_instancesBuffer.bufferData.bufferMemoryName = "Build_Scene_TLASInstancesBufferMemory";
+	buffers.tlas_instancesBuffer.bufferData.bufferName = "multi_blas_TLASInstancesBuffer";
+	buffers.tlas_instancesBuffer.bufferData.bufferMemoryName = "multi_blas_TLASInstancesBufferMemory";
 
 	if (pCoreBase->CreateBuffer(
 		VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
@@ -159,7 +153,7 @@ void Build_Scene::CreateTLAS() {
 		&buffers.tlas_instancesBuffer,
 		sizeof(VkAccelerationStructureInstanceKHR) * static_cast<uint32_t>(blasInstances.size()),
 		blasInstances.data()) != VK_SUCCESS) {
-		throw std::invalid_argument("failed to create Build_Scene instances buffer");
+		throw std::invalid_argument("failed to create multi_blas instances buffer");
 	}
 
 	// -- instance buffer device address
@@ -211,7 +205,7 @@ void Build_Scene::CreateTLAS() {
 	// -- create acceleration structure
 	pCoreBase->add([this, &accelerationStructureCreateInfo]()
 		{return pCoreBase->objCreate.VKCreateAccelerationStructureKHR(&accelerationStructureCreateInfo, nullptr,
-			&TLAS.accelerationStructureKHR);}, "Build_Scene_accelerationStructureKHR");
+			&TLAS.accelerationStructureKHR);}, "multi_blas_accelerationStructureKHR");
 
 	// -- create scratch buffer
 	vrt::RTObjects::createScratchBuffer(this->pCoreBase,
@@ -240,7 +234,7 @@ void Build_Scene::CreateTLAS() {
 	//build the acceleration structure on the device via a one-time command buffer submission
 	//implementations can support acceleration structure building on host (VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands)
 	//device builds are preferred
-
+	
 	//create one time submit command buffer
 	VkCommandBuffer commandBuffer = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -265,13 +259,13 @@ void Build_Scene::CreateTLAS() {
 
 }
 
-void Build_Scene::CreateStorageImage() {
+void multi_blas::CreateStorageImage() {
 
 	vrt::RTObjects::createStorageImage(this->pCoreBase, &this->storageImage, "glTFAnimation_storageImage");
 
 }
 
-void Build_Scene::CreateUniformBuffer() {
+void multi_blas::CreateUniformBuffer() {
 
 	buffers.ubo.bufferData.bufferName = "shadowUBOBuffer";
 	buffers.ubo.bufferData.bufferMemoryName = "shadowUBOBufferMemory";
@@ -286,7 +280,7 @@ void Build_Scene::CreateUniformBuffer() {
 
 }
 
-void Build_Scene::UpdateUniformBuffer(float deltaTime) {
+void multi_blas::UpdateUniformBuffer(float deltaTime) {
 	float rotationTime = deltaTime * 0.10f;
 
 	//projection matrix
@@ -299,6 +293,8 @@ void Build_Scene::UpdateUniformBuffer(float deltaTime) {
 	uniformData.viewInverse = glm::inverse(pCoreBase->camera->GetViewMatrix());
 
 	//light position
+	//uniformData.lightPos = glm::vec4(cos(glm::radians(rotationTime * 360.0f)) * 150.0f, 100.0f + sin(glm::radians(rotationTime * 360.0f))
+	//	* 50.0f, 100.0f + sin(glm::radians(rotationTime * 360.0f)) * 150.0f, 1.0f);
 	uniformData.lightPos =
 		glm::vec4(cos(glm::radians(rotationTime * 360.0f)) * 40.0f,
 			-20.0f + sin(glm::radians(rotationTime * 360.0f)) * 20.0f,
@@ -308,17 +304,17 @@ void Build_Scene::UpdateUniformBuffer(float deltaTime) {
 	memcpy(buffers.ubo.bufferData.mapped, &uniformData, sizeof(UniformData));
 }
 
-void Build_Scene::CreateRayTracingPipeline() {
+void multi_blas::CreateRayTracingPipeline() {
 
 	uint32_t imageCount{ 0 };
 	for (int i = 0; i < assets.models.size(); i++) {
-		imageCount += static_cast<uint32_t>(assets.models[i]->textures.size());
+		imageCount += assets.models[i]->textures.size();
 	}
 	//imageCount = static_cast<uint32_t>(this->assets.animatedModel->textures.size()) +
 	//	static_cast<uint32_t>(this->assets.helmetModel->textures.size()) +
 	//	static_cast<uint32_t>(this->assets.reflectionSceneModel->textures.size());
 
-	std::cout << "Build_Scene raytracing pipeline_  imagecount: " << imageCount << std::endl;
+	std::cout << "multi_blas raytracing pipeline_  imagecount: " << imageCount << std::endl;
 
 	//acceleration structure layout binding
 	VkDescriptorSetLayoutBinding accelerationStructureLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
@@ -332,9 +328,9 @@ void Build_Scene::CreateRayTracingPipeline() {
 	VkDescriptorSetLayoutBinding uniformBufferLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
 		2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR, nullptr);
 
-	////texture image layout binding
-	//VkDescriptorSetLayoutBinding textureImageLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
-	//	3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR, nullptr);
+	//texture image layout binding
+	VkDescriptorSetLayoutBinding textureImageLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
+		3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR, nullptr);
 
 	////geometry node layout binding
 	//VkDescriptorSetLayoutBinding geometryNodeLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
@@ -346,15 +342,11 @@ void Build_Scene::CreateRayTracingPipeline() {
 
 	//g_node_buffer layout binding
 	VkDescriptorSetLayoutBinding g_node_bufferLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
-		3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
+		4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
 
 	//g_node_indices layout binding
 	VkDescriptorSetLayoutBinding g_node_indicesLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
-		4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
-
-	//texture image layout binding
-	VkDescriptorSetLayoutBinding glassTextureImagesLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
-		5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR, nullptr);
+		5, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
 
 	//texture image layout binding
 	VkDescriptorSetLayoutBinding allTextureImagesLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
@@ -366,9 +358,11 @@ void Build_Scene::CreateRayTracingPipeline() {
 		accelerationStructureLayoutBinding,
 		storageImageLayoutBinding,
 		uniformBufferLayoutBinding,
+		textureImageLayoutBinding,
+		//geometryNodeLayoutBinding,
+		//secondGeometryNodeLayoutBinding,
 		g_node_bufferLayoutBinding,
 		g_node_indicesLayoutBinding,
-		glassTextureImagesLayoutBinding,
 		allTextureImagesLayoutBinding,
 
 		});
@@ -432,8 +426,8 @@ void Build_Scene::CreateRayTracingPipeline() {
 
 	// Ray generation group
 	{
-		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/Build_Scene_raygen.rgen.spv", VK_SHADER_STAGE_RAYGEN_BIT_KHR,
-			"Build_Scene_raygen"));
+		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/multi_blas_raygen.rgen.spv", VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+			"multi_blas_raygen"));
 		shaderStages.back().pSpecializationInfo = &specializationInfo;
 		VkRayTracingShaderGroupCreateInfoKHR shaderGroup{};
 		shaderGroup.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
@@ -447,8 +441,8 @@ void Build_Scene::CreateRayTracingPipeline() {
 
 	// Miss group
 	{
-		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/Build_Scene_miss.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR,
-			"Build_Scene_miss"));
+		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/multi_blas_miss.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR,
+			"multi_blas_miss"));
 		VkRayTracingShaderGroupCreateInfoKHR shaderGroup{};
 		shaderGroup.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		shaderGroup.type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
@@ -458,16 +452,16 @@ void Build_Scene::CreateRayTracingPipeline() {
 		shaderGroup.intersectionShader = VK_SHADER_UNUSED_KHR;
 		shaderGroups.push_back(shaderGroup);
 		// Second shader for glTFShadows
-		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/Build_Scene_shadow.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR,
-			"Build_Scene_shadowmiss"));
+		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/multi_blas_shadow.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR,
+			"multi_blas_shadowmiss"));
 		shaderGroup.generalShader = static_cast<uint32_t>(shaderStages.size()) - 1;
 		shaderGroups.push_back(shaderGroup);
 	}
 
 	// Closest hit group for doing texture lookups
 	{
-		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/Build_Scene_closesthit.rchit.spv", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
-			"Build_Scene_closestHit"));
+		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/multi_blas_closesthit.rchit.spv", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
+			"multi_blas_closestHit"));
 		VkRayTracingShaderGroupCreateInfoKHR shaderGroup{};
 		shaderGroup.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		shaderGroup.type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
@@ -475,8 +469,8 @@ void Build_Scene::CreateRayTracingPipeline() {
 		shaderGroup.closestHitShader = static_cast<uint32_t>(shaderStages.size()) - 1;
 		shaderGroup.intersectionShader = VK_SHADER_UNUSED_KHR;
 		// This group also uses an anyhit shader for doing transparency (see anyhit.rahit for details)
-		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/Build_Scene_anyhit.rahit.spv", VK_SHADER_STAGE_ANY_HIT_BIT_KHR,
-			"Build_Scene_anyhit"));
+		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/multi_blas_anyhit.rahit.spv", VK_SHADER_STAGE_ANY_HIT_BIT_KHR,
+			"multi_blas_anyhit"));
 		shaderGroup.anyHitShader = static_cast<uint32_t>(shaderStages.size()) - 1;
 		shaderGroups.push_back(shaderGroup);
 	}
@@ -498,7 +492,7 @@ void Build_Scene::CreateRayTracingPipeline() {
 
 }
 
-void Build_Scene::CreateShaderBindingTable() {
+void multi_blas::CreateShaderBindingTable() {
 	// handle size
 	const uint32_t handleSize = pCoreBase->deviceProperties.rayTracingPipelineKHR.shaderGroupHandleSize;
 
@@ -579,12 +573,12 @@ void Build_Scene::CreateShaderBindingTable() {
 
 }
 
-void Build_Scene::CreateDescriptorSet() {
+void multi_blas::CreateDescriptorSet() {
 
 	//image count
 	uint32_t imageCount{ 0 };
 	for (int i = 0; i < assets.models.size(); i++) {
-		imageCount += static_cast<uint32_t>(assets.models[i]->textures.size());
+		imageCount += assets.models[i]->textures.size();
 	}
 
 	//std::cout << "!!!!!!!!!!!CREATEDESCRIPTORSETS!!!!!!!!!!!\nstatic_cast<uint32_t>(this->assets.animatedModel->textures.size(): " 
@@ -678,7 +672,7 @@ void Build_Scene::CreateDescriptorSet() {
 	g_nodes_bufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	g_nodes_bufferWrite.dstSet = pipelineData.descriptorSet;
 	g_nodes_bufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	g_nodes_bufferWrite.dstBinding = 3;
+	g_nodes_bufferWrite.dstBinding = 4;
 	g_nodes_bufferWrite.pBufferInfo = &g_nodes_BufferDescriptor;
 	g_nodes_bufferWrite.descriptorCount = 1;
 
@@ -692,20 +686,9 @@ void Build_Scene::CreateDescriptorSet() {
 	g_nodes_indicesWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	g_nodes_indicesWrite.dstSet = pipelineData.descriptorSet;
 	g_nodes_indicesWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	g_nodes_indicesWrite.dstBinding = 4;
+	g_nodes_indicesWrite.dstBinding = 5;
 	g_nodes_indicesWrite.pBufferInfo = &g_nodes_indicesDescriptor;
 	g_nodes_indicesWrite.descriptorCount = 1;
-
-	VkDescriptorImageInfo glassTextureDescriptor{ this->assets.coloredClassTexture.sampler, this->assets.coloredClassTexture.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-
-	//storage/result image write
-	VkWriteDescriptorSet glassTextureWrite{};
-	glassTextureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	glassTextureWrite.dstSet = pipelineData.descriptorSet;
-	glassTextureWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	glassTextureWrite.dstBinding = 5;
-	glassTextureWrite.pImageInfo = &glassTextureDescriptor;
-	glassTextureWrite.descriptorCount = 1;
 
 
 	std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
@@ -715,12 +698,10 @@ void Build_Scene::CreateDescriptorSet() {
 		storageImageWrite,
 		// Binding 2: Uniform data
 		uniformBufferWrite,
-		// Binding 3: g_nodes_buffer write
+		// Binding 4: g_nodes_buffer write
 		g_nodes_bufferWrite,
-		// Binding 4: g_nodes_indices write
-		g_nodes_indicesWrite,
-		// Binding 5: glass texture image write
-		glassTextureWrite
+		// Binding 5: g_nodes_indices write
+		g_nodes_indicesWrite
 	};
 
 	// Image descriptors for the image array
@@ -740,7 +721,7 @@ void Build_Scene::CreateDescriptorSet() {
 	writeDescriptorImgArray.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	writeDescriptorImgArray.dstBinding = 6;
 	writeDescriptorImgArray.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	writeDescriptorImgArray.descriptorCount = static_cast<uint32_t>(textureDescriptors.size());
+	writeDescriptorImgArray.descriptorCount = textureDescriptors.size();
 	writeDescriptorImgArray.dstSet = this->pipelineData.descriptorSet;
 	writeDescriptorImgArray.pImageInfo = textureDescriptors.data();
 	writeDescriptorSets.push_back(writeDescriptorImgArray);
@@ -750,7 +731,7 @@ void Build_Scene::CreateDescriptorSet() {
 
 }
 
-void Build_Scene::SetupBufferRegionAddresses() {
+void multi_blas::SetupBufferRegionAddresses() {
 
 	//setup buffer regions pointing to shaders in shader binding table
 	const uint32_t handleSizeAligned = vrt::Tools::alignedSize(
@@ -774,7 +755,7 @@ void Build_Scene::SetupBufferRegionAddresses() {
 
 }
 
-void Build_Scene::BuildCommandBuffers() {
+void multi_blas::BuildCommandBuffers() {
 
 	//if (resized)
 	//{
@@ -864,7 +845,7 @@ void Build_Scene::BuildCommandBuffers() {
 
 }
 
-void Build_Scene::RebuildCommandBuffers(int frame) {
+void multi_blas::RebuildCommandBuffers(int frame) {
 
 	//subresource range
 	VkImageSubresourceRange subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
@@ -935,7 +916,7 @@ void Build_Scene::RebuildCommandBuffers(int frame) {
 
 }
 
-void Build_Scene::UpdateBLAS() {
+void multi_blas::UpdateBLAS() {
 	// Build
 	//via a one-time command buffer submission
 	VkCommandBuffer commandBuffer = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -953,7 +934,7 @@ void Build_Scene::UpdateBLAS() {
 	//std::cout << "this->BLAS.deviceAddress" << this->BLAS.deviceAddress << std::endl;
 }
 
-void Build_Scene::UpdateTLAS() {
+void multi_blas::UpdateTLAS() {
 
 	VkAccelerationStructureGeometryKHR accelerationStructureGeometry{};
 	accelerationStructureGeometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
@@ -1034,7 +1015,7 @@ void Build_Scene::UpdateTLAS() {
 
 }
 
-void Build_Scene::PreTransformModel() {
+void multi_blas::PreTransformModel() {
 
 	//pre transform animation model
 	//animation uses bone local transform matrices to reposition model vertices
@@ -1048,16 +1029,20 @@ void Build_Scene::PreTransformModel() {
 		}
 	}
 
-	for (auto& sceneVtx : this->assets.gondola->modelVertexBuffer) {
-		sceneVtx.pos.x += -2.0f;
+	//the scene model geometry is -currently- left alone throughout render -- transform vertices by vertex here
+	for (auto& sceneVtx : this->assets.helmetModel->modelVertexBuffer) {
+		sceneVtx.pos.y += 0.5f;
+		sceneVtx.pos.z += -0.5f;
 	}
 
-	this->assets.gondola->vertices.buffer.map(this->pCoreBase->devices.logical, this->assets.gondola->vertices.buffer.bufferData.size, 0);
-	this->assets.gondola->vertices.buffer.copyTo(this->assets.gondola->modelVertexBuffer.data(), this->assets.gondola->vertices.buffer.bufferData.size);
+	//update scene model vertices buffer
+	this->assets.helmetModel->vertices.buffer.map(this->pCoreBase->devices.logical, this->assets.helmetModel->vertices.buffer.bufferData.size, 0);
+	this->assets.helmetModel->vertices.buffer.copyTo(this->assets.helmetModel->modelVertexBuffer.data(), this->assets.helmetModel->vertices.buffer.bufferData.size);
+
 
 }
 
-void Build_Scene::CreateGeometryNodesBuffer() {
+void multi_blas::CreateGeometryNodesBuffer() {
 
 	buffers.g_nodes_buffer.bufferData.bufferName = "g_nodes_buffer";
 	buffers.g_nodes_buffer.bufferData.bufferMemoryName = "g_nodes_bufferMemory";
@@ -1085,154 +1070,9 @@ void Build_Scene::CreateGeometryNodesBuffer() {
 
 }
 
-void Build_Scene::UpdateDescriptorSet() {
-
-	//image count
-	uint32_t imageCount{ 0 };
-	for (int i = 0; i < assets.models.size(); i++) {
-		imageCount += static_cast<uint32_t>(assets.models[i]->textures.size());
-	}
-
-	VkWriteDescriptorSetAccelerationStructureKHR descriptorAccelerationStructureInfo{};
-	descriptorAccelerationStructureInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
-	descriptorAccelerationStructureInfo.accelerationStructureCount = 1;
-	descriptorAccelerationStructureInfo.pAccelerationStructures = &this->TLAS.accelerationStructureKHR;
-
-	VkWriteDescriptorSet accelerationStructureWrite{};
-	accelerationStructureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	// The specialized acceleration structure descriptor has to be chained
-	accelerationStructureWrite.pNext = &descriptorAccelerationStructureInfo;
-	accelerationStructureWrite.dstSet = pipelineData.descriptorSet;
-	accelerationStructureWrite.dstBinding = 0;
-	accelerationStructureWrite.descriptorCount = 1;
-	accelerationStructureWrite.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
-
-	VkDescriptorImageInfo storageImageDescriptor{ VK_NULL_HANDLE, storageImage.view, VK_IMAGE_LAYOUT_GENERAL };
-
-	//storage/result image write
-	VkWriteDescriptorSet storageImageWrite{};
-	storageImageWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	storageImageWrite.dstSet = pipelineData.descriptorSet;
-	storageImageWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-	storageImageWrite.dstBinding = 1;
-	storageImageWrite.pImageInfo = &storageImageDescriptor;
-	storageImageWrite.descriptorCount = 1;
 
 
-	//ubo descriptor info
-	VkDescriptorBufferInfo uboDescriptor{};
-	uboDescriptor.buffer = buffers.ubo.bufferData.buffer;
-	uboDescriptor.offset = 0;
-	uboDescriptor.range = buffers.ubo.bufferData.size;
-
-	//ubo descriptor write info
-	VkWriteDescriptorSet uniformBufferWrite{};
-	uniformBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	uniformBufferWrite.dstSet = pipelineData.descriptorSet;
-	uniformBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uniformBufferWrite.dstBinding = 2;
-	uniformBufferWrite.pBufferInfo = &uboDescriptor;
-	uniformBufferWrite.descriptorCount = 1;
-
-	// g_nodes_buffer
-	VkDescriptorBufferInfo g_nodes_BufferDescriptor{
-		this->buffers.g_nodes_buffer.bufferData.buffer,
-		0, this->buffers.g_nodes_buffer.bufferData.size };
-
-	//geometry descriptor write info
-	VkWriteDescriptorSet g_nodes_bufferWrite{};
-	g_nodes_bufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	g_nodes_bufferWrite.dstSet = pipelineData.descriptorSet;
-	g_nodes_bufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	g_nodes_bufferWrite.dstBinding = 3;
-	g_nodes_bufferWrite.pBufferInfo = &g_nodes_BufferDescriptor;
-	g_nodes_bufferWrite.descriptorCount = 1;
-
-	// g_nodes_indices
-	VkDescriptorBufferInfo g_nodes_indicesDescriptor{
-		this->buffers.g_nodes_indices.bufferData.buffer,
-		0, this->buffers.g_nodes_indices.bufferData.size };
-
-	//geometry descriptor write info
-	VkWriteDescriptorSet g_nodes_indicesWrite{};
-	g_nodes_indicesWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	g_nodes_indicesWrite.dstSet = pipelineData.descriptorSet;
-	g_nodes_indicesWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	g_nodes_indicesWrite.dstBinding = 4;
-	g_nodes_indicesWrite.pBufferInfo = &g_nodes_indicesDescriptor;
-	g_nodes_indicesWrite.descriptorCount = 1;
-
-	VkDescriptorImageInfo glassTextureDescriptor{ this->assets.coloredClassTexture.sampler, this->assets.coloredClassTexture.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-
-	//storage/result image write
-	VkWriteDescriptorSet glassTextureWrite{};
-	glassTextureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	glassTextureWrite.dstSet = pipelineData.descriptorSet;
-	glassTextureWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	glassTextureWrite.dstBinding = 5;
-	glassTextureWrite.pImageInfo = &glassTextureDescriptor;
-	glassTextureWrite.descriptorCount = 1;
-
-	std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
-		// Binding 0: Top level acceleration structure
-		accelerationStructureWrite,
-		// Binding 1: Ray tracing result image
-		storageImageWrite,
-		// Binding 2: Uniform data
-		uniformBufferWrite,
-		// Binding 4: g_nodes_buffer write
-		g_nodes_bufferWrite,
-		// Binding 5: g_nodes_indices write
-		g_nodes_indicesWrite,
-		// Binding 5: glass texture write
-		glassTextureWrite
-	};
-
-	// Image descriptors for the image array
-	std::vector<VkDescriptorImageInfo> textureDescriptors{};
-
-	for (int i = 0; i < assets.models.size(); i++) {
-		for (int j = 0; j < assets.models[i]->textures.size(); j++) {
-			VkDescriptorImageInfo descriptor{};
-			descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			descriptor.sampler = assets.models[i]->textures[j].sampler;
-			descriptor.imageView = assets.models[i]->textures[j].view;
-			textureDescriptors.push_back(descriptor);
-		}
-	}
-
-	VkWriteDescriptorSet writeDescriptorImgArray{};
-	writeDescriptorImgArray.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	writeDescriptorImgArray.dstBinding = 6;
-	writeDescriptorImgArray.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	writeDescriptorImgArray.descriptorCount = static_cast<uint32_t>(textureDescriptors.size());
-	writeDescriptorImgArray.dstSet = this->pipelineData.descriptorSet;
-	writeDescriptorImgArray.pImageInfo = textureDescriptors.data();
-	writeDescriptorSets.push_back(writeDescriptorImgArray);
-
-	vkUpdateDescriptorSets(this->pCoreBase->devices.logical,
-		static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, VK_NULL_HANDLE);
-
-}
-
-void Build_Scene::HandleResize() {
-
-		// Delete allocated resources
-		vkDestroyImageView(pCoreBase->devices.logical, storageImage.view, nullptr);
-		vkDestroyImage(pCoreBase->devices.logical, storageImage.image, nullptr);
-		vkFreeMemory(pCoreBase->devices.logical, storageImage.memory, nullptr);
-
-		// Recreate image
-		this->CreateStorageImage();
-
-		// Update descriptor
-		this->UpdateDescriptorSet();
-
-}
-
-
-
-void Build_Scene::Destroy_Build_Scene() {
+void multi_blas::Destroy_multi_blas() {
 
 	// -- descriptor pool
 	vkDestroyDescriptorPool(pCoreBase->devices.logical, this->pipelineData.descriptorPool, nullptr);
@@ -1269,21 +1109,21 @@ void Build_Scene::Destroy_Build_Scene() {
 	// -- bottom level acceleration structure & related buffers -- //
 	for (int i = 0; i < this->bottomLevelAccelerationStructures.size(); i++) {
 
-		//accel. structure
-		pCoreBase->coreExtensions->vkDestroyAccelerationStructureKHR(
-			pCoreBase->devices.logical, this->bottomLevelAccelerationStructures[i].accelerationStructure.accelerationStructureKHR, nullptr);
+	//accel. structure
+	pCoreBase->coreExtensions->vkDestroyAccelerationStructureKHR(
+		pCoreBase->devices.logical, this->bottomLevelAccelerationStructures[i].accelerationStructure.accelerationStructureKHR, nullptr);
+	
+	//scratch buffer
+	this->bottomLevelAccelerationStructures[i].accelerationStructure.scratchBuffer.destroy(this->pCoreBase->devices.logical);
 
-		//scratch buffer
-		this->bottomLevelAccelerationStructures[i].accelerationStructure.scratchBuffer.destroy(this->pCoreBase->devices.logical);
-
-		//accel structure buffer and memory
-		vkDestroyBuffer(pCoreBase->devices.logical, this->bottomLevelAccelerationStructures[i].accelerationStructure.buffer, nullptr);
-		vkFreeMemory(pCoreBase->devices.logical, this->bottomLevelAccelerationStructures[i].accelerationStructure.memory, nullptr);
-
+	//accel structure buffer and memory
+	vkDestroyBuffer(pCoreBase->devices.logical, this->bottomLevelAccelerationStructures[i].accelerationStructure.buffer, nullptr);
+	vkFreeMemory(pCoreBase->devices.logical, this->bottomLevelAccelerationStructures[i].accelerationStructure.memory, nullptr);
+	
 	}
 
 	// -- top level acceleration structure & related buffers -- //
-
+	
 	//accel. structure
 	pCoreBase->coreExtensions->vkDestroyAccelerationStructureKHR(
 		pCoreBase->devices.logical, this->TLAS.accelerationStructureKHR, nullptr);
@@ -1305,10 +1145,9 @@ void Build_Scene::Destroy_Build_Scene() {
 	this->gltf_compute.Destroy_glTF_Compute();
 
 	// -- models
-	this->assets.gondola->DestroyModel();
+	this->assets.reflectionSceneModel->DestroyModel();
+	this->assets.helmetModel->DestroyModel();
 	this->assets.animatedModel->DestroyModel();
-	this->assets.sampleBuildingModel->DestroyModel();
-	this->assets.buildingGlass->DestroyModel();
-	this->assets.coloredClassTexture.DestroyTexture();
 
 }
+

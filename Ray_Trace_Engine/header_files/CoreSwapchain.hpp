@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tools.hpp>
+#include <Utilities_EngCore.hpp>
 
 class CoreSwapchain {
 public:
@@ -41,7 +41,7 @@ public:
 	std::vector<VkImage> createSwapchainImage(VkDevice logicalDevice);
 	std::vector<VkImageView> createSwapchainImageView(VkDevice logicalDevice);
 	VkSwapchainKHR createSwapchain(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, VkSurfaceKHR surface,
-		GLFWwindow* window, vrt::Tools::QueueFamilyIndices queueFamilyIndices);
+		GLFWwindow* window, gtp::Utilities_EngCore::QueueFamilyIndices queueFamilyIndices);
 
 	void DestroySwapchain(VkDevice logicalDevice);
 };

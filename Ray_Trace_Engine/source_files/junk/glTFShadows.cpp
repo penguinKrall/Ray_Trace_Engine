@@ -130,12 +130,12 @@ void glTFShadows::CreateBLAS() {
 		VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
 		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 
-	//this->tfModel = TFModel(this->pCoreBase, "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/FlightHelmet/glTF/FlightHelmet.gltf");
-	//this->tfModel = TFModel(this->pCoreBase, "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/CesiumMan/glTF/CesiumMan.gltf");
+	//this->tfModel = TFModel(this->pCoreBase, "C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/FlightHelmet/glTF/FlightHelmet.gltf");
+	//this->tfModel = TFModel(this->pCoreBase, "C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/CesiumMan/glTF/CesiumMan.gltf");
 
 	//load model
-	this->tfModel = TFModel(this->pCoreBase, "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/vulkanscene_shadow.gltf");
-	//this->tfModel = TFModel(this->pCoreBase, "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/reflection_scene.gltf");
+	this->tfModel = TFModel(this->pCoreBase, "C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/vulkanscene_shadow.gltf");
+	//this->tfModel = TFModel(this->pCoreBase, "C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/reflection_scene.gltf");
 	//buffer device addresses
 	VkDeviceOrHostAddressConstKHR vertexBufferDeviceAddress{};
 	VkDeviceOrHostAddressConstKHR indexBufferDeviceAddress{};

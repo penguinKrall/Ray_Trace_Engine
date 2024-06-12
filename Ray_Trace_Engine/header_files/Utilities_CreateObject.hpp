@@ -1,12 +1,12 @@
 #pragma once
 
-#include <Tools.hpp>
+#include <Utilities_EngCore.hpp>
 #include <CoreExtensions.hpp>
 #include <CoreDebug.hpp>
 
 // -- object create
 //@brief contains create functions for Vulkan Objects
-class ObjCreate {
+class Utilities_CreateObject {
 public:
 
 	// -- devices struct
@@ -31,15 +31,15 @@ public:
 	VkCommandPool commandPool{};
 
 	// -- default constructor
-	ObjCreate();
+	Utilities_CreateObject();
 
 	// -- constructor
-	//@brief calls initObjCreate function and assigns values to devices struct containing references to devices
-	ObjCreate(VkPhysicalDevice* physicalDevice, VkDevice* logicalDevice,
+	//@brief calls initUtilities_CreateObject function and assigns values to devices struct containing references to devices
+	Utilities_CreateObject(VkPhysicalDevice* physicalDevice, VkDevice* logicalDevice,
 		CoreExtensions* coreExtensions, CoreDebug* coreDebug, VkCommandPool commandPool);
 
 	// -- init function that is called in constructor
-	void InitObjCreate(VkPhysicalDevice* physicalDevice, VkDevice* logicalDevice,
+	void InitUtilities_CreateObject(VkPhysicalDevice* physicalDevice, VkDevice* logicalDevice,
 		CoreExtensions* coreExtensions, CoreDebug* coreDebug, VkCommandPool commandPool);
 
 	// -- create buffer

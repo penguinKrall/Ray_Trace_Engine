@@ -1,10 +1,32 @@
-#include "gltf_viewer_model.hpp"
+#include "glTFModel.hpp"
+
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
-#define TINYGLTF_NO_STB_IMAGE_WRITE
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+
+#include <tiny_gltf.h>
+
+//We use a custom image loading function with tinyglTF, so we can do custom stuff loading ktx textures
+bool loadImageDataFunc(tinygltf::Image* image, const int imageIndex, std::string* error, std::string* warning,
+	int req_width, int req_height, const unsigned char* bytes, int size, void* userData) {
+	// KTX files will be handled by our own code
+	if (image->uri.find_last_of(".") != std::string::npos) {
+		if (image->uri.substr(image->uri.find_last_of(".") + 1) == "ktx") {
+			return true;
+		}
+	}
+
+	return tinygltf::LoadImageData(image, imageIndex, error, warning, req_width, req_height, bytes, size, userData);
+}
+
+bool loadImageDataFuncEmpty(tinygltf::Image* image, const int imageIndex, std::string* error,
+	std::string* warning, int req_width, int req_height, const unsigned char* bytes, int size, void* userData) {
+	// This function will be used for samples that don't require images to be loaded
+	return true;
+}
 
 // Bounding box
-namespace GVM {
+namespace gtp {
 	BoundingBox::BoundingBox() {
 	};
 
@@ -53,7 +75,7 @@ namespace GVM {
 		vkDestroySampler(coreBase->devices.logical, sampler, nullptr);
 	}
 
-	void Texture::fromglTfImage(tinygltf::Image& gltfimage, TextureSampler textureSampler, CoreBase* coreBase, VkQueue copyQueue)
+	void Texture::fromglTfImage(tinygltf::Image& gltfimage, TextureSampler textureSampler, EngineCore* coreBase, VkQueue copyQueue)
 	{
 		this->coreBase = coreBase;
 
@@ -302,7 +324,7 @@ namespace GVM {
 	}
 	
 	// Mesh
-	Mesh::Mesh(CoreBase* coreBase, glm::mat4 matrix) {
+	Mesh::Mesh(EngineCore* coreBase, glm::mat4 matrix) {
 		this->coreBase = coreBase;
 		this->uniformBlock.matrix = matrix;
 		coreBase->CreateBuffer2(
@@ -336,7 +358,7 @@ namespace GVM {
 
 	glm::mat4 Node::getMatrix() {
 		glm::mat4 m = localMatrix();
-		GVM::Node* p = parent;
+		gtp::Node* p = parent;
 		while (p) {
 			m = p->localMatrix() * m;
 			p = p->parent;
@@ -353,7 +375,7 @@ namespace GVM {
 				glm::mat4 inverseTransform = glm::inverse(m);
 				size_t numJoints = std::min((uint32_t)skin->joints.size(), MAX_NUM_JOINTS);
 				for (size_t i = 0; i < numJoints; i++) {
-					GVM::Node* jointNode = skin->joints[i];
+					gtp::Node* jointNode = skin->joints[i];
 					glm::mat4 jointMat = jointNode->getMatrix() * skin->inverseBindMatrices[i];
 					jointMat = inverseTransform * jointMat;
 					mesh->uniformBlock.jointMatrix[i] = jointMat;
@@ -413,9 +435,9 @@ namespace GVM {
 		skins.resize(0);
 	};
 
-	void Model::loadNode(GVM::Node* parent, const tinygltf::Node& node, uint32_t nodeIndex, const tinygltf::Model& model, LoaderInfo& loaderInfo, float globalscale)
+	void Model::loadNode(gtp::Node* parent, const tinygltf::Node& node, uint32_t nodeIndex, const tinygltf::Model& model, LoaderInfo& loaderInfo, float globalscale)
 	{
-		GVM::Node* newNode = new Node{};
+		gtp::Node* newNode = new Node{};
 		newNode->index = nodeIndex;
 		newNode->parent = parent;
 		newNode->name = node.name;
@@ -698,11 +720,11 @@ namespace GVM {
 		}
 	}
 
-	void Model::loadTextures(tinygltf::Model& gltfModel, CoreBase* coreBase, VkQueue transferQueue)
+	void Model::loadTextures(tinygltf::Model& gltfModel, EngineCore* coreBase, VkQueue transferQueue)
 	{
 		for (tinygltf::Texture& tex : gltfModel.textures) {
 			tinygltf::Image image = gltfModel.images[tex.source];
-			GVM::TextureSampler textureSampler;
+			gtp::TextureSampler textureSampler;
 			if (tex.sampler == -1) {
 				// No sampler specified, use a default one
 				textureSampler.magFilter = VK_FILTER_LINEAR;
@@ -714,7 +736,7 @@ namespace GVM {
 			else {
 				textureSampler = textureSamplers[tex.sampler];
 			}
-			GVM::Texture texture;
+			gtp::Texture texture;
 			texture.fromglTfImage(image, textureSampler, coreBase, transferQueue);
 			texture.index = static_cast<uint32_t>(textures.size());
 			textures.push_back(texture);
@@ -762,7 +784,7 @@ namespace GVM {
 	void Model::loadTextureSamplers(tinygltf::Model& gltfModel)
 	{
 		for (tinygltf::Sampler smpl : gltfModel.samplers) {
-			GVM::TextureSampler sampler{};
+			gtp::TextureSampler sampler{};
 			sampler.minFilter = getVkFilterMode(smpl.minFilter);
 			sampler.magFilter = getVkFilterMode(smpl.magFilter);
 			sampler.addressModeU = getVkWrapMode(smpl.wrapS);
@@ -775,7 +797,7 @@ namespace GVM {
 	void Model::loadMaterials(tinygltf::Model& gltfModel)
 	{
 		for (tinygltf::Material& mat : gltfModel.materials) {
-			GVM::Material material{};
+			gtp::Material material{};
 			material.doubleSided = mat.doubleSided;
 			if (mat.values.find("baseColorTexture") != mat.values.end()) {
 				material.baseColorTexture = &textures[mat.values["baseColorTexture"].TextureIndex()];
@@ -876,7 +898,7 @@ namespace GVM {
 	void Model::loadAnimations(tinygltf::Model& gltfModel)
 	{
 		for (tinygltf::Animation& anim : gltfModel.animations) {
-			GVM::Animation animation{};
+			gtp::Animation animation{};
 			animation.name = anim.name;
 			if (anim.name.empty()) {
 				animation.name = std::to_string(animations.size());
@@ -884,7 +906,7 @@ namespace GVM {
 
 			// Samplers
 			for (auto& samp : anim.samplers) {
-				GVM::AnimationSampler sampler{};
+				gtp::AnimationSampler sampler{};
 
 				if (samp.interpolation == "LINEAR") {
 					sampler.interpolation = AnimationSampler::InterpolationType::LINEAR;
@@ -957,7 +979,7 @@ namespace GVM {
 
 			// Channels
 			for (auto& source : anim.channels) {
-				GVM::AnimationChannel channel{};
+				gtp::AnimationChannel channel{};
 
 				if (source.target_path == "rotation") {
 					channel.path = AnimationChannel::PathType::ROTATION;
@@ -985,7 +1007,7 @@ namespace GVM {
 		}
 	}
 
-	void Model::loadFromFile(std::string filename, CoreBase* coreBase, VkQueue transferQueue, uint32_t fileLoadingFlags,float scale)
+	void Model::loadFromFile(std::string filename, EngineCore* coreBase, VkQueue transferQueue, uint32_t fileLoadingFlags,float scale)
 	{
 		tinygltf::Model gltfModel;
 		tinygltf::TinyGLTF gltfContext;
@@ -1255,7 +1277,7 @@ namespace GVM {
 
 		bool updated = false;
 		for (auto& channel : animations[index].channels) {
-			GVM::AnimationSampler& sampler = animations[index].samplers[channel.samplerIndex];
+			gtp::AnimationSampler& sampler = animations[index].samplers[channel.samplerIndex];
 			if (sampler.inputs.size() > sampler.outputsVec4.size()) {
 				continue;
 			}
@@ -1265,17 +1287,17 @@ namespace GVM {
 					float u = std::max(0.0f, animations[index].currentTime - sampler.inputs[i]) / (sampler.inputs[i + 1] - sampler.inputs[i]);
 					if (u <= 1.0f) {
 						switch (channel.path) {
-						case GVM::AnimationChannel::PathType::TRANSLATION: {
+						case gtp::AnimationChannel::PathType::TRANSLATION: {
 							glm::vec4 trans = glm::mix(sampler.outputsVec4[i], sampler.outputsVec4[i + 1], u);
 							channel.node->translation = glm::vec3(trans);
 							break;
 						}
-						case GVM::AnimationChannel::PathType::SCALE: {
+						case gtp::AnimationChannel::PathType::SCALE: {
 							glm::vec4 trans = glm::mix(sampler.outputsVec4[i], sampler.outputsVec4[i + 1], u);
 							channel.node->scale = glm::vec3(trans);
 							break;
 						}
-						case GVM::AnimationChannel::PathType::ROTATION: {
+						case gtp::AnimationChannel::PathType::ROTATION: {
 							glm::quat q1;
 							q1.x = sampler.outputsVec4[i].x;
 							q1.y = sampler.outputsVec4[i].y;

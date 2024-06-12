@@ -4,8 +4,8 @@ CoreUI::CoreUI() {
 
 }
 
-CoreUI::CoreUI(CoreBase* coreBase) {
-	shader = Shader(coreBase);
+CoreUI::CoreUI(EngineCore* coreBase) {
+	shader = gtp::Shader(coreBase);
 	this->buffers.vertex.resize(frame_draws);
 	this->buffers.index.resize(frame_draws);
 	InitContext();
@@ -18,18 +18,18 @@ CoreUI::CoreUI(CoreBase* coreBase) {
 
 	//// 2: initialize imgui library
 	backends.io = &ImGui::GetIO();
-	backends.io->DisplaySize.x = static_cast<float>(this->pCoreBase->width);
-	backends.io->DisplaySize.y = static_cast<float>(this->pCoreBase->height);
+	backends.io->DisplaySize.x = static_cast<float>(this->pEngineCore->width);
+	backends.io->DisplaySize.y = static_cast<float>(this->pEngineCore->height);
 
 	//initialize ImGui for GLFW
-	ImGui_ImplGlfw_InitForVulkan(pCoreBase->windowGLFW, true);
+	ImGui_ImplGlfw_InitForVulkan(pEngineCore->windowGLFW, true);
 
 	//init for vulkan
 	ImGui_ImplVulkan_InitInfo imguiInitInfo = {};
-	imguiInitInfo.Instance = pCoreBase->instance;
-	imguiInitInfo.PhysicalDevice = pCoreBase->devices.physical;
-	imguiInitInfo.Device = pCoreBase->devices.logical;
-	imguiInitInfo.Queue = pCoreBase->queue.graphics;
+	imguiInitInfo.Instance = pEngineCore->instance;
+	imguiInitInfo.PhysicalDevice = pEngineCore->devices.physical;
+	imguiInitInfo.Device = pEngineCore->devices.logical;
+	imguiInitInfo.Queue = pEngineCore->queue.graphics;
 	imguiInitInfo.DescriptorPool = descriptor.descriptorPool;
 	imguiInitInfo.MinImageCount = 3;
 	imguiInitInfo.ImageCount = 3;
@@ -100,8 +100,8 @@ void CoreUI::InitStyle() {
 	backends.io->FontGlobalScale = properties.scale;
 }
 
-void CoreUI::InitCoreUI(CoreBase* coreBase) {
-	this->pCoreBase = coreBase;
+void CoreUI::InitCoreUI(EngineCore* coreBase) {
+	this->pEngineCore = coreBase;
 	std::cout << "\ninitializing UI\n'''''''''''''''\n" << std::endl;
 }
 
@@ -147,26 +147,26 @@ void CoreUI::CreateFontImage() {
 	targetImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 	//create image
-	pCoreBase->add([this, &targetImageCreateInfo]()
-		{return pCoreBase->objCreate.VKCreateImage(&targetImageCreateInfo, nullptr, &fontImage.image);}, "UIFontImage");
+	pEngineCore->add([this, &targetImageCreateInfo]()
+		{return pEngineCore->objCreate.VKCreateImage(&targetImageCreateInfo, nullptr, &fontImage.image);}, "UIFontImage");
 
 	//image memory requirements
 	VkMemoryRequirements memReqs;
-	vkGetImageMemoryRequirements(pCoreBase->devices.logical, fontImage.image, &memReqs);
+	vkGetImageMemoryRequirements(pEngineCore->devices.logical, fontImage.image, &memReqs);
 
 	//image memory allocation information
 	VkMemoryAllocateInfo memoryAllocateInfo{};
 	memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memoryAllocateInfo.allocationSize = memReqs.size;
-	memoryAllocateInfo.memoryTypeIndex = pCoreBase->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	memoryAllocateInfo.memoryTypeIndex = pEngineCore->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 	//allocate image memory
-	pCoreBase->add([this, &memoryAllocateInfo]()
-		{return pCoreBase->objCreate.VKAllocateMemory(&memoryAllocateInfo, nullptr, &fontImage.memory);},
+	pEngineCore->add([this, &memoryAllocateInfo]()
+		{return pEngineCore->objCreate.VKAllocateMemory(&memoryAllocateInfo, nullptr, &fontImage.memory);},
 		"UIFontImageMemory");
 
 	//bind image memory
-	if (vkBindImageMemory(pCoreBase->devices.logical, fontImage.image, fontImage.memory, 0) != VK_SUCCESS) {
+	if (vkBindImageMemory(pEngineCore->devices.logical, fontImage.image, fontImage.memory, 0) != VK_SUCCESS) {
 		throw std::invalid_argument("failed to bind image memory");
 	}
 
@@ -181,8 +181,8 @@ void CoreUI::CreateFontImage() {
 	fontImageViewCreateInfo.subresourceRange.layerCount = 1;
 
 	//create image view and map name/handle for debug
-	pCoreBase->add([this, &fontImageViewCreateInfo]()
-		{return pCoreBase->objCreate.VKCreateImageView(&fontImageViewCreateInfo, nullptr, &fontImage.view);},
+	pEngineCore->add([this, &fontImageViewCreateInfo]()
+		{return pEngineCore->objCreate.VKCreateImageView(&fontImageViewCreateInfo, nullptr, &fontImage.view);},
 		"UIFontImageView");
 }
 
@@ -205,15 +205,15 @@ void CoreUI::CreateFontSampler() {
 	samplerInfo.anisotropyEnable = VK_TRUE;
 	samplerInfo.maxAnisotropy = 8;
 
-	pCoreBase->add([this, &samplerInfo]()
-		{return pCoreBase->objCreate.VKCreateSampler(&samplerInfo, nullptr, &fontImage.sampler);}, "fontImageSampler");
+	pEngineCore->add([this, &samplerInfo]()
+		{return pEngineCore->objCreate.VKCreateSampler(&samplerInfo, nullptr, &fontImage.sampler);}, "fontImageSampler");
 }
 
 void CoreUI::CreateUIRenderPass() {
 
 	//attachments (swapchain image)
 	std::array<VkAttachmentDescription, 1> attachmentDescription{};
-	attachmentDescription[0].format = pCoreBase->swapchainData.assignedSwapchainImageFormat.format;
+	attachmentDescription[0].format = pEngineCore->swapchainData.assignedSwapchainImageFormat.format;
 	attachmentDescription[0].samples = VK_SAMPLE_COUNT_1_BIT;
 	attachmentDescription[0].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 	attachmentDescription[0].storeOp = VK_ATTACHMENT_STORE_OP_NONE;
@@ -262,8 +262,8 @@ void CoreUI::CreateUIRenderPass() {
 	renderPassCreateInfo.pDependencies = subpassDependencies.data();
 
 	//create render pass
-	pCoreBase->add([this, &renderPassCreateInfo]()
-		{return pCoreBase->objCreate.VKCreateRenderPass(&renderPassCreateInfo, nullptr, &renderData.renderPass);}, "UIRenderPass");
+	pEngineCore->add([this, &renderPassCreateInfo]()
+		{return pEngineCore->objCreate.VKCreateRenderPass(&renderPassCreateInfo, nullptr, &renderData.renderPass);}, "UIRenderPass");
 
 }
 
@@ -284,8 +284,8 @@ void CoreUI::CreateUIPipeline() {
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
 
 	//create pipeline layout
-	pCoreBase->add([this, &pipelineLayoutCreateInfo]()
-		{return pCoreBase->objCreate.VKCreatePipelineLayout(&pipelineLayoutCreateInfo, nullptr, &renderData.pipelineLayout);}, "UIPipelineLayout");
+	pEngineCore->add([this, &pipelineLayoutCreateInfo]()
+		{return pEngineCore->objCreate.VKCreatePipelineLayout(&pipelineLayoutCreateInfo, nullptr, &renderData.pipelineLayout);}, "UIPipelineLayout");
 
 	//input assembly state
 	VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo{};
@@ -335,9 +335,9 @@ void CoreUI::CreateUIPipeline() {
 	VkPipelineViewportStateCreateInfo viewportStateCreateInfo{};
 	viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	viewportStateCreateInfo.viewportCount = 1;
-	viewportStateCreateInfo.pViewports = &pCoreBase->viewport;
+	viewportStateCreateInfo.pViewports = &pEngineCore->viewport;
 	viewportStateCreateInfo.scissorCount = 1;
-	viewportStateCreateInfo.pScissors = &pCoreBase->scissor;
+	viewportStateCreateInfo.pScissors = &pEngineCore->scissor;
 	viewportStateCreateInfo.flags = 0;
 
 	VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo{};
@@ -390,9 +390,9 @@ void CoreUI::CreateUIPipeline() {
 
 #if defined(VK_KHR_dynamic_rendering)
 	VkPipelineRenderingCreateInfo pipelineRenderingCreateInfo = {};
-	std::vector<VkFormat> colorFormat = { pCoreBase->swapchainData.assignedSwapchainImageFormat.format };
+	std::vector<VkFormat> colorFormat = { pEngineCore->swapchainData.assignedSwapchainImageFormat.format };
 
-	VkFormat depthFormat = { pCoreBase->chooseSupportedFormat(
+	VkFormat depthFormat = { pEngineCore->chooseSupportedFormat(
 		{ VK_FORMAT_D32_SFLOAT_S8_UINT,
 		VK_FORMAT_D32_SFLOAT,
 		VK_FORMAT_D24_UNORM_S8_UINT },
@@ -430,8 +430,8 @@ void CoreUI::CreateUIPipeline() {
 
 	pipelineCreateInfo.pVertexInputState = &vertexInputState;
 
-	pCoreBase->add([this, &pipelineCreateInfo]()
-		{return pCoreBase->objCreate.VKCreateGraphicsPipeline(renderData.pipelineCache, 1, &pipelineCreateInfo, nullptr, &renderData.pipeline);}, "UIPipeline");
+	pEngineCore->add([this, &pipelineCreateInfo]()
+		{return pEngineCore->objCreate.VKCreateGraphicsPipeline(renderData.pipelineCache, 1, &pipelineCreateInfo, nullptr, &renderData.pipeline);}, "UIPipeline");
 
 }
 
@@ -442,13 +442,13 @@ void CoreUI::CreateUIFramebuffer() {
 
 	//std::cout << "msaa levels: " << rdz.core.components.msaaSamples << std::endl;
 
-	glfwGetWindowSize(pCoreBase->windowGLFW, &width, &height);
+	glfwGetWindowSize(pEngineCore->windowGLFW, &width, &height);
 
 	renderData.framebuffer.resize(frame_draws);
 
 	int idx = 0;
 
-	for (auto& imageviews : pCoreBase->swapchainData.swapchainImages.imageView) {
+	for (auto& imageviews : pEngineCore->swapchainData.swapchainImages.imageView) {
 
 		std::vector<VkImageView> framebufferAttachments = {
 			imageviews,
@@ -466,8 +466,8 @@ void CoreUI::CreateUIFramebuffer() {
 		// Create a modified name by appending the counter value
 		std::string modifiedName = std::format("{}{}", "UIFramebuffer", idx);
 
-		pCoreBase->add([this, &framebufferCreateInfo, &idx]()
-			{return pCoreBase->objCreate.VKCreateFramebuffer(&framebufferCreateInfo, nullptr, &renderData.framebuffer[idx]);}, modifiedName );
+		pEngineCore->add([this, &framebufferCreateInfo, &idx]()
+			{return pEngineCore->objCreate.VKCreateFramebuffer(&framebufferCreateInfo, nullptr, &renderData.framebuffer[idx]);}, modifiedName );
 
 		++idx;
 
@@ -477,7 +477,7 @@ void CoreUI::CreateUIFramebuffer() {
 void CoreUI::RecreateFramebuffers() {
 	//destroy
 	for (const auto& fbuffs : renderData.framebuffer) {
-		vkDestroyFramebuffer(pCoreBase->devices.logical, fbuffs, nullptr);
+		vkDestroyFramebuffer(pEngineCore->devices.logical, fbuffs, nullptr);
 	}
 	//create
 	CreateUIFramebuffer();
@@ -493,11 +493,11 @@ void CoreUI::CreateResources() {
 
 
 	//staging buffer for font data upload
-	vrt::Buffer stagingBuffer;
+	gtp::Buffer stagingBuffer;
 
 	//create staging buffer
-	pCoreBase->add([this, &stagingBuffer, &uploadSize]()
-		{return stagingBuffer.CreateBuffer(pCoreBase->devices.physical, pCoreBase->devices.logical,
+	pEngineCore->add([this, &stagingBuffer, &uploadSize]()
+		{return stagingBuffer.CreateBuffer(pEngineCore->devices.physical, pEngineCore->devices.logical,
 			VK_BUFFER_USAGE_TRANSFER_SRC_BIT, uploadSize, "UIcreateResourcesStagingBuffer");},
 		"UIcreateResourcesStagingBuffer");
 
@@ -505,30 +505,30 @@ void CoreUI::CreateResources() {
 	stagingBuffer.bufferData.memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
 	//create staging buffer memory
-	pCoreBase->add([this, &stagingBuffer]()
-		{return stagingBuffer.AllocateBufferMemory(pCoreBase->devices.physical, pCoreBase->devices.logical,
+	pEngineCore->add([this, &stagingBuffer]()
+		{return stagingBuffer.AllocateBufferMemory(pEngineCore->devices.physical, pEngineCore->devices.logical,
 			"UIcreateResourcesStagingBufferMemory");}, "UIcreateResourcesStagingBufferMemory");
 
 	//map memory
-	stagingBuffer.map(pCoreBase->devices.logical, uploadSize, 0);
+	stagingBuffer.map(pEngineCore->devices.logical, uploadSize, 0);
 	
 	//copy font data to buffer
 	stagingBuffer.copyTo(fontData, uploadSize);
 
 	//unmap memory
-	stagingBuffer.unmap(pCoreBase->devices.logical);
+	stagingBuffer.unmap(pEngineCore->devices.logical);
 
 	//bind buffer memory to buffer
-	stagingBuffer.bind(pCoreBase->devices.logical, 0);
+	stagingBuffer.bind(pEngineCore->devices.logical, 0);
 
 	//subresource range for font image layout transitions/copy
 	VkImageSubresourceRange subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 
 	//create temporary command buffer for transition/copy
-	VkCommandBuffer cmdBuffer = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer cmdBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	//transition image from undefined to dst optimal
-	vrt::Tools::setImageLayout(
+	gtp::Utilities_EngCore::setImageLayout(
 		cmdBuffer,
 		fontImage.image,
 		VK_IMAGE_LAYOUT_UNDEFINED,
@@ -552,7 +552,7 @@ void CoreUI::CreateResources() {
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &bufferImageCopyData);
 
 	//transition image layout from dst optimal to shader read
-	vrt::Tools::setImageLayout(
+	gtp::Utilities_EngCore::setImageLayout(
 		cmdBuffer,
 		fontImage.image,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -560,10 +560,10 @@ void CoreUI::CreateResources() {
 		subresourceRange);
 
 	//submit temporary command buffer
-	pCoreBase->FlushCommandBuffer(cmdBuffer, pCoreBase->queue.graphics, pCoreBase->commandPools.graphics, true);
+	pEngineCore->FlushCommandBuffer(cmdBuffer, pEngineCore->queue.graphics, pEngineCore->commandPools.graphics, true);
 
 	//destroy staging buffer
-	stagingBuffer.destroy(pCoreBase->devices.logical);
+	stagingBuffer.destroy(pEngineCore->devices.logical);
 
 	// Font texture Sampler
 	CreateFontSampler();
@@ -597,8 +597,8 @@ void CoreUI::CreateFontImageDescriptor() {
 	descriptorPoolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 
 	//create descriptor pool
-	pCoreBase->add([this, &descriptorPoolInfo]()
-		{return pCoreBase->objCreate.VKCreateDescriptorPool(&descriptorPoolInfo, nullptr, &descriptor.descriptorPool);}, "UIDescriptorPool");
+	pEngineCore->add([this, &descriptorPoolInfo]()
+		{return pEngineCore->objCreate.VKCreateDescriptorPool(&descriptorPoolInfo, nullptr, &descriptor.descriptorPool);}, "UIDescriptorPool");
 
 	//descriptor set layout
 	std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
@@ -611,8 +611,8 @@ void CoreUI::CreateFontImageDescriptor() {
 	static_cast<uint32_t>(setLayoutBindings.size()), setLayoutBindings.data() };
 
 	//create descriptor set layout
-	pCoreBase->add([this, &descriptorLayoutCreateInfo]()
-		{return pCoreBase->objCreate.VKCreateDescriptorSetLayout(&descriptorLayoutCreateInfo, nullptr, &descriptor.descriptorSetLayout);},
+	pEngineCore->add([this, &descriptorLayoutCreateInfo]()
+		{return pEngineCore->objCreate.VKCreateDescriptorSetLayout(&descriptorLayoutCreateInfo, nullptr, &descriptor.descriptorSetLayout);},
 		"UIDescriptorSetLayout");
 
 	//allocate descriptor set
@@ -627,7 +627,7 @@ void CoreUI::CreateFontImageDescriptor() {
 	descriptorSetAllocInfo.pSetLayouts = layouts.data();
 
 	//allocate
-	if (vkAllocateDescriptorSets(pCoreBase->devices.logical,
+	if (vkAllocateDescriptorSets(pEngineCore->devices.logical,
 		&descriptorSetAllocInfo, &descriptor.descriptorSet) != VK_SUCCESS) {
 		throw std::invalid_argument("Failed to allocate a UI descriptor!");
 	}
@@ -648,7 +648,7 @@ void CoreUI::CreateFontImageDescriptor() {
 	writeDescriptorSet.pImageInfo = &descriptorImageInfo;
 
 	//update descriptor sets
-	vkUpdateDescriptorSets(pCoreBase->devices.logical,
+	vkUpdateDescriptorSets(pEngineCore->devices.logical,
 		1, &writeDescriptorSet, 0, nullptr);
 
 }
@@ -679,27 +679,27 @@ void CoreUI::update(int currentFrame) {
 
 		//unmap
 		if (buffers.vertex[currentFrame].bufferData.mapped != nullptr) {
-			vkUnmapMemory(pCoreBase->devices.logical, buffers.vertex[currentFrame].bufferData.memory);
+			vkUnmapMemory(pEngineCore->devices.logical, buffers.vertex[currentFrame].bufferData.memory);
 			buffers.vertex[currentFrame].bufferData.mapped = nullptr;
 		}
 
 		//destroy buffer and allocated memory
-		vkDestroyBuffer(pCoreBase->devices.logical, buffers.vertex[currentFrame].bufferData.buffer, nullptr);
-		vkFreeMemory(pCoreBase->devices.logical, buffers.vertex[currentFrame].bufferData.memory, nullptr);
+		vkDestroyBuffer(pEngineCore->devices.logical, buffers.vertex[currentFrame].bufferData.buffer, nullptr);
+		vkFreeMemory(pEngineCore->devices.logical, buffers.vertex[currentFrame].bufferData.memory, nullptr);
 
 		//memory property flags
 		buffers.vertex[currentFrame].bufferData.memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
 		//create buffer and allocate memory and bind together
-		buffers.vertex[currentFrame].CreateBuffer(pCoreBase->devices.physical, pCoreBase->devices.logical, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertexBufferSize, "UIVertexBuffer");
-		buffers.vertex[currentFrame].AllocateBufferMemory(pCoreBase->devices.physical, pCoreBase->devices.logical, "UIVertexBufferMemory");
-		buffers.vertex[currentFrame].bind(pCoreBase->devices.logical, 0);
+		buffers.vertex[currentFrame].CreateBuffer(pEngineCore->devices.physical, pEngineCore->devices.logical, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertexBufferSize, "UIVertexBuffer");
+		buffers.vertex[currentFrame].AllocateBufferMemory(pEngineCore->devices.physical, pEngineCore->devices.logical, "UIVertexBufferMemory");
+		buffers.vertex[currentFrame].bind(pEngineCore->devices.logical, 0);
 
 		//get vertex count from draw data
 		buffers.vertexCount = backends.drawData->TotalVtxCount;
 
 		//map memory
-		vkMapMemory(pCoreBase->devices.logical, buffers.vertex[currentFrame].bufferData.memory, 0,
+		vkMapMemory(pEngineCore->devices.logical, buffers.vertex[currentFrame].bufferData.memory, 0,
 			vertexBufferSize, 0, &buffers.vertex[currentFrame].bufferData.mapped);
 
 	}
@@ -709,27 +709,27 @@ void CoreUI::update(int currentFrame) {
 
 		//unmap
 		if (buffers.index[currentFrame].bufferData.mapped != nullptr) {
-			vkUnmapMemory(pCoreBase->devices.logical, buffers.index[currentFrame].bufferData.memory);
+			vkUnmapMemory(pEngineCore->devices.logical, buffers.index[currentFrame].bufferData.memory);
 			buffers.index[currentFrame].bufferData.mapped = nullptr;
 		}
 
 		//destroy buffer and allocated memory
-		vkDestroyBuffer(pCoreBase->devices.logical, buffers.index[currentFrame].bufferData.buffer, nullptr);
-		vkFreeMemory(pCoreBase->devices.logical, buffers.index[currentFrame].bufferData.memory, nullptr);
+		vkDestroyBuffer(pEngineCore->devices.logical, buffers.index[currentFrame].bufferData.buffer, nullptr);
+		vkFreeMemory(pEngineCore->devices.logical, buffers.index[currentFrame].bufferData.memory, nullptr);
 
 		//index buffer memory property flags
 		buffers.index[currentFrame].bufferData.memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
 		//create buffer and allocate memory and bind
-		buffers.index[currentFrame].CreateBuffer(pCoreBase->devices.physical, pCoreBase->devices.logical, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, indexBufferSize, "UIIndexBuffer");
-		buffers.index[currentFrame].AllocateBufferMemory(pCoreBase->devices.physical, pCoreBase->devices.logical, "UIIndexBufferMemory");
-		buffers.index[currentFrame].bind(pCoreBase->devices.logical, 0);
+		buffers.index[currentFrame].CreateBuffer(pEngineCore->devices.physical, pEngineCore->devices.logical, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, indexBufferSize, "UIIndexBuffer");
+		buffers.index[currentFrame].AllocateBufferMemory(pEngineCore->devices.physical, pEngineCore->devices.logical, "UIIndexBufferMemory");
+		buffers.index[currentFrame].bind(pEngineCore->devices.logical, 0);
 
 		//get index count from draw data
 		buffers.indexCount = backends.drawData->TotalIdxCount;
 
 		//map memory
-		vkMapMemory(pCoreBase->devices.logical, buffers.index[currentFrame].bufferData.memory, 0, indexBufferSize,
+		vkMapMemory(pEngineCore->devices.logical, buffers.index[currentFrame].bufferData.memory, 0, indexBufferSize,
 			0, &buffers.index[currentFrame].bufferData.mapped);
 
 	}
@@ -748,11 +748,11 @@ void CoreUI::update(int currentFrame) {
 	}
 
 	//flush buffers to GPU
-	if (buffers.vertex[currentFrame].flush(pCoreBase->devices.logical, VK_WHOLE_SIZE, 0) != VK_SUCCESS) {
+	if (buffers.vertex[currentFrame].flush(pEngineCore->devices.logical, VK_WHOLE_SIZE, 0) != VK_SUCCESS) {
 		throw std::invalid_argument(" failed to flush UI vertex buffer!");
 	}
 
-	if (buffers.index[currentFrame].flush(pCoreBase->devices.logical, VK_WHOLE_SIZE, 0) != VK_SUCCESS) {
+	if (buffers.index[currentFrame].flush(pEngineCore->devices.logical, VK_WHOLE_SIZE, 0) != VK_SUCCESS) {
 		throw std::invalid_argument(" failed to flush UI index buffer!");
 	}
 
@@ -771,7 +771,7 @@ void CoreUI::Input() {
 		ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove);
 
 	ImGui::SetWindowPos(ImVec2(0, 0));  // set position to top left
-	ImGui::SetWindowSize(ImVec2(static_cast<float>(pCoreBase->swapchainData.swapchainExtent2D.width), 100));  // set size of top left window
+	ImGui::SetWindowSize(ImVec2(static_cast<float>(pEngineCore->swapchainData.swapchainExtent2D.width), 100));  // set size of top left window
 
 	//top left window menu bar
 	//file/close
@@ -779,7 +779,7 @@ void CoreUI::Input() {
 		if (ImGui::BeginMenu("File", true)) {
 
 			if (ImGui::MenuItem("Exit", "Esc")) {
-				glfwSetWindowShouldClose(pCoreBase->windowGLFW, true);
+				glfwSetWindowShouldClose(pEngineCore->windowGLFW, true);
 			}
 
 			ImGui::EndMenu(); // End "File" drop-down menu
@@ -817,37 +817,37 @@ void CoreUI::Input() {
 void CoreUI::DrawUI(const VkCommandBuffer commandBuffer, int currentFrame) {
 
 	//set viewport and scissor
-	pCoreBase->extent.width = pCoreBase->swapchainData.swapchainExtent2D.width;
-	pCoreBase->extent.height = pCoreBase->swapchainData.swapchainExtent2D.height;
+	pEngineCore->extent.width = pEngineCore->swapchainData.swapchainExtent2D.width;
+	pEngineCore->extent.height = pEngineCore->swapchainData.swapchainExtent2D.height;
 
-	pCoreBase->viewport.width = static_cast<float>(pCoreBase->swapchainData.swapchainExtent2D.width);
-	pCoreBase->viewport.height = static_cast<float>(pCoreBase->swapchainData.swapchainExtent2D.height);
+	pEngineCore->viewport.width = static_cast<float>(pEngineCore->swapchainData.swapchainExtent2D.width);
+	pEngineCore->viewport.height = static_cast<float>(pEngineCore->swapchainData.swapchainExtent2D.height);
 
-	pCoreBase->viewport.minDepth = 0.0f;
-	pCoreBase->viewport.maxDepth = 1.0f;
+	pEngineCore->viewport.minDepth = 0.0f;
+	pEngineCore->viewport.maxDepth = 1.0f;
 
-	pCoreBase->scissor.extent.width = pCoreBase->swapchainData.swapchainExtent2D.width;
-	pCoreBase->scissor.extent.height = pCoreBase->swapchainData.swapchainExtent2D.height;
+	pEngineCore->scissor.extent.width = pEngineCore->swapchainData.swapchainExtent2D.width;
+	pEngineCore->scissor.extent.height = pEngineCore->swapchainData.swapchainExtent2D.height;
 
-	pCoreBase->renderArea = {
-	{0, 0}, pCoreBase->extent };
+	pEngineCore->renderArea = {
+	{0, 0}, pEngineCore->extent };
 
 	vkCmdSetViewport(commandBuffer,
-		0, 1, &pCoreBase->viewport);
+		0, 1, &pEngineCore->viewport);
 
 	vkCmdSetScissor(commandBuffer,
-		0, 1, &pCoreBase->scissor);
+		0, 1, &pEngineCore->scissor);
 
 	//render area
 	VkRect2D renderArea = {
-		{0}, {pCoreBase->swapchainData.swapchainExtent2D.width, pCoreBase->swapchainData.swapchainExtent2D.height}
+		{0}, {pEngineCore->swapchainData.swapchainExtent2D.width, pEngineCore->swapchainData.swapchainExtent2D.height}
 	};
 
 	//clear values (unused rn - renderpass does not clear attachments)
 	std::vector<VkClearValue> clearValue = {
-	pCoreBase->colorClearValue,
-	//pCoreBase->depthClearValue,
-	//pCoreBase->colorClearValue
+	pEngineCore->colorClearValue,
+	//pEngineCore->depthClearValue,
+	//pEngineCore->colorClearValue
 	};
 
 	//get draw data
@@ -924,35 +924,35 @@ void CoreUI::DestroyUI() {
 
 	//framebuffers
 	for (const auto& fbuffs : renderData.framebuffer) {
-		vkDestroyFramebuffer(pCoreBase->devices.logical, fbuffs, nullptr);
+		vkDestroyFramebuffer(pEngineCore->devices.logical, fbuffs, nullptr);
 	}
 
 	//buffers
 	for (int i = 0; i < frame_draws; i++) {
-		buffers.vertex[i].destroy(pCoreBase->devices.logical);
-		buffers.index[i].destroy(pCoreBase->devices.logical);
+		buffers.vertex[i].destroy(pEngineCore->devices.logical);
+		buffers.index[i].destroy(pEngineCore->devices.logical);
 	}
 
 	//shader
 	shader.DestroyShader();
 
 	//pipeline
-	vkDestroyPipelineCache(pCoreBase->devices.logical, this->renderData.pipelineCache, nullptr);
-	vkDestroyPipeline(pCoreBase->devices.logical, this->renderData.pipeline, nullptr);
-	vkDestroyPipelineLayout(pCoreBase->devices.logical, this->renderData.pipelineLayout, nullptr);
+	vkDestroyPipelineCache(pEngineCore->devices.logical, this->renderData.pipelineCache, nullptr);
+	vkDestroyPipeline(pEngineCore->devices.logical, this->renderData.pipeline, nullptr);
+	vkDestroyPipelineLayout(pEngineCore->devices.logical, this->renderData.pipelineLayout, nullptr);
 
 	//render pass
-	vkDestroyRenderPass(pCoreBase->devices.logical, this->renderData.renderPass, nullptr);
+	vkDestroyRenderPass(pEngineCore->devices.logical, this->renderData.renderPass, nullptr);
 
 	//descriptor
-	vkDestroyDescriptorSetLayout(pCoreBase->devices.logical, this->descriptor.descriptorSetLayout, nullptr);
-	vkDestroyDescriptorPool(pCoreBase->devices.logical, this->descriptor.descriptorPool, nullptr);
+	vkDestroyDescriptorSetLayout(pEngineCore->devices.logical, this->descriptor.descriptorSetLayout, nullptr);
+	vkDestroyDescriptorPool(pEngineCore->devices.logical, this->descriptor.descriptorPool, nullptr);
 
 	//font image
-	vkDestroyImageView(pCoreBase->devices.logical, this->fontImage.view, nullptr);
-	vkDestroyImage(pCoreBase->devices.logical, this->fontImage.image, nullptr);
-	vkFreeMemory(pCoreBase->devices.logical, this->fontImage.memory, nullptr);
-	vkDestroySampler(pCoreBase->devices.logical, this->fontImage.sampler, nullptr);
+	vkDestroyImageView(pEngineCore->devices.logical, this->fontImage.view, nullptr);
+	vkDestroyImage(pEngineCore->devices.logical, this->fontImage.image, nullptr);
+	vkFreeMemory(pEngineCore->devices.logical, this->fontImage.memory, nullptr);
+	vkDestroySampler(pEngineCore->devices.logical, this->fontImage.sampler, nullptr);
 
 	ImGui_ImplVulkan_Shutdown();
 

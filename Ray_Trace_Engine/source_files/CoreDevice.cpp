@@ -52,7 +52,7 @@ VkResult CoreDevice::getPhysicalDevice(VkInstance instance) {
 		VkPhysicalDeviceProperties deviceProperties;
 		vkGetPhysicalDeviceProperties(deviceData.deviceList[i], &deviceProperties);
 		std::cout << "Device [" << i << "] : " << deviceProperties.deviceName << std::endl;
-		std::cout << " Type: " << vrt::Tools::physicalDeviceTypeString(deviceProperties.deviceType) << "\n";
+		std::cout << " Type: " << gtp::Utilities_EngCore::physicalDeviceTypeString(deviceProperties.deviceType) << "\n";
 		std::cout << " API: " << (deviceProperties.apiVersion >> 22) <<
 			"." << ((deviceProperties.apiVersion >> 12) & 0x3ff) <<
 			"." << (deviceProperties.apiVersion & 0xfff) << "\n" << std::endl;
@@ -73,7 +73,7 @@ VkResult CoreDevice::getPhysicalDevice(VkInstance instance) {
 	std::cout << std::endl << "Selected Physical Device" << std::endl;
 	std::cout << "Device Name: " << deviceProperties.physicalDevice.deviceName << std::endl;
 	std::cout << "Device Type: " <<
-		vrt::Tools::physicalDeviceTypeString(deviceProperties.physicalDevice.deviceType) << std::endl;
+		gtp::Utilities_EngCore::physicalDeviceTypeString(deviceProperties.physicalDevice.deviceType) << std::endl;
 	std::cout << "API Version: " << (deviceProperties.physicalDevice.apiVersion >> 22) << "." <<
 		((deviceProperties.physicalDevice.apiVersion >> 12) & 0x3ff) << "." <<
 		(deviceProperties.physicalDevice.apiVersion & 0xfff) << std::endl;
@@ -258,10 +258,10 @@ VkResult CoreDevice::getPhysicalDevice(VkInstance instance) {
 }
 
 // -- get queue family indices
-//vrt::Tools::QueueFamilyIndices CoreDevice::getQueueFamilyIndices(VkSurfaceKHR surface) {
+//gtp::Utilities_EngCore::QueueFamilyIndices CoreDevice::getQueueFamilyIndices(VkSurfaceKHR surface) {
 //
 //	//get queue family count
-//	vrt::Tools::QueueFamilyIndices indices;
+//	gtp::Utilities_EngCore::QueueFamilyIndices indices;
 //	uint32_t queueFamilyCount = 0;
 //	vkGetPhysicalDeviceQueueFamilyProperties(devices.physical, &queueFamilyCount, nullptr);
 //
@@ -346,7 +346,7 @@ VkDevice CoreDevice::createLogicalDevice(VkSurfaceKHR surface) {
 	//default priority
 	const float defaultQueuePriority(1.0f);
 
-	queue.queueFamilyIndices = vrt::Tools::getQueueFamilyIndices(devices.physical, surface);
+	queue.queueFamilyIndices = gtp::Utilities_EngCore::getQueueFamilyIndices(devices.physical, surface);
 
 	std::cout << "Queue Family Indices " << std::endl;
 	std::cout << " queueFamilyIndices.graphics: " << queue.queueFamilyIndices.graphics << std::endl;

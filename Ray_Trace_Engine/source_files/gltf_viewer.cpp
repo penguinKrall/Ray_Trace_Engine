@@ -4,19 +4,19 @@ gltf_viewer::gltf_viewer()
 {
 }
 
-gltf_viewer::gltf_viewer(CoreBase* coreBase) {
+gltf_viewer::gltf_viewer(EngineCore* coreBase) {
 
 	Init_gltf_viewer(coreBase);
 
 }
 
-void gltf_viewer::Init_gltf_viewer(CoreBase* coreBase) {
+void gltf_viewer::Init_gltf_viewer(EngineCore* coreBase) {
 
 	//init core pointer
-	this->pCoreBase = coreBase;
+	this->pEngineCore = coreBase;
 
 	//shader
-	shader = Shader(pCoreBase);
+	shader = gtp::Shader(pEngineCore);
 
 	//load assets
 	this->LoadAssets();
@@ -25,10 +25,10 @@ void gltf_viewer::Init_gltf_viewer(CoreBase* coreBase) {
 
 	this->PreTransformModel();
 	//
-	vkDeviceWaitIdle(this->pCoreBase->devices.logical);
+	vkDeviceWaitIdle(this->pEngineCore->devices.logical);
 	//
 	////compute
-	this->gltfCompute = gltf_viewer_compute(pCoreBase, this->assets.animatedModel);
+	this->gltfCompute = ComputeVertex(pEngineCore, this->assets.animatedModel);
 	//
 	////create bottom level acceleration structure
 	this->CreateBottomLevelAccelerationStructures();
@@ -85,38 +85,38 @@ void gltf_viewer::Init_gltf_viewer(CoreBase* coreBase) {
 void gltf_viewer::LoadAssets() {
 
 	const uint32_t glTFLoadingFlags =
-		GVM::FileLoadingFlags::PreTransformVertices |
-		GVM::FileLoadingFlags::PreMultiplyVertexColors;
+		gtp::FileLoadingFlags::PreTransformVertices |
+		gtp::FileLoadingFlags::PreMultiplyVertexColors;
 
-	//this->assets.animatedModel = new GVM::gltf_viewer_model(pCoreBase);
-	this->assets.animatedModel = new GVM::Model();
+	//this->assets.animatedModel = new gtp::gltf_viewer_model(pEngineCore);
+	this->assets.animatedModel = new gtp::Model();
 
-	this->assets.animatedModel->loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/Fox2/Fox2.gltf",
-		pCoreBase, pCoreBase->queue.graphics);
+	this->assets.animatedModel->loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/Fox2/Fox2.gltf",
+		pEngineCore, pEngineCore->queue.graphics);
 
 	this->assets.models.push_back(this->assets.animatedModel);
 
-	this->assets.testScene = new GVM::Model();
-	this->assets.testScene->loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/test_scene/testScene.gltf",
-		pCoreBase, pCoreBase->queue.graphics);
+	this->assets.testScene = new gtp::Model();
+	this->assets.testScene->loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/test_scene/testScene.gltf",
+		pEngineCore, pEngineCore->queue.graphics);
 	
 	this->assets.models.push_back(this->assets.testScene);
 	
-	this->assets.waterSurface = new GVM::Model();
-	this->assets.waterSurface->loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/test_scene/pool_water_surface/pool_water_surface.gltf",
-		pCoreBase, pCoreBase->queue.graphics, glTFLoadingFlags);
+	this->assets.waterSurface = new gtp::Model();
+	this->assets.waterSurface->loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/test_scene/pool_water_surface/pool_water_surface.gltf",
+		pEngineCore, pEngineCore->queue.graphics, glTFLoadingFlags);
 	
 	this->assets.models.push_back(this->assets.waterSurface);
 	
 	//std::cout << "this->assets.waterSurface->textures.size(): " << this->assets.waterSurface.textures.size() << std::endl;
 	
-	this->assets.coloredGlassTexture = vrt::Texture(this->pCoreBase);
-	this->assets.coloredGlassTexture.loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/textures/colored_glass_rgba.ktx",
+	this->assets.coloredGlassTexture = gtp::TextureLoader(this->pEngineCore);
+	this->assets.coloredGlassTexture.loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/textures/colored_glass_rgba.ktx",
 		VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	
-//this->assets.gondola = new GVM::Model();
-//this->assets.gondola->loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/test_scene/testScene.gltf",
-//	pCoreBase, pCoreBase->queue.graphics, glTFLoadingFlags);
+//this->assets.gondola = new gtp::Model();
+//this->assets.gondola->loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/test_scene/testScene.gltf",
+//	pEngineCore, pEngineCore->queue.graphics, glTFLoadingFlags);
 //
 //this->assets.models.push_back(this->assets.gondola);
 //
@@ -134,8 +134,8 @@ void gltf_viewer::CreateBottomLevelAccelerationStructures() {
 	
 	//create bottom level acceleration structures
 	for (int i = 0; i < this->bottomLevelAccelerationStructures.size(); i++) {
-		gltf_viewer_rt_utils::createBLAS(
-			this->pCoreBase,
+		Utilities_AS::createBLAS(
+			this->pEngineCore,
 			&this->geometryNodeBuf,
 			&this->geometryIndexBuf,
 			&this->bottomLevelAccelerationStructures[i],
@@ -178,7 +178,7 @@ void gltf_viewer::CreateTLAS() {
 	buffers.tlas_instancesBuffer.bufferData.bufferName = "gltf_viewer_TLASInstancesBuffer";
 	buffers.tlas_instancesBuffer.bufferData.bufferMemoryName = "gltf_viewer_TLASInstancesBufferMemory";
 
-	if (pCoreBase->CreateBuffer(
+	if (pEngineCore->CreateBuffer(
 		VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 		&buffers.tlas_instancesBuffer,
@@ -188,7 +188,7 @@ void gltf_viewer::CreateTLAS() {
 	}
 
 	// -- instance buffer device address
-	tlasData.instanceDataDeviceAddress.deviceAddress = gltf_viewer_rt_utils::getBufferDeviceAddress(this->pCoreBase, buffers.tlas_instancesBuffer.bufferData.buffer);
+	tlasData.instanceDataDeviceAddress.deviceAddress = Utilities_AS::getBufferDeviceAddress(this->pEngineCore, buffers.tlas_instancesBuffer.bufferData.buffer);
 
 	// -- acceleration Structure Geometry{};
 	tlasData.accelerationStructureGeometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
@@ -215,15 +215,15 @@ void gltf_viewer::CreateTLAS() {
 	tlasData.accelerationStructureBuildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 
 	// -- get acceleration structure build sizes
-	pCoreBase->coreExtensions->vkGetAccelerationStructureBuildSizesKHR(
-		pCoreBase->devices.logical,
+	pEngineCore->coreExtensions->vkGetAccelerationStructureBuildSizesKHR(
+		pEngineCore->devices.logical,
 		VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
 		&tlasData.accelerationStructureBuildGeometryInfo,
 		&tlasData.primitive_count,
 		&tlasData.accelerationStructureBuildSizesInfo);
 
 	// -- create acceleration structure buffer
-	gltf_viewer_rt_utils::createAccelerationStructureBuffer(this->pCoreBase, &this->TLAS.memory, &this->TLAS.buffer, &tlasData.accelerationStructureBuildSizesInfo,
+	Utilities_AS::createAccelerationStructureBuffer(this->pEngineCore, &this->TLAS.memory, &this->TLAS.buffer, &tlasData.accelerationStructureBuildSizesInfo,
 		"glTFAnimation_TLASBuffer");
 
 	// -- acceleration structure create info
@@ -234,12 +234,12 @@ void gltf_viewer::CreateTLAS() {
 	accelerationStructureCreateInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
 
 	// -- create acceleration structure
-	pCoreBase->add([this, &accelerationStructureCreateInfo]()
-		{return pCoreBase->objCreate.VKCreateAccelerationStructureKHR(&accelerationStructureCreateInfo, nullptr,
+	pEngineCore->add([this, &accelerationStructureCreateInfo]()
+		{return pEngineCore->objCreate.VKCreateAccelerationStructureKHR(&accelerationStructureCreateInfo, nullptr,
 			&TLAS.accelerationStructureKHR);}, "gltf_viewer_accelerationStructureKHR");
 
 	// -- create scratch buffer
-	gltf_viewer_rt_utils::createScratchBuffer(this->pCoreBase,
+	Utilities_AS::createScratchBuffer(this->pEngineCore,
 		&buffers.tlas_scratch, tlasData.accelerationStructureBuildSizesInfo.buildScratchSize, "glTFAnimation_ScratchBufferTLAS");
 
 	// acceleration Build Geometry Info{};
@@ -267,17 +267,17 @@ void gltf_viewer::CreateTLAS() {
 	//device builds are preferred
 
 	//create one time submit command buffer
-	VkCommandBuffer commandBuffer = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer commandBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	//build acceleration structure/s
-	pCoreBase->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
+	pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
 		commandBuffer,
 		1,
 		&tlasData.accelerationBuildGeometryInfo,
 		tlasData.accelerationBuildStructureRangeInfos.data());
 
 	//flush one time submit command buffer
-	pCoreBase->FlushCommandBuffer(commandBuffer, pCoreBase->queue.graphics, pCoreBase->commandPools.graphics, true);
+	pEngineCore->FlushCommandBuffer(commandBuffer, pEngineCore->queue.graphics, pEngineCore->commandPools.graphics, true);
 
 	//get acceleration structure device address
 	VkAccelerationStructureDeviceAddressInfoKHR accelerationDeviceAddressInfo{};
@@ -285,14 +285,14 @@ void gltf_viewer::CreateTLAS() {
 	accelerationDeviceAddressInfo.accelerationStructure = this->TLAS.accelerationStructureKHR;
 
 	//get and assign tlas acceleration structure device address value
-	this->TLAS.deviceAddress = pCoreBase->coreExtensions->vkGetAccelerationStructureDeviceAddressKHR(pCoreBase->devices.logical,
+	this->TLAS.deviceAddress = pEngineCore->coreExtensions->vkGetAccelerationStructureDeviceAddressKHR(pEngineCore->devices.logical,
 		&accelerationDeviceAddressInfo);
 
 }
 
 void gltf_viewer::CreateStorageImage() {
 
-	gltf_viewer_rt_utils::createStorageImage(this->pCoreBase, &this->storageImage, "glTFAnimation_storageImage");
+	Utilities_AS::createStorageImage(this->pEngineCore, &this->storageImage, "glTFAnimation_storageImage");
 
 }
 
@@ -301,7 +301,7 @@ void gltf_viewer::CreateUniformBuffer() {
 	buffers.ubo.bufferData.bufferName = "shadowUBOBuffer";
 	buffers.ubo.bufferData.bufferMemoryName = "shadowUBOBufferMemory";
 
-	if (pCoreBase->CreateBuffer(
+	if (pEngineCore->CreateBuffer(
 		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 		&buffers.ubo, sizeof(UniformData), &uniformData) != VK_SUCCESS) {
 		throw std::invalid_argument("failed to create shadow uniform buffer!");
@@ -315,13 +315,13 @@ void gltf_viewer::UpdateUniformBuffer(float deltaTime) {
 	float rotationTime = deltaTime * 0.10f;
 
 	//projection matrix
-	glm::mat4 proj = glm::perspective(glm::radians(pCoreBase->camera->Zoom),
-		float(pCoreBase->swapchainData.swapchainExtent2D.width) / float(pCoreBase->swapchainData.swapchainExtent2D.height), 0.1f, 1000.0f);
+	glm::mat4 proj = glm::perspective(glm::radians(pEngineCore->camera->Zoom),
+		float(pEngineCore->swapchainData.swapchainExtent2D.width) / float(pEngineCore->swapchainData.swapchainExtent2D.height), 0.1f, 1000.0f);
 	proj[1][1] *= -1.0f;
 	uniformData.projInverse = glm::inverse(proj);
 
 	//view matrix
-	uniformData.viewInverse = glm::inverse(pCoreBase->camera->GetViewMatrix());
+	uniformData.viewInverse = glm::inverse(pEngineCore->camera->GetViewMatrix());
 
 	//light position
 	//uniformData.lightPos =
@@ -352,43 +352,43 @@ void gltf_viewer::CreateRayTracingPipeline() {
 	std::cout << "gltf_viewer raytracing pipeline_  imagecount: " << imageCount << std::endl;
 
 	//acceleration structure layout binding
-	VkDescriptorSetLayoutBinding accelerationStructureLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
+	VkDescriptorSetLayoutBinding accelerationStructureLayoutBinding = gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
 		0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, nullptr);
 
 	//storage image layout binding
-	VkDescriptorSetLayoutBinding storageImageLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
+	VkDescriptorSetLayoutBinding storageImageLayoutBinding = gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
 		1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
 
 	// uniform buffer layout binding
-	VkDescriptorSetLayoutBinding uniformBufferLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
+	VkDescriptorSetLayoutBinding uniformBufferLayoutBinding = gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
 		2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR, nullptr);
 
 	////texture image layout binding
-	//VkDescriptorSetLayoutBinding textureImageLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
+	//VkDescriptorSetLayoutBinding textureImageLayoutBinding = gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
 	//	3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR, nullptr);
 
 	////geometry node layout binding
-	//VkDescriptorSetLayoutBinding geometryNodeLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
+	//VkDescriptorSetLayoutBinding geometryNodeLayoutBinding = gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
 	//	4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
 	//
 	////second geometry node layout binding
-	//VkDescriptorSetLayoutBinding secondGeometryNodeLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
+	//VkDescriptorSetLayoutBinding secondGeometryNodeLayoutBinding = gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
 	//	5, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
 
 	//g_node_buffer layout binding
-	VkDescriptorSetLayoutBinding g_node_bufferLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
+	VkDescriptorSetLayoutBinding g_node_bufferLayoutBinding = gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
 		3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
 
 	//g_node_indices layout binding
-	VkDescriptorSetLayoutBinding g_node_indicesLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
+	VkDescriptorSetLayoutBinding g_node_indicesLayoutBinding = gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
 		4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
 
 	//texture image layout binding
-	VkDescriptorSetLayoutBinding glassTextureImagesLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
+	VkDescriptorSetLayoutBinding glassTextureImagesLayoutBinding = gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
 		5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR, nullptr);
 
 	//texture image layout binding
-	VkDescriptorSetLayoutBinding allTextureImagesLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
+	VkDescriptorSetLayoutBinding allTextureImagesLayoutBinding = gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
 		6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageCount, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR, nullptr);
 
 
@@ -427,8 +427,8 @@ void gltf_viewer::CreateRayTracingPipeline() {
 	descriptorSetLayoutCreateInfo.pNext = &setLayoutBindingFlags;
 
 	//create descriptor set layout
-	pCoreBase->add([this, &descriptorSetLayoutCreateInfo]()
-		{return pCoreBase->objCreate.VKCreateDescriptorSetLayout(&descriptorSetLayoutCreateInfo,
+	pEngineCore->add([this, &descriptorSetLayoutCreateInfo]()
+		{return pEngineCore->objCreate.VKCreateDescriptorSetLayout(&descriptorSetLayoutCreateInfo,
 			nullptr, &pipelineData.descriptorSetLayout);},
 		"glTFAnimation_DescriptorSetLayout");
 
@@ -438,8 +438,8 @@ void gltf_viewer::CreateRayTracingPipeline() {
 	pipelineLayoutCreateInfo.pSetLayouts = &pipelineData.descriptorSetLayout;
 
 	//create pipeline layout
-	pCoreBase->add([this, &pipelineLayoutCreateInfo]()
-		{return pCoreBase->objCreate.VKCreatePipelineLayout(&pipelineLayoutCreateInfo,
+	pEngineCore->add([this, &pipelineLayoutCreateInfo]()
+		{return pEngineCore->objCreate.VKCreatePipelineLayout(&pipelineLayoutCreateInfo,
 			nullptr, &pipelineData.pipelineLayout);}, "gltShadTex_RayTracingPipelineLayout");
 
 	//project directory for loading shader modules
@@ -523,20 +523,20 @@ void gltf_viewer::CreateRayTracingPipeline() {
 	rayTracingPipelineCreateInfo.layout = pipelineData.pipelineLayout;
 
 	//create raytracing pipeline
-	pCoreBase->add([this, &rayTracingPipelineCreateInfo]()
-		{return pCoreBase->objCreate.VKCreateRaytracingPipeline(&rayTracingPipelineCreateInfo,
+	pEngineCore->add([this, &rayTracingPipelineCreateInfo]()
+		{return pEngineCore->objCreate.VKCreateRaytracingPipeline(&rayTracingPipelineCreateInfo,
 			nullptr, &pipelineData.pipeline);}, "glTFAnimation_RaytracingPipeline");
 
 }
 
 void gltf_viewer::CreateShaderBindingTable() {
 	// handle size
-	const uint32_t handleSize = pCoreBase->deviceProperties.rayTracingPipelineKHR.shaderGroupHandleSize;
+	const uint32_t handleSize = pEngineCore->deviceProperties.rayTracingPipelineKHR.shaderGroupHandleSize;
 
 	// aligned handle size
-	const uint32_t handleSizeAligned = vrt::Tools::alignedSize(
-		pCoreBase->deviceProperties.rayTracingPipelineKHR.shaderGroupHandleSize,
-		pCoreBase->deviceProperties.rayTracingPipelineKHR.shaderGroupHandleAlignment);
+	const uint32_t handleSizeAligned = gtp::Utilities_EngCore::alignedSize(
+		pEngineCore->deviceProperties.rayTracingPipelineKHR.shaderGroupHandleSize,
+		pEngineCore->deviceProperties.rayTracingPipelineKHR.shaderGroupHandleAlignment);
 
 	// group count
 	const uint32_t groupCount = static_cast<uint32_t>(shaderGroups.size());
@@ -548,7 +548,7 @@ void gltf_viewer::CreateShaderBindingTable() {
 	std::vector<uint8_t> shaderHandleStorage(sbtSize);
 
 	// get ray tracing shader handle group sizes
-	if (pCoreBase->coreExtensions->vkGetRayTracingShaderGroupHandlesKHR(pCoreBase->devices.logical, pipelineData.pipeline,
+	if (pEngineCore->coreExtensions->vkGetRayTracingShaderGroupHandlesKHR(pEngineCore->devices.logical, pipelineData.pipeline,
 		0, groupCount, sbtSize, shaderHandleStorage.data()) != VK_SUCCESS) {
 		throw std::invalid_argument("failed to get ray tracing shader group handle sizes");
 	}
@@ -566,7 +566,7 @@ void gltf_viewer::CreateShaderBindingTable() {
 		// raygen
 		raygenShaderBindingTable.bufferData.bufferName = "shadowRaygenShaderBindingTable";
 		raygenShaderBindingTable.bufferData.bufferMemoryName = "shadowRaygenShaderBindingTableMemory";
-		if (pCoreBase->CreateBuffer(bufferUsageFlags, memoryUsageFlags, &raygenShaderBindingTable, handleSize, nullptr)
+		if (pEngineCore->CreateBuffer(bufferUsageFlags, memoryUsageFlags, &raygenShaderBindingTable, handleSize, nullptr)
 			!= VK_SUCCESS) {
 			throw std::runtime_error("failed to create raygenShaderBindingTable");
 		}
@@ -574,7 +574,7 @@ void gltf_viewer::CreateShaderBindingTable() {
 		// miss
 		missShaderBindingTable.bufferData.bufferName = "shadowMissShaderBindingTable";
 		missShaderBindingTable.bufferData.bufferMemoryName = "shadowMissShaderBindingTableMemory";
-		if (pCoreBase->CreateBuffer(bufferUsageFlags, memoryUsageFlags, &missShaderBindingTable, handleSize * 2, nullptr)
+		if (pEngineCore->CreateBuffer(bufferUsageFlags, memoryUsageFlags, &missShaderBindingTable, handleSize * 2, nullptr)
 			!= VK_SUCCESS) {
 			throw std::runtime_error("failed to create missShaderBindingTable");
 		}
@@ -582,23 +582,23 @@ void gltf_viewer::CreateShaderBindingTable() {
 		// hit
 		hitShaderBindingTable.bufferData.bufferName = "shadowHitShaderBindingTable";
 		hitShaderBindingTable.bufferData.bufferMemoryName = "shadowHitShaderBindingTableMemory";
-		if (pCoreBase->CreateBuffer(bufferUsageFlags, memoryUsageFlags, &hitShaderBindingTable, handleSize * 2, nullptr)
+		if (pEngineCore->CreateBuffer(bufferUsageFlags, memoryUsageFlags, &hitShaderBindingTable, handleSize * 2, nullptr)
 			!= VK_SUCCESS) {
 			throw std::runtime_error("failed to create hitShaderBindingTable");
 		}
 
 		// copy buffers
-		raygenShaderBindingTable.map(pCoreBase->devices.logical);
+		raygenShaderBindingTable.map(pEngineCore->devices.logical);
 		memcpy(raygenShaderBindingTable.bufferData.mapped, shaderHandleStorage.data(), handleSize);
-		raygenShaderBindingTable.unmap(pCoreBase->devices.logical);
+		raygenShaderBindingTable.unmap(pEngineCore->devices.logical);
 
-		missShaderBindingTable.map(pCoreBase->devices.logical);
+		missShaderBindingTable.map(pEngineCore->devices.logical);
 		memcpy(missShaderBindingTable.bufferData.mapped, shaderHandleStorage.data() + handleSizeAligned, handleSize * 2);
-		missShaderBindingTable.unmap(pCoreBase->devices.logical);
+		missShaderBindingTable.unmap(pEngineCore->devices.logical);
 
-		hitShaderBindingTable.map(pCoreBase->devices.logical);
+		hitShaderBindingTable.map(pEngineCore->devices.logical);
 		memcpy(hitShaderBindingTable.bufferData.mapped, shaderHandleStorage.data() + handleSizeAligned * 3, handleSize * 2);
-		hitShaderBindingTable.unmap(pCoreBase->devices.logical);
+		hitShaderBindingTable.unmap(pEngineCore->devices.logical);
 	}
 
 	catch (const std::exception& e) {
@@ -636,8 +636,8 @@ void gltf_viewer::CreateDescriptorSet() {
 	descriptorPoolCreateInfo.maxSets = 1;
 
 	//create descriptor pool
-	pCoreBase->add([this, &descriptorPoolCreateInfo]()
-		{return pCoreBase->objCreate.VKCreateDescriptorPool(&descriptorPoolCreateInfo,
+	pEngineCore->add([this, &descriptorPoolCreateInfo]()
+		{return pEngineCore->objCreate.VKCreateDescriptorPool(&descriptorPoolCreateInfo,
 			nullptr, &this->pipelineData.descriptorPool);}, "glTFAnimation_DescriptorPool");
 
 	VkDescriptorSetVariableDescriptorCountAllocateInfoEXT variableDescriptorCountAllocInfo{};
@@ -654,8 +654,8 @@ void gltf_viewer::CreateDescriptorSet() {
 	descriptorSetAllocateInfo.pNext = &variableDescriptorCountAllocInfo;
 
 	//create descriptor set
-	pCoreBase->add([this, &descriptorSetAllocateInfo]()
-		{return pCoreBase->objCreate.VKAllocateDescriptorSet(&descriptorSetAllocateInfo,
+	pEngineCore->add([this, &descriptorSetAllocateInfo]()
+		{return pEngineCore->objCreate.VKAllocateDescriptorSet(&descriptorSetAllocateInfo,
 			nullptr, &this->pipelineData.descriptorSet);}, "glTFAnimation_DescriptorSet");
 
 	VkWriteDescriptorSetAccelerationStructureKHR descriptorAccelerationStructureInfo{};
@@ -776,7 +776,7 @@ void gltf_viewer::CreateDescriptorSet() {
 	writeDescriptorImgArray.pImageInfo = textureDescriptors.data();
 	writeDescriptorSets.push_back(writeDescriptorImgArray);
 
-	vkUpdateDescriptorSets(this->pCoreBase->devices.logical,
+	vkUpdateDescriptorSets(this->pEngineCore->devices.logical,
 		static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, VK_NULL_HANDLE);
 
 }
@@ -784,22 +784,22 @@ void gltf_viewer::CreateDescriptorSet() {
 void gltf_viewer::SetupBufferRegionAddresses() {
 
 	//setup buffer regions pointing to shaders in shader binding table
-	const uint32_t handleSizeAligned = vrt::Tools::alignedSize(
-		pCoreBase->deviceProperties.rayTracingPipelineKHR.shaderGroupHandleSize,
-		pCoreBase->deviceProperties.rayTracingPipelineKHR.shaderGroupHandleAlignment);
+	const uint32_t handleSizeAligned = gtp::Utilities_EngCore::alignedSize(
+		pEngineCore->deviceProperties.rayTracingPipelineKHR.shaderGroupHandleSize,
+		pEngineCore->deviceProperties.rayTracingPipelineKHR.shaderGroupHandleAlignment);
 
 	//VkStridedDeviceAddressRegionKHR raygenShaderSbtEntry{};
-	raygenStridedDeviceAddressRegion.deviceAddress = gltf_viewer_rt_utils::getBufferDeviceAddress(this->pCoreBase, raygenShaderBindingTable.bufferData.buffer);
+	raygenStridedDeviceAddressRegion.deviceAddress = Utilities_AS::getBufferDeviceAddress(this->pEngineCore, raygenShaderBindingTable.bufferData.buffer);
 	raygenStridedDeviceAddressRegion.stride = handleSizeAligned;
 	raygenStridedDeviceAddressRegion.size = handleSizeAligned;
 
 	//VkStridedDeviceAddressRegionKHR missShaderSbtEntry{};
-	missStridedDeviceAddressRegion.deviceAddress = gltf_viewer_rt_utils::getBufferDeviceAddress(this->pCoreBase, missShaderBindingTable.bufferData.buffer);
+	missStridedDeviceAddressRegion.deviceAddress = Utilities_AS::getBufferDeviceAddress(this->pEngineCore, missShaderBindingTable.bufferData.buffer);
 	missStridedDeviceAddressRegion.stride = handleSizeAligned;
 	missStridedDeviceAddressRegion.size = handleSizeAligned * 2;
 
 	//VkStridedDeviceAddressRegionKHR hitShaderSbtEntry{};
-	hitStridedDeviceAddressRegion.deviceAddress = gltf_viewer_rt_utils::getBufferDeviceAddress(this->pCoreBase, hitShaderBindingTable.bufferData.buffer);
+	hitStridedDeviceAddressRegion.deviceAddress = Utilities_AS::getBufferDeviceAddress(this->pEngineCore, hitShaderBindingTable.bufferData.buffer);
 	hitStridedDeviceAddressRegion.stride = handleSizeAligned;
 	hitStridedDeviceAddressRegion.size = handleSizeAligned * 2;
 
@@ -817,43 +817,43 @@ void gltf_viewer::BuildCommandBuffers() {
 
 	VkImageSubresourceRange subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 
-	for (int32_t i = 0; i < pCoreBase->commandBuffers.graphics.size(); ++i) {
+	for (int32_t i = 0; i < pEngineCore->commandBuffers.graphics.size(); ++i) {
 
 		//std::cout << " command buffers [" << i << "]" << std::endl;
 
-		if (vkBeginCommandBuffer(pCoreBase->commandBuffers.graphics[i], &cmdBufInfo) != VK_SUCCESS) {
+		if (vkBeginCommandBuffer(pEngineCore->commandBuffers.graphics[i], &cmdBufInfo) != VK_SUCCESS) {
 			throw std::invalid_argument("failed to begin recording graphics command buffer");
 		}
 
 		//dispatch the ray tracing commands
-		vkCmdBindPipeline(pCoreBase->commandBuffers.graphics[i], VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipelineData.pipeline);
+		vkCmdBindPipeline(pEngineCore->commandBuffers.graphics[i], VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipelineData.pipeline);
 
-		vkCmdBindDescriptorSets(pCoreBase->commandBuffers.graphics[i],
+		vkCmdBindDescriptorSets(pEngineCore->commandBuffers.graphics[i],
 			VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipelineData.pipelineLayout, 0, 1, &pipelineData.descriptorSet, 0, nullptr);
 
 		VkStridedDeviceAddressRegionKHR emptyShaderSbtEntry{};
-		pCoreBase->coreExtensions->vkCmdTraceRaysKHR(
-			pCoreBase->commandBuffers.graphics[i],
+		pEngineCore->coreExtensions->vkCmdTraceRaysKHR(
+			pEngineCore->commandBuffers.graphics[i],
 			&raygenStridedDeviceAddressRegion,
 			&missStridedDeviceAddressRegion,
 			&hitStridedDeviceAddressRegion,
 			&emptyShaderSbtEntry,
-			pCoreBase->swapchainData.swapchainExtent2D.width,
-			pCoreBase->swapchainData.swapchainExtent2D.height,
+			pEngineCore->swapchainData.swapchainExtent2D.width,
+			pEngineCore->swapchainData.swapchainExtent2D.height,
 			1);
 
 		//copy ray tracing output to swap chain image
 		//prepare current swap chain image as transfer destination
-		vrt::Tools::setImageLayout(
-			pCoreBase->commandBuffers.graphics[i],
-			pCoreBase->swapchainData.swapchainImages.image[i],
+		gtp::Utilities_EngCore::setImageLayout(
+			pEngineCore->commandBuffers.graphics[i],
+			pEngineCore->swapchainData.swapchainImages.image[i],
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			subresourceRange);
 
 		//prepare ray tracing output image as transfer source
-		vrt::Tools::setImageLayout(
-			pCoreBase->commandBuffers.graphics[i],
+		gtp::Utilities_EngCore::setImageLayout(
+			pEngineCore->commandBuffers.graphics[i],
 			storageImage.image,
 			VK_IMAGE_LAYOUT_GENERAL,
 			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
@@ -864,30 +864,30 @@ void gltf_viewer::BuildCommandBuffers() {
 		copyRegion.srcOffset = { 0, 0, 0 };
 		copyRegion.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
 		copyRegion.dstOffset = { 0, 0, 0 };
-		copyRegion.extent = { pCoreBase->swapchainData.swapchainExtent2D.width,
-			pCoreBase->swapchainData.swapchainExtent2D.height, 1 };
+		copyRegion.extent = { pEngineCore->swapchainData.swapchainExtent2D.width,
+			pEngineCore->swapchainData.swapchainExtent2D.height, 1 };
 
-		vkCmdCopyImage(pCoreBase->commandBuffers.graphics[i], storageImage.image,
-			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, pCoreBase->swapchainData.swapchainImages.image[i],
+		vkCmdCopyImage(pEngineCore->commandBuffers.graphics[i], storageImage.image,
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, pEngineCore->swapchainData.swapchainImages.image[i],
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
 		//transition swap chain image back for presentation
-		vrt::Tools::setImageLayout(
-			pCoreBase->commandBuffers.graphics[i],
-			pCoreBase->swapchainData.swapchainImages.image[i],
+		gtp::Utilities_EngCore::setImageLayout(
+			pEngineCore->commandBuffers.graphics[i],
+			pEngineCore->swapchainData.swapchainImages.image[i],
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 			subresourceRange);
 
 		//transition ray tracing output image back to general layout
-		vrt::Tools::setImageLayout(
-			pCoreBase->commandBuffers.graphics[i],
+		gtp::Utilities_EngCore::setImageLayout(
+			pEngineCore->commandBuffers.graphics[i],
 			storageImage.image,
 			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 			VK_IMAGE_LAYOUT_GENERAL,
 			subresourceRange);
 
-		if (vkEndCommandBuffer(pCoreBase->commandBuffers.graphics[i]) != VK_SUCCESS) {
+		if (vkEndCommandBuffer(pEngineCore->commandBuffers.graphics[i]) != VK_SUCCESS) {
 			throw std::invalid_argument("failed to end recording command buffer");
 		}
 
@@ -903,26 +903,26 @@ void gltf_viewer::RebuildCommandBuffers(int frame) {
 	VkStridedDeviceAddressRegionKHR emptySbtEntry{};
 
 	//dispatch the ray tracing commands
-	vkCmdBindPipeline(pCoreBase->commandBuffers.graphics[frame], VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipelineData.pipeline);
+	vkCmdBindPipeline(pEngineCore->commandBuffers.graphics[frame], VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipelineData.pipeline);
 
-	vkCmdBindDescriptorSets(pCoreBase->commandBuffers.graphics[frame],
+	vkCmdBindDescriptorSets(pEngineCore->commandBuffers.graphics[frame],
 		VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipelineData.pipelineLayout, 0, 1, &pipelineData.descriptorSet, 0, 0);
 
-	pCoreBase->coreExtensions->vkCmdTraceRaysKHR(
-		pCoreBase->commandBuffers.graphics[frame],
+	pEngineCore->coreExtensions->vkCmdTraceRaysKHR(
+		pEngineCore->commandBuffers.graphics[frame],
 		&raygenStridedDeviceAddressRegion,
 		&missStridedDeviceAddressRegion,
 		&hitStridedDeviceAddressRegion,
 		&emptySbtEntry,
-		pCoreBase->swapchainData.swapchainExtent2D.width,
-		pCoreBase->swapchainData.swapchainExtent2D.height,
+		pEngineCore->swapchainData.swapchainExtent2D.width,
+		pEngineCore->swapchainData.swapchainExtent2D.height,
 		1);
 
 	//copy ray tracing output to swap chain image
 	//prepare current swap chain image as transfer destination
-	vrt::Tools::setImageLayout(
-		pCoreBase->commandBuffers.graphics[frame],
-		pCoreBase->swapchainData.swapchainImages.image[frame],
+	gtp::Utilities_EngCore::setImageLayout(
+		pEngineCore->commandBuffers.graphics[frame],
+		pEngineCore->swapchainData.swapchainImages.image[frame],
 		VK_IMAGE_LAYOUT_UNDEFINED,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 		subresourceRange);
@@ -930,8 +930,8 @@ void gltf_viewer::RebuildCommandBuffers(int frame) {
 	////std::cout << "test"<< std::endl;
 	//prepare ray tracing output image as transfer source
 
-	vrt::Tools::setImageLayout(
-		pCoreBase->commandBuffers.graphics[frame],
+	gtp::Utilities_EngCore::setImageLayout(
+		pEngineCore->commandBuffers.graphics[frame],
 		storageImage.image,
 		VK_IMAGE_LAYOUT_GENERAL,
 		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
@@ -942,23 +942,23 @@ void gltf_viewer::RebuildCommandBuffers(int frame) {
 	copyRegion.srcOffset = { 0, 0, 0 };
 	copyRegion.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
 	copyRegion.dstOffset = { 0, 0, 0 };
-	copyRegion.extent = { pCoreBase->swapchainData.swapchainExtent2D.width, pCoreBase->swapchainData.swapchainExtent2D.height, 1 };
+	copyRegion.extent = { pEngineCore->swapchainData.swapchainExtent2D.width, pEngineCore->swapchainData.swapchainExtent2D.height, 1 };
 
-	vkCmdCopyImage(pCoreBase->commandBuffers.graphics[frame], storageImage.image,
-		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, pCoreBase->swapchainData.swapchainImages.image[frame],
+	vkCmdCopyImage(pEngineCore->commandBuffers.graphics[frame], storageImage.image,
+		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, pEngineCore->swapchainData.swapchainImages.image[frame],
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
 	//transition swap chain image back for presentation
-	vrt::Tools::setImageLayout(
-		pCoreBase->commandBuffers.graphics[frame],
-		pCoreBase->swapchainData.swapchainImages.image[frame],
+	gtp::Utilities_EngCore::setImageLayout(
+		pEngineCore->commandBuffers.graphics[frame],
+		pEngineCore->swapchainData.swapchainImages.image[frame],
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 		VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 		subresourceRange);
 
 	//transition ray tracing output image back to general layout
-	vrt::Tools::setImageLayout(
-		pCoreBase->commandBuffers.graphics[frame],
+	gtp::Utilities_EngCore::setImageLayout(
+		pEngineCore->commandBuffers.graphics[frame],
 		storageImage.image,
 		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		VK_IMAGE_LAYOUT_GENERAL,
@@ -969,17 +969,17 @@ void gltf_viewer::RebuildCommandBuffers(int frame) {
 void gltf_viewer::UpdateBLAS() {
 	// Build
 	//via a one-time command buffer submission
-	VkCommandBuffer commandBuffer = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer commandBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	//build BLAS
-	pCoreBase->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
+	pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
 		commandBuffer,
 		1,
 		&this->bottomLevelAccelerationStructures[0].accelerationStructureBuildGeometryInfo,
 		this->bottomLevelAccelerationStructures[0].pBuildRangeInfos.data());
 
 	//end and submit and destroy command buffer
-	pCoreBase->FlushCommandBuffer(commandBuffer, pCoreBase->queue.graphics, pCoreBase->commandPools.graphics, true);
+	pEngineCore->FlushCommandBuffer(commandBuffer, pEngineCore->queue.graphics, pEngineCore->commandPools.graphics, true);
 
 	//std::cout << "this->BLAS.deviceAddress" << this->BLAS.deviceAddress << std::endl;
 }
@@ -1022,8 +1022,8 @@ void gltf_viewer::UpdateTLAS() {
 	VkAccelerationStructureBuildSizesInfoKHR accelerationStructureBuildSizesInfo{};
 	accelerationStructureBuildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 
-	pCoreBase->coreExtensions->vkGetAccelerationStructureBuildSizesKHR(
-		pCoreBase->devices.logical,
+	pEngineCore->coreExtensions->vkGetAccelerationStructureBuildSizesKHR(
+		pEngineCore->devices.logical,
 		VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
 		&accelerationStructureBuildGeometryInfo,
 		&tlasData.primitive_count,
@@ -1042,25 +1042,25 @@ void gltf_viewer::UpdateTLAS() {
 	//some implementations may support acceleration structure building on the host
 	//(VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands), but we prefer device builds
 	//create command buffer
-	VkCommandBuffer commandBuffer = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer commandBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	//this is where i start next
 	//build acceleration structures
-	pCoreBase->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
+	pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
 		commandBuffer,
 		1,
 		&accelerationStructureBuildGeometryInfo,
 		accelerationBuildStructureRangeInfos.data());
 
 	//flush command buffer
-	pCoreBase->FlushCommandBuffer(commandBuffer, pCoreBase->queue.graphics, pCoreBase->commandPools.graphics, true);
+	pEngineCore->FlushCommandBuffer(commandBuffer, pEngineCore->queue.graphics, pEngineCore->commandPools.graphics, true);
 
 	//get acceleration structure device address
 	VkAccelerationStructureDeviceAddressInfoKHR accelerationDeviceAddressInfo{};
 	accelerationDeviceAddressInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
 	accelerationDeviceAddressInfo.accelerationStructure = this->TLAS.accelerationStructureKHR;
 
-	this->TLAS.deviceAddress = pCoreBase->coreExtensions->vkGetAccelerationStructureDeviceAddressKHR(pCoreBase->devices.logical,
+	this->TLAS.deviceAddress = pEngineCore->coreExtensions->vkGetAccelerationStructureDeviceAddressKHR(pEngineCore->devices.logical,
 		&accelerationDeviceAddressInfo);
 
 }
@@ -1081,9 +1081,9 @@ void gltf_viewer::PreTransformModel() {
 	//}
 
 	////pre transform water surface
-	//std::vector<GVM::Model::Vertex> waterSurfaceVerticesBuffer;
-	//waterSurfaceVerticesBuffer = gltf_viewer_rt_utils::GetVerticesFromBuffer(this->pCoreBase->devices.logical, this->assets.waterSurface);
-	//VkDeviceSize waterSurfaceBufferSize = static_cast<uint32_t>(waterSurfaceVerticesBuffer.size()) * sizeof(GVM::Model::Vertex);
+	//std::vector<gtp::Model::Vertex> waterSurfaceVerticesBuffer;
+	//waterSurfaceVerticesBuffer = Utilities_AS::GetVerticesFromBuffer(this->pEngineCore->devices.logical, this->assets.waterSurface);
+	//VkDeviceSize waterSurfaceBufferSize = static_cast<uint32_t>(waterSurfaceVerticesBuffer.size()) * sizeof(gtp::Model::Vertex);
 	//
 	//std::cout << "waterSurfaceVerticesBuffer.size(): " << waterSurfaceVerticesBuffer.size() << std::endl;
 	//
@@ -1093,18 +1093,18 @@ void gltf_viewer::PreTransformModel() {
 	//
 	//void* waterSurfaceVerticesData;
 	//
-	//vkMapMemory(this->pCoreBase->devices.logical,
+	//vkMapMemory(this->pEngineCore->devices.logical,
 	//	this->assets.waterSurface->vertices.memory, 0,
 	//	waterSurfaceBufferSize, 0, &waterSurfaceVerticesData);
 	//
 	//memcpy(waterSurfaceVerticesData, waterSurfaceVerticesBuffer.data(), waterSurfaceBufferSize);
 	//
-	//vkUnmapMemory(this->pCoreBase->devices.logical, this->assets.waterSurface->vertices.memory);
+	//vkUnmapMemory(this->pEngineCore->devices.logical, this->assets.waterSurface->vertices.memory);
 	//
 	////pre transform scene
-	//std::vector<GVM::Model::Vertex> tempSceneVerticesBuffer;
-	//tempSceneVerticesBuffer = gltf_viewer_rt_utils::GetVerticesFromBuffer(this->pCoreBase->devices.logical, this->assets.testScene);
-	//VkDeviceSize tempSceneBufferSize = static_cast<uint32_t>(tempSceneVerticesBuffer.size()) * sizeof(GVM::Model::Vertex);
+	//std::vector<gtp::Model::Vertex> tempSceneVerticesBuffer;
+	//tempSceneVerticesBuffer = Utilities_AS::GetVerticesFromBuffer(this->pEngineCore->devices.logical, this->assets.testScene);
+	//VkDeviceSize tempSceneBufferSize = static_cast<uint32_t>(tempSceneVerticesBuffer.size()) * sizeof(gtp::Model::Vertex);
 	//
 	//std::cout << "tempSceneVerticesBuffer.size(): " << tempSceneVerticesBuffer.size() << std::endl;
 	//
@@ -1114,13 +1114,13 @@ void gltf_viewer::PreTransformModel() {
 	//
 	//void* verticesData;
 	//
-	//vkMapMemory(this->pCoreBase->devices.logical,
+	//vkMapMemory(this->pEngineCore->devices.logical,
 	//	this->assets.testScene->vertices.memory, 0,
 	//	tempSceneBufferSize, 0, &verticesData);
 	//
 	//memcpy(verticesData, tempSceneVerticesBuffer.data(), tempSceneBufferSize);
 	//
-	//vkUnmapMemory(this->pCoreBase->devices.logical, this->assets.testScene->vertices.memory);
+	//vkUnmapMemory(this->pEngineCore->devices.logical, this->assets.testScene->vertices.memory);
 
 }
 
@@ -1129,11 +1129,11 @@ void gltf_viewer::CreateGeometryNodesBuffer() {
 	buffers.g_nodes_buffer.bufferData.bufferName = "g_nodes_buffer";
 	buffers.g_nodes_buffer.bufferData.bufferMemoryName = "g_nodes_bufferMemory";
 
-	if (pCoreBase->CreateBuffer(
+	if (pEngineCore->CreateBuffer(
 		VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 		&buffers.g_nodes_buffer,
-		static_cast<uint32_t>(geometryNodeBuf.size()) * sizeof(gltf_viewer_rt_utils::GeometryNode),
+		static_cast<uint32_t>(geometryNodeBuf.size()) * sizeof(Utilities_AS::GeometryNode),
 		geometryNodeBuf.data()) != VK_SUCCESS) {
 		throw std::invalid_argument("failed to create g_nodes_buffer");
 	}
@@ -1141,7 +1141,7 @@ void gltf_viewer::CreateGeometryNodesBuffer() {
 	buffers.g_nodes_indices.bufferData.bufferName = "g_nodes_indicesBuffer";
 	buffers.g_nodes_indices.bufferData.bufferMemoryName = "g_nodes_indicesBufferMemory";
 
-	if (pCoreBase->CreateBuffer(
+	if (pEngineCore->CreateBuffer(
 		VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 		&buffers.g_nodes_indices,
@@ -1277,7 +1277,7 @@ void gltf_viewer::UpdateDescriptorSet() {
 	writeDescriptorImgArray.pImageInfo = textureDescriptors.data();
 	writeDescriptorSets.push_back(writeDescriptorImgArray);
 
-	vkUpdateDescriptorSets(this->pCoreBase->devices.logical,
+	vkUpdateDescriptorSets(this->pEngineCore->devices.logical,
 		static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, VK_NULL_HANDLE);
 
 }
@@ -1285,9 +1285,9 @@ void gltf_viewer::UpdateDescriptorSet() {
 void gltf_viewer::HandleResize() {
 
 	// Delete allocated resources
-	vkDestroyImageView(pCoreBase->devices.logical, storageImage.view, nullptr);
-	vkDestroyImage(pCoreBase->devices.logical, storageImage.image, nullptr);
-	vkFreeMemory(pCoreBase->devices.logical, storageImage.memory, nullptr);
+	vkDestroyImageView(pEngineCore->devices.logical, storageImage.view, nullptr);
+	vkDestroyImage(pEngineCore->devices.logical, storageImage.image, nullptr);
+	vkFreeMemory(pEngineCore->devices.logical, storageImage.memory, nullptr);
 
 	// Recreate image
 	this->CreateStorageImage();
@@ -1302,80 +1302,80 @@ void gltf_viewer::HandleResize() {
 void gltf_viewer::Destroy_gltf_viewer() {
 
 	// -- descriptor pool
-	vkDestroyDescriptorPool(pCoreBase->devices.logical, this->pipelineData.descriptorPool, nullptr);
+	vkDestroyDescriptorPool(pEngineCore->devices.logical, this->pipelineData.descriptorPool, nullptr);
 
 	// -- shader binding tables
-	raygenShaderBindingTable.destroy(pCoreBase->devices.logical);
-	hitShaderBindingTable.destroy(pCoreBase->devices.logical);
-	missShaderBindingTable.destroy(pCoreBase->devices.logical);
+	raygenShaderBindingTable.destroy(pEngineCore->devices.logical);
+	hitShaderBindingTable.destroy(pEngineCore->devices.logical);
+	missShaderBindingTable.destroy(pEngineCore->devices.logical);
 
 	// -- shaders
 	shader.DestroyShader();
 
 	// -- pipeline and layout
-	vkDestroyPipeline(this->pCoreBase->devices.logical, this->pipelineData.pipeline, nullptr);
-	vkDestroyPipelineLayout(this->pCoreBase->devices.logical, this->pipelineData.pipelineLayout, nullptr);
+	vkDestroyPipeline(this->pEngineCore->devices.logical, this->pipelineData.pipeline, nullptr);
+	vkDestroyPipelineLayout(this->pEngineCore->devices.logical, this->pipelineData.pipelineLayout, nullptr);
 
 	// -- descriptor set layout
-	vkDestroyDescriptorSetLayout(this->pCoreBase->devices.logical, this->pipelineData.descriptorSetLayout, nullptr);
+	vkDestroyDescriptorSetLayout(this->pEngineCore->devices.logical, this->pipelineData.descriptorSetLayout, nullptr);
 
 	// -- uniform buffer
-	buffers.ubo.destroy(this->pCoreBase->devices.logical);
+	buffers.ubo.destroy(this->pEngineCore->devices.logical);
 
 	// -- storage image
-	vkDestroyImageView(pCoreBase->devices.logical, this->storageImage.view, nullptr);
-	vkDestroyImage(pCoreBase->devices.logical, this->storageImage.image, nullptr);
-	vkFreeMemory(pCoreBase->devices.logical, this->storageImage.memory, nullptr);
+	vkDestroyImageView(pEngineCore->devices.logical, this->storageImage.view, nullptr);
+	vkDestroyImage(pEngineCore->devices.logical, this->storageImage.image, nullptr);
+	vkFreeMemory(pEngineCore->devices.logical, this->storageImage.memory, nullptr);
 
 	//g node buffer
-	this->buffers.g_nodes_buffer.destroy(this->pCoreBase->devices.logical);
+	this->buffers.g_nodes_buffer.destroy(this->pEngineCore->devices.logical);
 
 	//g node indices buffer
-	this->buffers.g_nodes_indices.destroy(this->pCoreBase->devices.logical);
+	this->buffers.g_nodes_indices.destroy(this->pEngineCore->devices.logical);
 
 	// -- bottom level acceleration structure & related buffers -- //
 	for (int i = 0; i < this->bottomLevelAccelerationStructures.size(); i++) {
 
 		//accel. structure
-		pCoreBase->coreExtensions->vkDestroyAccelerationStructureKHR(
-			pCoreBase->devices.logical, this->bottomLevelAccelerationStructures[i].accelerationStructure.accelerationStructureKHR, nullptr);
+		pEngineCore->coreExtensions->vkDestroyAccelerationStructureKHR(
+			pEngineCore->devices.logical, this->bottomLevelAccelerationStructures[i].accelerationStructure.accelerationStructureKHR, nullptr);
 
 		//scratch buffer
-		this->bottomLevelAccelerationStructures[i].accelerationStructure.scratchBuffer.destroy(this->pCoreBase->devices.logical);
+		this->bottomLevelAccelerationStructures[i].accelerationStructure.scratchBuffer.destroy(this->pEngineCore->devices.logical);
 
 		//accel structure buffer and memory
-		vkDestroyBuffer(pCoreBase->devices.logical, this->bottomLevelAccelerationStructures[i].accelerationStructure.buffer, nullptr);
-		vkFreeMemory(pCoreBase->devices.logical, this->bottomLevelAccelerationStructures[i].accelerationStructure.memory, nullptr);
+		vkDestroyBuffer(pEngineCore->devices.logical, this->bottomLevelAccelerationStructures[i].accelerationStructure.buffer, nullptr);
+		vkFreeMemory(pEngineCore->devices.logical, this->bottomLevelAccelerationStructures[i].accelerationStructure.memory, nullptr);
 
 	}
 
 	// -- top level acceleration structure & related buffers -- //
 
 	//accel. structure
-	pCoreBase->coreExtensions->vkDestroyAccelerationStructureKHR(
-		pCoreBase->devices.logical, this->TLAS.accelerationStructureKHR, nullptr);
+	pEngineCore->coreExtensions->vkDestroyAccelerationStructureKHR(
+		pEngineCore->devices.logical, this->TLAS.accelerationStructureKHR, nullptr);
 
 	//scratch buffer
-	buffers.tlas_scratch.destroy(this->pCoreBase->devices.logical);
+	buffers.tlas_scratch.destroy(this->pEngineCore->devices.logical);
 
 	//instances buffer
-	buffers.tlas_instancesBuffer.destroy(this->pCoreBase->devices.logical);
+	buffers.tlas_instancesBuffer.destroy(this->pEngineCore->devices.logical);
 
 	//accel. structure buffer and memory
-	vkDestroyBuffer(pCoreBase->devices.logical, this->TLAS.buffer, nullptr);
-	vkFreeMemory(pCoreBase->devices.logical, this->TLAS.memory, nullptr);
+	vkDestroyBuffer(pEngineCore->devices.logical, this->TLAS.buffer, nullptr);
+	vkFreeMemory(pEngineCore->devices.logical, this->TLAS.memory, nullptr);
 
 	//transforms buffer
-	this->buffers.transformBuffer.destroy(this->pCoreBase->devices.logical);
+	this->buffers.transformBuffer.destroy(this->pEngineCore->devices.logical);
 
 	// -- compute class
-	this->gltfCompute.Destroy_gltf_viewer_compute();
+	this->gltfCompute.Destroy_ComputeVertex();
 
 	// -- models
-	this->assets.animatedModel->destroy(this->pCoreBase->devices.logical);
-	this->assets.testScene->destroy(this->pCoreBase->devices.logical);
-	this->assets.waterSurface->destroy(this->pCoreBase->devices.logical);
-	this->assets.coloredGlassTexture.DestroyTexture();
-	//this->assets.gondola->destroy(this->pCoreBase->devices.logical);
+	this->assets.animatedModel->destroy(this->pEngineCore->devices.logical);
+	this->assets.testScene->destroy(this->pEngineCore->devices.logical);
+	this->assets.waterSurface->destroy(this->pEngineCore->devices.logical);
+	this->assets.coloredGlassTexture.DestroyTextureLoader();
+	//this->assets.gondola->destroy(this->pEngineCore->devices.logical);
 
 }

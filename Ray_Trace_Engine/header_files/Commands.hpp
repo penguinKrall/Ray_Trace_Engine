@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tools.hpp>
+#include <Utilities_EngCore.hpp>
 
 // -- Commands 
 class Commands {
@@ -12,7 +12,7 @@ public:
 	struct Queue {
 		//Queue family properties of the physical device
 		std::vector<VkQueueFamilyProperties> queueFamilyProperties;
-		vrt::Tools::QueueFamilyIndices queueFamilyIndices{};
+		gtp::Utilities_EngCore::QueueFamilyIndices queueFamilyIndices{};
 		VkQueue graphics{};
 		VkQueue compute{};
 		VkQueue present{};

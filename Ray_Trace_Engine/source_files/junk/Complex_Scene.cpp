@@ -1,16 +1,16 @@
-#include "Multi_Model.hpp"
+#include "Complex_Scene.hpp"
 
-Multi_Model::Multi_Model()
+Complex_Scene::Complex_Scene()
 {
 }
 
-Multi_Model::Multi_Model(CoreBase* coreBase) {
+Complex_Scene::Complex_Scene(CoreBase* coreBase) {
 
-	Init_Multi_Model(coreBase);
+	Init_Complex_Scene(coreBase);
 
 }
 
-void Multi_Model::Init_Multi_Model(CoreBase* coreBase) {
+void Complex_Scene::Init_Complex_Scene(CoreBase* coreBase) {
 
 	//init core pointer
 	this->pCoreBase = coreBase;
@@ -40,6 +40,9 @@ void Multi_Model::Init_Multi_Model(CoreBase* coreBase) {
 	//create uniform buffer
 	this->CreateUniformBuffer();
 
+	//create storage buffer
+	//this->CreateStorageBuffer();
+
 	//create ray tracing pipeline
 	this->CreateRayTracingPipeline();
 
@@ -58,30 +61,33 @@ void Multi_Model::Init_Multi_Model(CoreBase* coreBase) {
 
 }
 
-void Multi_Model::LoadAssets() {
+void Complex_Scene::LoadAssets() {
 
 	const uint32_t glTFLoadingFlags =
 		vkglTF::FileLoadingFlags::PreTransformVertices |
 		vkglTF::FileLoadingFlags::PreMultiplyVertexColors;
 
 	this->assets.animatedModel = new vkglTF::Model(pCoreBase);
-	this->assets.animatedModel->loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/CesiumMan/glTF/CesiumMan.gltf",
+	this->assets.animatedModel->loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/CesiumMan/glTF/CesiumMan.gltf",
 		pCoreBase, pCoreBase->queue.graphics);
 
 	this->assets.sceneModel = new vkglTF::Model(pCoreBase);
-	this->assets.sceneModel->loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/reflection_scene.gltf",
+	this->assets.sceneModel->loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/FlightHelmet/glTF/FlightHelmet.gltf",
 		pCoreBase, pCoreBase->queue.graphics, glTFLoadingFlags, 1.0f);
 
+	this->assets.staticModel = new vkglTF::Model(pCoreBase);
+	this->assets.staticModel->loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/reflection_scene.gltf",
+		pCoreBase, pCoreBase->queue.graphics, glTFLoadingFlags, 1.0f);
 }
 
-void Multi_Model::CreateBLAS() {
+void Complex_Scene::CreateBLAS() {
 
-	std::vector<GeometryNode> geometryNodes{};
+	//std::vector<GeometryNode> geometryNodes{};
 
 	for (auto& node : this->assets.animatedModel->linearNodes) {
 		if (node->mesh) {
 
-			std::cout << "\n\n\nreflection blas\n\n\n\n" << std::endl;
+			std::cout << "\n\n\ncomplex_scene animatedeModel blas\n\n\n\n" << std::endl;
 
 			for (auto& primitive : node->mesh->primitives) {
 				if (primitive->indexCount > 0) {
@@ -130,46 +136,118 @@ void Multi_Model::CreateBLAS() {
 		}
 	}
 
-	VkDeviceOrHostAddressConstKHR vertexBufferDeviceAddress;
-	VkDeviceOrHostAddressConstKHR indexBufferDeviceAddress;
+	for (auto& node : this->assets.sceneModel->linearNodes) {
+		if (node->mesh) {
 
-	vertexBufferDeviceAddress.deviceAddress =
-		vrt::RTObjects::getBufferDeviceAddress(this->pCoreBase,
-			this->assets.sceneModel->vertices.buffer.bufferData.buffer);
+			std::cout << "\n\n\ncomplex_scene sceneModel blas\n\n\n\n" << std::endl;
 
-	indexBufferDeviceAddress.deviceAddress =
-		vrt::RTObjects::getBufferDeviceAddress(this->pCoreBase,
-			this->assets.sceneModel->indices.buffer.bufferData.buffer);
+			for (auto& primitive : node->mesh->primitives) {
+				if (primitive->indexCount > 0) {
 
-	VkAccelerationStructureGeometryKHR geometry{};
-	geometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
-	geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
-	geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
-	geometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
-	geometry.geometry.triangles.vertexData = vertexBufferDeviceAddress;
-	geometry.geometry.triangles.maxVertex = static_cast<uint32_t>(this->assets.sceneModel->modelVertexBuffer.size() - 1);
-	std::cout << "this->assets.sceneModel->vertices.count: " << this->assets.sceneModel->vertices.count << std::endl;
-	geometry.geometry.triangles.vertexStride = sizeof(vkglTF::Vertex);
-	geometry.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
-	geometry.geometry.triangles.indexData = indexBufferDeviceAddress;
-	blasData.geometries.push_back(geometry);
-	blasData.maxPrimitiveCounts.push_back(static_cast<uint32_t>(this->assets.sceneModel->indices.count) / 3);
-	blasData.maxPrimCount += static_cast<uint32_t>(this->assets.sceneModel->indices.count) / 3;
+					VkDeviceOrHostAddressConstKHR vertexBufferDeviceAddress;
+					VkDeviceOrHostAddressConstKHR indexBufferDeviceAddress;
 
-	VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo{};
-	buildRangeInfo.firstVertex = 0;
-	buildRangeInfo.primitiveOffset = 0;
-	buildRangeInfo.primitiveCount = static_cast<uint32_t>(this->assets.sceneModel->indices.count) / 3;
-	std::cout << "scene model buildRangeInfo.primitiveCount" << buildRangeInfo.primitiveCount << std::endl;
-	buildRangeInfo.transformOffset = 0;
-	blasData.buildRangeInfos.push_back(buildRangeInfo);
+					vertexBufferDeviceAddress.deviceAddress =
+						vrt::RTObjects::getBufferDeviceAddress(this->pCoreBase,
+							this->assets.sceneModel->vertices.buffer.bufferData.buffer);// +primitive.firstVertex * sizeof(vkglTF::Vertex);
+					indexBufferDeviceAddress.deviceAddress =
+						vrt::RTObjects::getBufferDeviceAddress(this->pCoreBase,
+							this->assets.sceneModel->indices.buffer.bufferData.buffer) + primitive->firstIndex * sizeof(uint32_t);
 
-	GeometryNode geometryNode{};
-	geometryNode.vertexBufferDeviceAddress = vertexBufferDeviceAddress.deviceAddress;
-	geometryNode.indexBufferDeviceAddress = indexBufferDeviceAddress.deviceAddress;
-	geometryNode.textureIndexBaseColor = -1;
-	geometryNode.textureIndexOcclusion = -1;
-	geometryNodes.push_back(geometryNode);
+					VkAccelerationStructureGeometryKHR geometry{};
+					geometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+					geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+					geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
+					geometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
+					geometry.geometry.triangles.vertexData = vertexBufferDeviceAddress;
+					geometry.geometry.triangles.maxVertex = static_cast<uint32_t>(this->assets.sceneModel->modelVertexBuffer.size());
+					std::cout << "this->assets.sceneModel->vertices.count: " << this->assets.sceneModel->vertices.count << std::endl;
+					geometry.geometry.triangles.vertexStride = sizeof(vkglTF::Vertex);
+					geometry.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
+					geometry.geometry.triangles.indexData = indexBufferDeviceAddress;
+					blasData.geometries.push_back(geometry);
+					blasData.maxPrimitiveCounts.push_back(primitive->indexCount / 3);
+					blasData.maxPrimCount += primitive->indexCount / 3;
+
+					VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo{};
+					buildRangeInfo.firstVertex = 0;
+					buildRangeInfo.primitiveOffset = 0; // primitive.firstIndex * sizeof(uint32_t);
+					buildRangeInfo.primitiveCount = primitive->indexCount / 3;
+					std::cout << "animated model buildRangeInfo.primitiveCount" << buildRangeInfo.primitiveCount << std::endl;
+					buildRangeInfo.transformOffset = 0;
+					blasData.buildRangeInfos.push_back(buildRangeInfo);
+
+					GeometryNode geometryNode{};
+					geometryNode.vertexBufferDeviceAddress = vertexBufferDeviceAddress.deviceAddress;
+					geometryNode.indexBufferDeviceAddress = indexBufferDeviceAddress.deviceAddress;
+					geometryNode.textureIndexBaseColor =
+						primitive->material.baseColorTexture ? primitive->material.baseColorTexture->index + this->assets.animatedModel->textures.size() : -1;
+					geometryNode.textureIndexOcclusion =
+						primitive->material.occlusionTexture ? primitive->material.occlusionTexture->index + this->assets.animatedModel->textures.size() : -1;
+					geometryNodes.push_back(geometryNode);
+				}
+			}
+		}
+	}
+
+	for (auto& node : this->assets.staticModel->linearNodes) {
+		if (node->mesh) {
+
+			std::cout << "\n\n\ncomplex_scene staticModel blas\n\n\n\n" << std::endl;
+
+			for (auto& primitive : node->mesh->primitives) {
+				if (primitive->indexCount > 0) {
+
+					VkDeviceOrHostAddressConstKHR vertexBufferDeviceAddress;
+					VkDeviceOrHostAddressConstKHR indexBufferDeviceAddress;
+
+					vertexBufferDeviceAddress.deviceAddress =
+						vrt::RTObjects::getBufferDeviceAddress(this->pCoreBase,
+							this->assets.staticModel->vertices.buffer.bufferData.buffer);// +primitive.firstVertex * sizeof(vkglTF::Vertex);
+					indexBufferDeviceAddress.deviceAddress =
+						vrt::RTObjects::getBufferDeviceAddress(this->pCoreBase,
+							this->assets.staticModel->indices.buffer.bufferData.buffer) + primitive->firstIndex * sizeof(uint32_t);
+
+					VkAccelerationStructureGeometryKHR geometry{};
+					geometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+					geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+					geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
+					geometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
+					geometry.geometry.triangles.vertexData = vertexBufferDeviceAddress;
+					geometry.geometry.triangles.maxVertex = static_cast<uint32_t>(this->assets.staticModel->modelVertexBuffer.size());
+					std::cout << "this->assets.staticModel->vertices.count: " << this->assets.staticModel->vertices.count << std::endl;
+					geometry.geometry.triangles.vertexStride = sizeof(vkglTF::Vertex);
+					geometry.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
+					geometry.geometry.triangles.indexData = indexBufferDeviceAddress;
+					blasData.geometries.push_back(geometry);
+					blasData.maxPrimitiveCounts.push_back(primitive->indexCount / 3);
+					blasData.maxPrimCount += primitive->indexCount / 3;
+
+					VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo{};
+					buildRangeInfo.firstVertex = 0;
+					buildRangeInfo.primitiveOffset = 0; // primitive.firstIndex * sizeof(uint32_t);
+					buildRangeInfo.primitiveCount = primitive->indexCount / 3;
+					std::cout << "animated model buildRangeInfo.primitiveCount" << buildRangeInfo.primitiveCount << std::endl;
+					buildRangeInfo.transformOffset = 0;
+					blasData.buildRangeInfos.push_back(buildRangeInfo);
+
+					GeometryNode geometryNode{};
+					geometryNode.vertexBufferDeviceAddress = vertexBufferDeviceAddress.deviceAddress;
+					geometryNode.indexBufferDeviceAddress = indexBufferDeviceAddress.deviceAddress;
+
+					geometryNode.textureIndexBaseColor =
+						primitive->material.baseColorTexture ?
+						primitive->material.baseColorTexture->index + this->assets.animatedModel->textures.size() + this->assets.sceneModel->textures.size() : -1;
+
+					geometryNode.textureIndexOcclusion =
+						primitive->material.occlusionTexture ?
+						primitive->material.occlusionTexture->index + this->assets.animatedModel->textures.size() + this->assets.sceneModel->textures.size() : -1;
+
+					geometryNodes.push_back(geometryNode);
+				}
+			}
+		}
+	}
 
 	for (auto& rangeInfo : blasData.buildRangeInfos) {
 		blasData.pBuildRangeInfos.push_back(&rangeInfo);
@@ -191,7 +269,7 @@ void Multi_Model::CreateBLAS() {
 	//acceleration structure build geometry info
 	blasData.accelerationStructureBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
 	blasData.accelerationStructureBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-	blasData.accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+	blasData.accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
 	blasData.accelerationStructureBuildGeometryInfo.geometryCount = static_cast<uint32_t>(blasData.geometries.size());
 	blasData.accelerationStructureBuildGeometryInfo.pGeometries = blasData.geometries.data();
 
@@ -251,7 +329,7 @@ void Multi_Model::CreateBLAS() {
 
 }
 
-void Multi_Model::CreateTLAS() {
+void Complex_Scene::CreateTLAS() {
 
 	// We flip the matrix [1][1] = -1.0f to accomodate for the glTF up vector
 	VkTransformMatrixKHR transformMatrix = {
@@ -314,7 +392,7 @@ void Multi_Model::CreateTLAS() {
 	//VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfo{};
 	tlasData.accelerationStructureBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
 	tlasData.accelerationStructureBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-	tlasData.accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+	tlasData.accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
 	tlasData.accelerationStructureBuildGeometryInfo.geometryCount = 1;
 	tlasData.accelerationStructureBuildGeometryInfo.pGeometries = &tlasData.accelerationStructureGeometry;
 
@@ -352,7 +430,7 @@ void Multi_Model::CreateTLAS() {
 	//VkAccelerationStructureBuildGeometryInfoKHR accelerationBuildGeometryInfo{};
 	tlasData.accelerationBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
 	tlasData.accelerationBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-	tlasData.accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+	tlasData.accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
 	tlasData.accelerationBuildGeometryInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
 	tlasData.accelerationBuildGeometryInfo.dstAccelerationStructure = this->TLAS.accelerationStructureKHR;
 	tlasData.accelerationBuildGeometryInfo.geometryCount = 1;
@@ -394,23 +472,50 @@ void Multi_Model::CreateTLAS() {
 	this->TLAS.deviceAddress = pCoreBase->coreExtensions->vkGetAccelerationStructureDeviceAddressKHR(pCoreBase->devices.logical,
 		&accelerationDeviceAddressInfo);
 
-
-
-	//destroy scratch buffer
-	//scratchBuffer.destroy(this->pCoreBase->devices.logical);
-
-	//destroy instances buffer
-	//instancesBuffer.destroy(this->pCoreBase->devices.logical);
-
 }
 
-void Multi_Model::CreateStorageImage() {
+void Complex_Scene::CreateStorageImage() {
 
 	vrt::RTObjects::createStorageImage(this->pCoreBase, &this->storageImage, "glTFAnimation_storageImage");
 
 }
 
-void Multi_Model::CreateUniformBuffer() {
+void Complex_Scene::CreateStorageBuffer() {
+
+	//buffer sizes array
+	std::vector<VkDeviceSize> bufferSizeArray;
+
+	//buffer size total
+	VkDeviceSize bufferSizeTotal = 0;
+
+	//storage buffer array sizes
+	VkDeviceSize reflectGeometryIDSize = static_cast<uint32_t>(storageBufferData.reflectGeometryID.size()) * sizeof(int);
+
+	//fill buffer sizes array with storage buffer member sizes
+	bufferSizeArray.push_back(reflectGeometryIDSize);
+
+	//iterate through buffer sizes and total the buffer size
+	for (auto& buffSizes : bufferSizeArray) {
+		bufferSizeTotal += buffSizes;
+	}
+
+	//buffer and memory name
+	buffers.ssbo.bufferData.bufferName = "complex_model_StorageBuffer";
+	buffers.ssbo.bufferData.bufferMemoryName = "complex_model_StorageBufferMemory";
+
+	//create storage buffer
+	if (pCoreBase->CreateBuffer(
+		VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		&buffers.ssbo,
+		bufferSizeTotal,
+		&storageBufferData) != VK_SUCCESS) {
+		throw std::invalid_argument("failed to create complex_model storage buffer");
+	}
+
+}
+
+void Complex_Scene::CreateUniformBuffer() {
 
 	buffers.ubo.bufferData.bufferName = "shadowUBOBuffer";
 	buffers.ubo.bufferData.bufferMemoryName = "shadowUBOBufferMemory";
@@ -425,7 +530,7 @@ void Multi_Model::CreateUniformBuffer() {
 
 }
 
-void Multi_Model::UpdateUniformBuffer(float deltaTime) {
+void Complex_Scene::UpdateUniformBuffer(float deltaTime) {
 	float rotationTime = deltaTime * 0.10f;
 
 	//projection matrix
@@ -445,20 +550,18 @@ void Multi_Model::UpdateUniformBuffer(float deltaTime) {
 			-20.0f + sin(glm::radians(rotationTime * 360.0f)) * 20.0f,
 			25.0f + sin(glm::radians(rotationTime * 360.0f)) * 5.0f,
 			0.0f);
-	// This value is used to accumulate multiple frames into the finale picture
-	// It's required as ray tracing needs to do multiple passes for transparency
-	// In this sample we use noise offset by this frame index to shoot rays for transparency into different directions
-	// Once enough frames with random ray directions have been accumulated, it looks like proper transparency
-	uniformData.frame++;
+
 	memcpy(buffers.ubo.bufferData.mapped, &uniformData, sizeof(UniformData));
 }
 
-void Multi_Model::CreateRayTracingPipeline() {
+void Complex_Scene::CreateRayTracingPipeline() {
 
 	uint32_t imageCount{ 0 };
-	imageCount = static_cast<uint32_t>(this->assets.animatedModel->textures.size());
+	imageCount = static_cast<uint32_t>(this->assets.animatedModel->textures.size()) +
+		static_cast<uint32_t>(this->assets.sceneModel->textures.size()) +
+			static_cast<uint32_t>(this->assets.staticModel->textures.size());
 
-	//std::cout << "gltfAnimation raytracing pipeline_  imagecount: " << imageCount << std::endl;
+	std::cout << "gltfAnimation raytracing pipeline_  imagecount: " << imageCount << std::endl;
 
 	//acceleration structure layout binding
 	VkDescriptorSetLayoutBinding accelerationStructureLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
@@ -478,7 +581,7 @@ void Multi_Model::CreateRayTracingPipeline() {
 
 	//geometry node layout binding
 	VkDescriptorSetLayoutBinding geometryNodeLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
-		4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR, nullptr);
+		4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
 
 	//texture image layout binding
 	VkDescriptorSetLayoutBinding allTextureImagesLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
@@ -554,7 +657,7 @@ void Multi_Model::CreateRayTracingPipeline() {
 
 	// Ray generation group
 	{
-		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/multi_model_raygen.rgen.spv", VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/complex_scene_raygen.rgen.spv", VK_SHADER_STAGE_RAYGEN_BIT_KHR,
 			"gltfAnimation_raygen"));
 		shaderStages.back().pSpecializationInfo = &specializationInfo;
 		VkRayTracingShaderGroupCreateInfoKHR shaderGroup{};
@@ -569,7 +672,7 @@ void Multi_Model::CreateRayTracingPipeline() {
 
 	// Miss group
 	{
-		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/multi_model_miss.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR,
+		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/complex_scene_miss.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR,
 			"gltfAnimation_miss"));
 		VkRayTracingShaderGroupCreateInfoKHR shaderGroup{};
 		shaderGroup.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
@@ -580,7 +683,7 @@ void Multi_Model::CreateRayTracingPipeline() {
 		shaderGroup.intersectionShader = VK_SHADER_UNUSED_KHR;
 		shaderGroups.push_back(shaderGroup);
 		// Second shader for glTFShadows
-		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/multi_model_shadow.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR,
+		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/complex_scene_shadow.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR,
 			"gltfAnimation_shadowmiss"));
 		shaderGroup.generalShader = static_cast<uint32_t>(shaderStages.size()) - 1;
 		shaderGroups.push_back(shaderGroup);
@@ -588,7 +691,7 @@ void Multi_Model::CreateRayTracingPipeline() {
 
 	// Closest hit group for doing texture lookups
 	{
-		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/multi_model_closesthit.rchit.spv", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
+		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/complex_scene_closesthit.rchit.spv", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
 			"gltfAnimation_closestHit"));
 		VkRayTracingShaderGroupCreateInfoKHR shaderGroup{};
 		shaderGroup.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
@@ -597,12 +700,11 @@ void Multi_Model::CreateRayTracingPipeline() {
 		shaderGroup.closestHitShader = static_cast<uint32_t>(shaderStages.size()) - 1;
 		shaderGroup.intersectionShader = VK_SHADER_UNUSED_KHR;
 		// This group also uses an anyhit shader for doing transparency (see anyhit.rahit for details)
-		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/multi_model_anyhit.rahit.spv", VK_SHADER_STAGE_ANY_HIT_BIT_KHR,
+		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/complex_scene_anyhit.rahit.spv", VK_SHADER_STAGE_ANY_HIT_BIT_KHR,
 			"gltfAnimation_anyhit"));
 		shaderGroup.anyHitShader = static_cast<uint32_t>(shaderStages.size()) - 1;
 		shaderGroups.push_back(shaderGroup);
 	}
-
 
 	//	Create the ray tracing pipeline
 	VkRayTracingPipelineCreateInfoKHR rayTracingPipelineCreateInfo{};
@@ -621,7 +723,7 @@ void Multi_Model::CreateRayTracingPipeline() {
 
 }
 
-void Multi_Model::CreateShaderBindingTable() {
+void Complex_Scene::CreateShaderBindingTable() {
 	// handle size
 	const uint32_t handleSize = pCoreBase->deviceProperties.rayTracingPipelineKHR.shaderGroupHandleSize;
 
@@ -702,10 +804,12 @@ void Multi_Model::CreateShaderBindingTable() {
 
 }
 
-void Multi_Model::CreateDescriptorSet() {
+void Complex_Scene::CreateDescriptorSet() {
 
 	//image count
-	uint32_t imageCount = static_cast<uint32_t>(this->assets.animatedModel->textures.size());
+	uint32_t 	imageCount = static_cast<uint32_t>(this->assets.animatedModel->textures.size()) +
+		static_cast<uint32_t>(this->assets.sceneModel->textures.size()) +
+		static_cast<uint32_t>(this->assets.staticModel->textures.size());
 
 	//std::cout << "!!!!!!!!!!!CREATEDESCRIPTORSETS!!!!!!!!!!!\nstatic_cast<uint32_t>(this->assets.animatedModel->textures.size(): " 
 	//	<< static_cast<uint32_t>(this->assets.animatedModel->textures.size()) << std::endl;
@@ -714,9 +818,8 @@ void Multi_Model::CreateDescriptorSet() {
 		{ VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 10 },
 		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 10 },
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 10 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 150 },
 		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(this->assets.animatedModel->textures.size()) }
 	};
 	//descriptor pool create info
 	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
@@ -824,6 +927,13 @@ void Multi_Model::CreateDescriptorSet() {
 		descriptor.imageView = texture.view;
 		textureDescriptors.push_back(descriptor);
 	}
+	for (auto texture : this->assets.sceneModel->textures) {
+		VkDescriptorImageInfo descriptor{};
+		descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		descriptor.sampler = texture.sampler;
+		descriptor.imageView = texture.view;
+		textureDescriptors.push_back(descriptor);
+	}
 
 	VkWriteDescriptorSet writeDescriptorImgArray{};
 	writeDescriptorImgArray.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -839,7 +949,7 @@ void Multi_Model::CreateDescriptorSet() {
 
 }
 
-void Multi_Model::SetupBufferRegionAddresses() {
+void Complex_Scene::SetupBufferRegionAddresses() {
 
 	//setup buffer regions pointing to shaders in shader binding table
 	const uint32_t handleSizeAligned = vrt::Tools::alignedSize(
@@ -863,7 +973,7 @@ void Multi_Model::SetupBufferRegionAddresses() {
 
 }
 
-void Multi_Model::BuildCommandBuffers() {
+void Complex_Scene::BuildCommandBuffers() {
 
 	//if (resized)
 	//{
@@ -953,7 +1063,7 @@ void Multi_Model::BuildCommandBuffers() {
 
 }
 
-void Multi_Model::RebuildCommandBuffers(int frame) {
+void Complex_Scene::RebuildCommandBuffers(int frame) {
 
 	//subresource range
 	VkImageSubresourceRange subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
@@ -1024,7 +1134,7 @@ void Multi_Model::RebuildCommandBuffers(int frame) {
 
 }
 
-void Multi_Model::UpdateBLAS() {
+void Complex_Scene::UpdateBLAS() {
 	// Build
 	//via a one-time command buffer submission
 	VkCommandBuffer commandBuffer = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -1040,7 +1150,7 @@ void Multi_Model::UpdateBLAS() {
 	pCoreBase->FlushCommandBuffer(commandBuffer, pCoreBase->queue.graphics, pCoreBase->commandPools.graphics, true);
 }
 
-void Multi_Model::UpdateTLAS() {
+void Complex_Scene::UpdateTLAS() {
 
 	VkAccelerationStructureGeometryKHR accelerationStructureGeometry{};
 	accelerationStructureGeometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
@@ -1122,7 +1232,7 @@ void Multi_Model::UpdateTLAS() {
 
 // // // // // in case i need this // // // // //
 
-void Multi_Model::UpdateVertexBuffers() {
+void Complex_Scene::UpdateVertexBuffers() {
 
 	////copy from staging buffers
 	////create temporary command buffer
@@ -1144,8 +1254,11 @@ void Multi_Model::UpdateVertexBuffers() {
 
 }
 
-void Multi_Model::PreTransformModel() {
+void Complex_Scene::PreTransformModel() {
 
+	//pre transform animation model
+	//animation uses bone local transform matrices to reposition model vertices
+	//update the model transform matrix to apply an initial transform that will remain
 	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 2.0f));
 	for (auto& node : this->assets.animatedModel->linearNodes) {
@@ -1155,15 +1268,20 @@ void Multi_Model::PreTransformModel() {
 		}
 	}
 
-	//for (auto& node : this->assets.sceneModel->nodes) {
-	//	//if (node->mesh) {
-	//		node->matrix *= glm::transpose(glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
-	//	//}
-	//}
+	//the scene model geometry is -currently- left alone throughout render -- transform vertices by vertex here
+	for (auto& sceneVtx : this->assets.sceneModel->modelVertexBuffer) {
+		sceneVtx.pos.y += 0.5f;
+		sceneVtx.pos.z += -0.5f;
+	}
+
+	//update scene model vertices buffer
+	this->assets.sceneModel->vertices.buffer.map(this->pCoreBase->devices.logical, this->assets.sceneModel->vertices.buffer.bufferData.size, 0);
+	this->assets.sceneModel->vertices.buffer.copyTo(this->assets.sceneModel->modelVertexBuffer.data(), this->assets.sceneModel->vertices.buffer.bufferData.size);
+
 
 }
 
-void Multi_Model::Destroy_Multi_Model() {
+void Complex_Scene::Destroy_Complex_Scene() {
 
 	// -- descriptor pool
 	vkDestroyDescriptorPool(pCoreBase->devices.logical, this->pipelineData.descriptorPool, nullptr);
@@ -1221,6 +1339,7 @@ void Multi_Model::Destroy_Multi_Model() {
 	this->gltf_compute.Destroy_glTF_Compute();
 
 	// -- models
+	this->assets.staticModel->DestroyModel();
 	this->assets.sceneModel->DestroyModel();
 	this->assets.animatedModel->DestroyModel();
 

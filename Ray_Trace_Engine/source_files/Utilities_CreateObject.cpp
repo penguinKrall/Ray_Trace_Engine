@@ -1,14 +1,14 @@
-#include "ObjCreate.hpp"
+#include "Utilities_CreateObject.hpp"
 
-ObjCreate::ObjCreate() {
+Utilities_CreateObject::Utilities_CreateObject() {
 }
 
-ObjCreate::ObjCreate(VkPhysicalDevice* physicalDevice, VkDevice* logicalDevice,
+Utilities_CreateObject::Utilities_CreateObject(VkPhysicalDevice* physicalDevice, VkDevice* logicalDevice,
 	CoreExtensions* coreExtensions, CoreDebug* coreDebug, VkCommandPool commandPool) {
-	InitObjCreate(physicalDevice, logicalDevice, coreExtensions, coreDebug, commandPool);
+	InitUtilities_CreateObject(physicalDevice, logicalDevice, coreExtensions, coreDebug, commandPool);
 }
 
-void ObjCreate::InitObjCreate(VkPhysicalDevice* physicalDevice, VkDevice* logicalDevice,
+void Utilities_CreateObject::InitUtilities_CreateObject(VkPhysicalDevice* physicalDevice, VkDevice* logicalDevice,
 	CoreExtensions* coreExtensions, CoreDebug* coreDebug, VkCommandPool commandPool) {
 	this->devices.physical = physicalDevice;
 	this->devices.logical = logicalDevice;
@@ -17,14 +17,14 @@ void ObjCreate::InitObjCreate(VkPhysicalDevice* physicalDevice, VkDevice* logica
 	this->commandPool = commandPool;
 }
 
-VkBuffer ObjCreate::VKCreateBuffer(VkBufferCreateInfo* bufferCreateInfo, VkAllocationCallbacks* allocator, VkBuffer* buffer) {
+VkBuffer Utilities_CreateObject::VKCreateBuffer(VkBufferCreateInfo* bufferCreateInfo, VkAllocationCallbacks* allocator, VkBuffer* buffer) {
 	if (vkCreateBuffer(*devices.logical, bufferCreateInfo, allocator, buffer) != VK_SUCCESS) {
 		throw std::invalid_argument("failed to create buffer");
 	}
 	return *buffer;
 }
 
-VkDeviceMemory ObjCreate::VKAllocateMemory(VkMemoryAllocateInfo* memoryAllocateInfo, VkAllocationCallbacks* allocator,
+VkDeviceMemory Utilities_CreateObject::VKAllocateMemory(VkMemoryAllocateInfo* memoryAllocateInfo, VkAllocationCallbacks* allocator,
 	VkDeviceMemory* memory) {
 	if (vkAllocateMemory(*devices.logical, memoryAllocateInfo, allocator, memory)
 		!= VK_SUCCESS) {
@@ -34,7 +34,7 @@ VkDeviceMemory ObjCreate::VKAllocateMemory(VkMemoryAllocateInfo* memoryAllocateI
 	return *memory;
 }
 
-VkCommandBuffer ObjCreate::VKCreateCommandBuffer(VkCommandBufferLevel level, bool begin) {
+VkCommandBuffer Utilities_CreateObject::VKCreateCommandBuffer(VkCommandBufferLevel level, bool begin) {
 	//allocate info
 	VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
 	commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -60,14 +60,14 @@ VkCommandBuffer ObjCreate::VKCreateCommandBuffer(VkCommandBufferLevel level, boo
 
 }
 
-VkImage ObjCreate::VKCreateImage(VkImageCreateInfo* imageCreateInfo, VkAllocationCallbacks* allocator, VkImage* image) {
+VkImage Utilities_CreateObject::VKCreateImage(VkImageCreateInfo* imageCreateInfo, VkAllocationCallbacks* allocator, VkImage* image) {
 	if (vkCreateImage(*devices.logical, imageCreateInfo, allocator, image) != VK_SUCCESS) {
 		throw std::invalid_argument("failed to create image");
 	}
 	return *image;
 }
 
-VkImageView ObjCreate::VKCreateImageView(VkImageViewCreateInfo* createInfo,
+VkImageView Utilities_CreateObject::VKCreateImageView(VkImageViewCreateInfo* createInfo,
 	VkAllocationCallbacks* allocator, VkImageView* imageView) {
 	if (vkCreateImageView(*devices.logical, createInfo, allocator, imageView) != VK_SUCCESS) {
 		throw std::invalid_argument("failed to create image view");
@@ -75,21 +75,21 @@ VkImageView ObjCreate::VKCreateImageView(VkImageViewCreateInfo* createInfo,
 	return *imageView;
 }
 
-VkSampler ObjCreate::VKCreateSampler(VkSamplerCreateInfo* createInfo, VkAllocationCallbacks* allocator, VkSampler* sampler) {
+VkSampler Utilities_CreateObject::VKCreateSampler(VkSamplerCreateInfo* createInfo, VkAllocationCallbacks* allocator, VkSampler* sampler) {
 	if (vkCreateSampler(*devices.logical, createInfo, allocator, sampler) != VK_SUCCESS) {
 		throw std::invalid_argument(" failed to create sampler!");
 	}
 	return *sampler;
 }
 
-VkRenderPass ObjCreate::VKCreateRenderPass(VkRenderPassCreateInfo* createInfo, VkAllocationCallbacks* allocator, VkRenderPass* renderPass) {
+VkRenderPass Utilities_CreateObject::VKCreateRenderPass(VkRenderPassCreateInfo* createInfo, VkAllocationCallbacks* allocator, VkRenderPass* renderPass) {
 	if (vkCreateRenderPass(*devices.logical, createInfo, allocator, renderPass) != VK_SUCCESS) {
 		throw std::invalid_argument("failed to create renderpass");
 	}
 	return *renderPass;
 }
 
-VkPipelineLayout ObjCreate::VKCreatePipelineLayout(VkPipelineLayoutCreateInfo* createInfo,
+VkPipelineLayout Utilities_CreateObject::VKCreatePipelineLayout(VkPipelineLayoutCreateInfo* createInfo,
 	VkAllocationCallbacks* allocator, VkPipelineLayout* pipelineLayout) {
 	if (vkCreatePipelineLayout(*devices.logical, createInfo, allocator, pipelineLayout)
 		!= VK_SUCCESS) {
@@ -98,7 +98,7 @@ VkPipelineLayout ObjCreate::VKCreatePipelineLayout(VkPipelineLayoutCreateInfo* c
 	return *pipelineLayout;
 }
 
-VkPipeline ObjCreate::VKCreateRaytracingPipeline(VkRayTracingPipelineCreateInfoKHR* createInfo,
+VkPipeline Utilities_CreateObject::VKCreateRaytracingPipeline(VkRayTracingPipelineCreateInfoKHR* createInfo,
 	VkAllocationCallbacks* allocator, VkPipeline* pipeline) {
 	if (coreExtensions->vkCreateRayTracingPipelinesKHR(*devices.logical, VK_NULL_HANDLE, VK_NULL_HANDLE, 1,
 		createInfo, allocator, pipeline) != VK_SUCCESS) {
@@ -107,7 +107,7 @@ VkPipeline ObjCreate::VKCreateRaytracingPipeline(VkRayTracingPipelineCreateInfoK
 	return *pipeline;
 }
 
-VkDescriptorPool ObjCreate::VKCreateDescriptorPool(VkDescriptorPoolCreateInfo* descriptorPoolCreateInfo,
+VkDescriptorPool Utilities_CreateObject::VKCreateDescriptorPool(VkDescriptorPoolCreateInfo* descriptorPoolCreateInfo,
 	VkAllocationCallbacks* allocator, VkDescriptorPool* descriptorPool) {
 	if (vkCreateDescriptorPool(*devices.logical, descriptorPoolCreateInfo, allocator, descriptorPool)
 		!= VK_SUCCESS) {
@@ -116,7 +116,7 @@ VkDescriptorPool ObjCreate::VKCreateDescriptorPool(VkDescriptorPoolCreateInfo* d
 	return *descriptorPool;
 }
 
-VkDescriptorSetLayout ObjCreate::VKCreateDescriptorSetLayout(VkDescriptorSetLayoutCreateInfo* createInfo,
+VkDescriptorSetLayout Utilities_CreateObject::VKCreateDescriptorSetLayout(VkDescriptorSetLayoutCreateInfo* createInfo,
 	VkAllocationCallbacks* allocator, VkDescriptorSetLayout* descriptorSetLayout) {
 	if (vkCreateDescriptorSetLayout(*devices.logical, createInfo, allocator, descriptorSetLayout) != VK_SUCCESS) {
 		throw std::invalid_argument("failed to create descriptor set layout");
@@ -124,7 +124,7 @@ VkDescriptorSetLayout ObjCreate::VKCreateDescriptorSetLayout(VkDescriptorSetLayo
 	return *descriptorSetLayout;
 }
 
-VkDescriptorSet ObjCreate::VKAllocateDescriptorSet(VkDescriptorSetAllocateInfo* descriptorSetAllocateInfo,
+VkDescriptorSet Utilities_CreateObject::VKAllocateDescriptorSet(VkDescriptorSetAllocateInfo* descriptorSetAllocateInfo,
 	VkAllocationCallbacks* allocator, VkDescriptorSet* descriptorSet) {
 	if (vkAllocateDescriptorSets(*devices.logical, descriptorSetAllocateInfo, descriptorSet) != VK_SUCCESS) {
 		throw std::invalid_argument("failed to create descriptor set");
@@ -132,7 +132,7 @@ VkDescriptorSet ObjCreate::VKAllocateDescriptorSet(VkDescriptorSetAllocateInfo* 
 	return *descriptorSet;
 }
 
-VkShaderModule ObjCreate::VKCreateShaderModule(VkShaderModuleCreateInfo* createInfo,
+VkShaderModule Utilities_CreateObject::VKCreateShaderModule(VkShaderModuleCreateInfo* createInfo,
 	VkAllocationCallbacks* allocator, VkShaderModule* shaderModule) {
 	if (vkCreateShaderModule(*devices.logical, createInfo, allocator, shaderModule) != VK_SUCCESS) {
 		throw std::invalid_argument("failed to create shader module");
@@ -140,7 +140,7 @@ VkShaderModule ObjCreate::VKCreateShaderModule(VkShaderModuleCreateInfo* createI
 	return *shaderModule;
 }
 
-VkSemaphore ObjCreate::VKCreateSemaphore(VkSemaphoreCreateInfo* semaphoreCreateInfo,
+VkSemaphore Utilities_CreateObject::VKCreateSemaphore(VkSemaphoreCreateInfo* semaphoreCreateInfo,
 	VkAllocationCallbacks* allocator, VkSemaphore* semaphore) {
 	if (vkCreateSemaphore(*devices.logical, semaphoreCreateInfo, allocator, semaphore) != VK_SUCCESS) {
 		throw std::invalid_argument("failed to create semaphore");
@@ -148,14 +148,14 @@ VkSemaphore ObjCreate::VKCreateSemaphore(VkSemaphoreCreateInfo* semaphoreCreateI
 	return *semaphore;
 }
 
-VkFence ObjCreate::VKCreateFence(VkFenceCreateInfo* fenceCreateInfo, VkAllocationCallbacks* allocator, VkFence* fence) {
+VkFence Utilities_CreateObject::VKCreateFence(VkFenceCreateInfo* fenceCreateInfo, VkAllocationCallbacks* allocator, VkFence* fence) {
 	if (vkCreateFence(*devices.logical, fenceCreateInfo, allocator, fence) != VK_SUCCESS) {
 		throw std::invalid_argument("failed to create a fence!");
 	}
 	return *fence;
 }
 
-VkAccelerationStructureKHR ObjCreate::VKCreateAccelerationStructureKHR(
+VkAccelerationStructureKHR Utilities_CreateObject::VKCreateAccelerationStructureKHR(
 	VkAccelerationStructureCreateInfoKHR* accelerationStructureCreateInfo, VkAllocationCallbacks* allocator,
 	VkAccelerationStructureKHR* accelerationStructureKHR) {
 	//function pointer in CoreExtensions.hpp -- class instance 

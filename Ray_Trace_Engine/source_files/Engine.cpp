@@ -1,286 +1,288 @@
 #include "Engine.hpp"
 
-// -- ctor
-Engine Engine::engine() {
-	return Engine();
-}
+namespace gtp {
 
-// -- init
-VkResult Engine::InitEngine() {
-
-
-	//init core
-	InitCore();
-
-	lastX = float(this->width) / 2.0f;
-	lastY = float(this->height) / 2.0f;
-
-	posX = float(this->width) / 2.0f;
-	posY = float(this->height) / 2.0f;
-
-	//init ui
-	InitUI();
-
-	//init renderers
-	InitRenderers();
-
-	return VK_SUCCESS;
-
-}
-
-// -- Run
-void Engine::Run() {
-
-	//main loop
-	while (!glfwWindowShouldClose(windowGLFW)) {
-
-
-		//poll events
-		glfwPollEvents();
-
-		//timer
-		auto now = static_cast<float>(glfwGetTime());
-		this->deltaTime = now - this->lastTime;
-		this->lastTime = now;
-
-		//std::cout << " delta time: " << deltaTime << std::endl;
-
-		//handle input
-		userInput();
-
-		//draw
-		Draw();
-
-		//set to false - wont update buffers again unless view changes
-		pCoreBase->camera->viewUpdated = false;
-
-		this->timer += deltaTime;
+	// -- ctor
+	Engine Engine::engine() {
+		return Engine();
 	}
 
-}
-
-// -- terminate
-//@note destroys objects created related to renderers and core
-void Engine::Terminate() {
-
-	//wait idle before destroy
-	vkDeviceWaitIdle(devices.logical);
-
-	//ui
-	UI.DestroyUI();
-
-	//renderers
-	//gltf_viewer
-	this->renderers.gltfViewer.Destroy_gltf_viewer();
-	
-	// build scene
-	//this->renderers.gltfViewer.Destroy_Build_Scene();
-
-	////multi blas
-	//this->renderers.multiBlas.Destroy_multi_blas();
-	//
-	////complex scene
-	//this->renderers.complexScene.Destroy_Complex_Scene();
-	//
-	////multi model
-	//this->renderers.multiModel.Destroy_Multi_Model();
-	//
-	////gltf reflections
-	//this->renderers.gltfReflections.DestroyglTF_Reflections();
-	//
-	////math compute
-	//this->renderers.mathCompute.Destroy_Math_Compute();
-	//
-	////rt animation
-	//this->renderers.gltfAnimation.DestroyglTFAnimation();
-	//
-	////glTFTextured
-	//this->renderers.gltfTextured.DestroyglTFTextured();
-	//
-	////shadow
-	//this->renderers.gltfShadows.DestroyglTFShadows();
-	//
-	////rt basic/texture
-	//this->renderers.raytracing.DestroyRaytracing();
+	// -- init
+	VkResult Engine::InitEngine() {
 
 
-	//core
-	DestroyCore();
+		//init core
+		InitCore();
 
-}
+		lastX = float(this->width) / 2.0f;
+		lastY = float(this->height) / 2.0f;
 
-void Engine::userInput() {
+		posX = float(this->width) / 2.0f;
+		posY = float(this->height) / 2.0f;
 
-	//float deltaTime = deltaTime;
+		//init ui
+		InitUI();
 
-	glfwGetCursorPos(windowGLFW, &posX, &posY);
+		//init renderers
+		InitRenderers();
 
-	// Print mouse coordinates (you can use them as needed)
-	//printf("Mouse Coordinates: %.2f, %.2f\n", posX, posY);
+		return VK_SUCCESS;
 
-	auto xoffset = static_cast<float>(posX - lastX);
-	auto yoffset = static_cast<float>(lastY - posY);
-	lastX = posX;
-	lastY = posY;
-
-
-	if (glfwGetMouseButton(windowGLFW, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_TRUE) {
-		camera->viewUpdated = true;
-		camera->ProcessMouseMovement(xoffset, yoffset);
 	}
 
-	if (glfwGetKey(windowGLFW, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-		camera->viewUpdated = true;
-		glfwSetWindowShouldClose(windowGLFW, true);
+	// -- Run
+	void Engine::Run() {
+
+		//main loop
+		while (!glfwWindowShouldClose(windowGLFW)) {
+
+
+			//poll events
+			glfwPollEvents();
+
+			//timer
+			auto now = static_cast<float>(glfwGetTime());
+			this->deltaTime = now - this->lastTime;
+			this->lastTime = now;
+
+			//std::cout << " delta time: " << deltaTime << std::endl;
+
+			//handle input
+			userInput();
+
+			//draw
+			Draw();
+
+			//set to false - wont update buffers again unless view changes
+			pEngineCore->camera->viewUpdated = false;
+
+			this->timer += deltaTime;
+		}
+
 	}
 
-	if (glfwGetKey(windowGLFW, GLFW_KEY_W) == GLFW_PRESS) {
-		camera->viewUpdated = true;
-		camera->ProcessKeyboard(Movement::FORWARD, deltaTime);
-	}
+	// -- terminate
+	//@note destroys objects created related to renderers and core
+	void Engine::Terminate() {
 
-	if (glfwGetKey(windowGLFW, GLFW_KEY_S) == GLFW_PRESS) {
-		camera->viewUpdated = true;
-		camera->ProcessKeyboard(Movement::BACKWARD, deltaTime);
-	}
-
-	if (glfwGetKey(windowGLFW, GLFW_KEY_A) == GLFW_PRESS) {
-		camera->viewUpdated = true;
-		camera->ProcessKeyboard(Movement::LEFT, deltaTime);
-	}
-
-	if (glfwGetKey(windowGLFW, GLFW_KEY_D) == GLFW_PRESS) {
-		camera->viewUpdated = true;
-		camera->ProcessKeyboard(Movement::RIGHT, deltaTime);
-	}
-
-	if (glfwGetKey(windowGLFW, GLFW_KEY_UP) == GLFW_TRUE) {
-		camera->viewUpdated = true;
-		camera->ProcessKeyboard(Movement::UP, deltaTime);
-	}
-
-	if (glfwGetKey(windowGLFW, GLFW_KEY_DOWN) == GLFW_TRUE) {
-		camera->viewUpdated = true;
-		camera->ProcessKeyboard(Movement::DOWN, deltaTime);
-	}
-
-}
-
-void Engine::InitRenderers() {
-
-	//std::cout << "\ninitializing raytracing class - quad with grate texture\n''''''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//this->renderers.raytracing = Raytracing(this->pCoreBase);
-	//std::cout << "\nfinished initializing raytracing class\n'''''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//
-	//std::cout << "\ninitializing glTFShadows class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//this->renderers.gltfShadows = glTFShadows(this->pCoreBase);
-	//std::cout << "\nfinished initializing glTFShadows class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//
-	//std::cout << "\ninitializing glTFTextured class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//this->renderers.gltfTextured = glTFTextured(this->pCoreBase);
-	//std::cout << "\nfinished initializing glTFTextured class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//
-	//std::cout << "\ninitializing glTFAnimation class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//this->renderers.gltfAnimation = glTFAnimation(this->pCoreBase);
-	//std::cout << "\nfinished initializing glTFAnimation class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//
-	//std::cout << "\ninitializing glTF_PBR class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//this->renderers.gltfPBR = glTF_PBR(this->pCoreBase);
-	//std::cout << "\nfinished initializing glTF_PBR class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//
-	//std::cout << "\ninitializing Math_Compute class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//this->renderers.mathCompute = Math_Compute(this->pCoreBase);
-	//std::cout << "\nfinished initializing Math_Compute class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//
-	//std::cout << "\ninitializing glTF_Reflections class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//this->renderers.gltfReflections = glTF_Reflections(this->pCoreBase);
-	//std::cout << "\nfinished initializing glTF_Reflections class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//
-	//std::cout << "\ninitializing Multi_Model class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//this->renderers.multiModel = Multi_Model(this->pCoreBase);
-	//std::cout << "\nfinished initializing Multi_Model class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//
-	//std::cout << "\ninitializing Complex_Scene class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//this->renderers.complexScene = Complex_Scene(this->pCoreBase);
-	//std::cout << "\nfinished initializing Complex_Scene class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//
-	//std::cout << "\ninitializing multi_blas class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//this->renderers.multiBlas = multi_blas(this->pCoreBase);
-	//std::cout << "\nfinished initializing multi_blas class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-
-	//std::cout << "\ninitializing Build_Scene class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	//this->renderers.gltfViewer = Build_Scene(this->pCoreBase);
-	//std::cout << "\nfinished initializing Build_Scene class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-
-	std::cout << "\ninitializing gltf_viewer class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-	this->renderers.gltfViewer = gltf_viewer(this->pCoreBase);
-	std::cout << "\nfinished initializing gltf_viewer class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
-
-}
-
-void Engine::InitUI() {
-	UI = CoreUI(this->pCoreBase);
-	std::cout << "\nfinished initializing UI\n''''''''''''''''''''''''\n" << std::endl;
-}
-
-void Engine::BeginGraphicsCommandBuffer(int currentFrame) {
-
-	//command buffer begin info
-	VkCommandBufferBeginInfo cmdBufInfo{};
-	cmdBufInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-	//begin command buffer
-	if (vkBeginCommandBuffer(pCoreBase->commandBuffers.graphics[currentFrame], &cmdBufInfo) != VK_SUCCESS) {
-		throw std::invalid_argument("failed to begin recording graphics command buffer");
-	}
-
-}
-
-void Engine::EndGraphicsCommandBuffer(int currentFrame) {
-
-	if (vkEndCommandBuffer(commandBuffers.graphics[currentFrame]) != VK_SUCCESS) {
-		throw std::invalid_argument("failed to end recording command buffer");
-	}
-
-}
-
-void Engine::Draw() {
-
-	uint32_t imageIndex = 0;
-
-	/*--------------------*/
-	//     resize        //
-	/*------------------*/
-
-	if (camera->framebufferResized) {
-		//wait idle
+		//wait idle before destroy
 		vkDeviceWaitIdle(devices.logical);
-		//recreate semaphores, fences
-		RecreateSyncObjects();
-		//recreate swapchain, swapchain images/views
-		RecreateCoreSwapchain();
-		//recreate god knows what
-		renderers.gltfViewer.HandleResize();
-		//recreate ui framebuffers
-		UI.RecreateFramebuffers();
-		//Flaggy McFlaggerson
-		camera->framebufferResized = false;
-		//ret
-		return;
+
+		//ui
+		UI.DestroyUI();
+
+		//renderers
+		//gltf_viewer
+		this->renderers.gltfViewer.Destroy_gltf_viewer();
+
+		// build scene
+		//this->renderers.gltfViewer.Destroy_Build_Scene();
+
+		////multi blas
+		//this->renderers.multiBlas.Destroy_multi_blas();
+		//
+		////complex scene
+		//this->renderers.complexScene.Destroy_Complex_Scene();
+		//
+		////multi model
+		//this->renderers.multiModel.Destroy_Multi_Model();
+		//
+		////gltf reflections
+		//this->renderers.gltfReflections.DestroyglTF_Reflections();
+		//
+		////math compute
+		//this->renderers.mathCompute.Destroy_Math_Compute();
+		//
+		////rt animation
+		//this->renderers.gltfAnimation.DestroyglTFAnimation();
+		//
+		////glTFTextured
+		//this->renderers.gltfTextured.DestroyglTFTextured();
+		//
+		////shadow
+		//this->renderers.gltfShadows.DestroyglTFShadows();
+		//
+		////rt basic/texture
+		//this->renderers.raytracing.DestroyRaytracing();
+
+
+		//core
+		DestroyCore();
+
 	}
 
-	/*---------------------------------------*/
-	//     wait stages / draw fences        //
-	/*-------------------------------------*/
+	void Engine::userInput() {
 
-	//---------------------//
-	//---COMPUTE QUEUE-----//
-	//---------------------//
+		//float deltaTime = deltaTime;
 
-	//if (camera->activeWindow) {
+		glfwGetCursorPos(windowGLFW, &posX, &posY);
+
+		// Print mouse coordinates (you can use them as needed)
+		//printf("Mouse Coordinates: %.2f, %.2f\n", posX, posY);
+
+		auto xoffset = static_cast<float>(posX - lastX);
+		auto yoffset = static_cast<float>(lastY - posY);
+		lastX = posX;
+		lastY = posY;
 
 
-		//wait for fences  
+		if (glfwGetMouseButton(windowGLFW, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_TRUE) {
+			camera->viewUpdated = true;
+			camera->ProcessMouseMovement(xoffset, yoffset);
+		}
+
+		if (glfwGetKey(windowGLFW, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+			camera->viewUpdated = true;
+			glfwSetWindowShouldClose(windowGLFW, true);
+		}
+
+		if (glfwGetKey(windowGLFW, GLFW_KEY_W) == GLFW_PRESS) {
+			camera->viewUpdated = true;
+			camera->ProcessKeyboard(Movement::FORWARD, deltaTime);
+		}
+
+		if (glfwGetKey(windowGLFW, GLFW_KEY_S) == GLFW_PRESS) {
+			camera->viewUpdated = true;
+			camera->ProcessKeyboard(Movement::BACKWARD, deltaTime);
+		}
+
+		if (glfwGetKey(windowGLFW, GLFW_KEY_A) == GLFW_PRESS) {
+			camera->viewUpdated = true;
+			camera->ProcessKeyboard(Movement::LEFT, deltaTime);
+		}
+
+		if (glfwGetKey(windowGLFW, GLFW_KEY_D) == GLFW_PRESS) {
+			camera->viewUpdated = true;
+			camera->ProcessKeyboard(Movement::RIGHT, deltaTime);
+		}
+
+		if (glfwGetKey(windowGLFW, GLFW_KEY_UP) == GLFW_TRUE) {
+			camera->viewUpdated = true;
+			camera->ProcessKeyboard(Movement::UP, deltaTime);
+		}
+
+		if (glfwGetKey(windowGLFW, GLFW_KEY_DOWN) == GLFW_TRUE) {
+			camera->viewUpdated = true;
+			camera->ProcessKeyboard(Movement::DOWN, deltaTime);
+		}
+
+	}
+
+	void Engine::InitRenderers() {
+
+		//std::cout << "\ninitializing raytracing class - quad with grate texture\n''''''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//this->renderers.raytracing = Raytracing(this->pEngineCore);
+		//std::cout << "\nfinished initializing raytracing class\n'''''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//
+		//std::cout << "\ninitializing glTFShadows class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//this->renderers.gltfShadows = glTFShadows(this->pEngineCore);
+		//std::cout << "\nfinished initializing glTFShadows class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//
+		//std::cout << "\ninitializing glTFTextured class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//this->renderers.gltfTextured = glTFTextured(this->pEngineCore);
+		//std::cout << "\nfinished initializing glTFTextured class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//
+		//std::cout << "\ninitializing glTFAnimation class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//this->renderers.gltfAnimation = glTFAnimation(this->pEngineCore);
+		//std::cout << "\nfinished initializing glTFAnimation class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//
+		//std::cout << "\ninitializing glTF_PBR class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//this->renderers.gltfPBR = glTF_PBR(this->pEngineCore);
+		//std::cout << "\nfinished initializing glTF_PBR class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//
+		//std::cout << "\ninitializing Math_Compute class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//this->renderers.mathCompute = Math_Compute(this->pEngineCore);
+		//std::cout << "\nfinished initializing Math_Compute class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//
+		//std::cout << "\ninitializing glTF_Reflections class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//this->renderers.gltfReflections = glTF_Reflections(this->pEngineCore);
+		//std::cout << "\nfinished initializing glTF_Reflections class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//
+		//std::cout << "\ninitializing Multi_Model class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//this->renderers.multiModel = Multi_Model(this->pEngineCore);
+		//std::cout << "\nfinished initializing Multi_Model class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//
+		//std::cout << "\ninitializing Complex_Scene class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//this->renderers.complexScene = Complex_Scene(this->pEngineCore);
+		//std::cout << "\nfinished initializing Complex_Scene class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//
+		//std::cout << "\ninitializing multi_blas class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//this->renderers.multiBlas = multi_blas(this->pEngineCore);
+		//std::cout << "\nfinished initializing multi_blas class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+
+		//std::cout << "\ninitializing Build_Scene class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		//this->renderers.gltfViewer = Build_Scene(this->pEngineCore);
+		//std::cout << "\nfinished initializing Build_Scene class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+
+		std::cout << "\ninitializing gltf_viewer class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+		this->renderers.gltfViewer = gltf_viewer(this->pEngineCore);
+		std::cout << "\nfinished initializing gltf_viewer class\n'''''''''''''''''''''''''''''''''''''''''''''''\n" << std::endl;
+
+	}
+
+	void Engine::InitUI() {
+		UI = CoreUI(this->pEngineCore);
+		std::cout << "\nfinished initializing UI\n''''''''''''''''''''''''\n" << std::endl;
+	}
+
+	void Engine::BeginGraphicsCommandBuffer(int currentFrame) {
+
+		//command buffer begin info
+		VkCommandBufferBeginInfo cmdBufInfo{};
+		cmdBufInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+		//begin command buffer
+		if (vkBeginCommandBuffer(pEngineCore->commandBuffers.graphics[currentFrame], &cmdBufInfo) != VK_SUCCESS) {
+			throw std::invalid_argument("failed to begin recording graphics command buffer");
+		}
+
+	}
+
+	void Engine::EndGraphicsCommandBuffer(int currentFrame) {
+
+		if (vkEndCommandBuffer(commandBuffers.graphics[currentFrame]) != VK_SUCCESS) {
+			throw std::invalid_argument("failed to end recording command buffer");
+		}
+
+	}
+
+	void Engine::Draw() {
+
+		uint32_t imageIndex = 0;
+
+		/*--------------------*/
+		//     resize        //
+		/*------------------*/
+
+		if (camera->framebufferResized) {
+			//wait idle
+			vkDeviceWaitIdle(devices.logical);
+			//recreate semaphores, fences
+			RecreateSyncObjects();
+			//recreate swapchain, swapchain images/views
+			RecreateCoreSwapchain();
+			//recreate god knows what
+			renderers.gltfViewer.HandleResize();
+			//recreate ui framebuffers
+			UI.RecreateFramebuffers();
+			//Flaggy McFlaggerson
+			camera->framebufferResized = false;
+			//ret
+			return;
+		}
+
+		/*---------------------------------------*/
+		//     wait stages / draw fences        //
+		/*-------------------------------------*/
+
+		//---------------------//
+		//---COMPUTE QUEUE-----//
+		//---------------------//
+
+		//if (camera->activeWindow) {
+
+
+			//wait for fences  
 		vkWaitForFences(devices.logical, 1, &sync.computeFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
 
 		//reset fences
@@ -328,7 +330,7 @@ void Engine::Draw() {
 		computeSubmitInfo.pSignalSemaphores = &this->sync.computeFinishedSemaphore[currentFrame];
 
 		//submit compute queue
-		if (vkQueueSubmit(pCoreBase->queue.compute,
+		if (vkQueueSubmit(pEngineCore->queue.compute,
 			1, &computeSubmitInfo, sync.computeFences[currentFrame]) != VK_SUCCESS) {
 			throw std::invalid_argument("failed to submit compute command buffer!");
 		}
@@ -337,12 +339,12 @@ void Engine::Draw() {
 		//-----GRAPHICS QUEUE----//
 		//----------------------//
 
-		//vkDeviceWaitIdle(this->pCoreBase->devices.logical);
+		//vkDeviceWaitIdle(this->pEngineCore->devices.logical);
 
 		//wait for draw fences
 		vkWaitForFences(devices.logical, 1, &sync.drawFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
 
-			vkResetFences(devices.logical, 1, &sync.drawFences[currentFrame]);
+		vkResetFences(devices.logical, 1, &sync.drawFences[currentFrame]);
 
 		//acquire next image
 		VkResult acquireImageResult = vkAcquireNextImageKHR(devices.logical, swapchainData.swapchainKHR,
@@ -414,7 +416,7 @@ void Engine::Draw() {
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.pWaitDstStageMask = waitStages.data();
-		submitInfo.waitSemaphoreCount = graphicsSemaphores.size();
+		submitInfo.waitSemaphoreCount = static_cast<uint32_t>(graphicsSemaphores.size());
 		submitInfo.pWaitSemaphores = graphicsSemaphores.data();
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = &sync.renderFinishedSemaphore[currentFrame];
@@ -442,5 +444,7 @@ void Engine::Draw() {
 
 		// Update current frame index
 		this->currentFrame = (this->currentFrame + 1) % frame_draws;
+
+	}
 
 }

@@ -1,10 +1,10 @@
-#include "Tools.hpp"
+#include "Utilities_EngCore.hpp"
 
-vrt::Tools::QueueFamilyIndices vrt::Tools::getQueueFamilyIndices(VkPhysicalDevice physicalDevice,
+gtp::Utilities_EngCore::QueueFamilyIndices gtp::Utilities_EngCore::getQueueFamilyIndices(VkPhysicalDevice physicalDevice,
 	VkSurfaceKHR surface) {
 
 	//get queue family count
-	vrt::Tools::QueueFamilyIndices indices;
+	gtp::Utilities_EngCore::QueueFamilyIndices indices;
 	uint32_t queueFamilyCount = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
 	//ouput count
@@ -60,7 +60,7 @@ vrt::Tools::QueueFamilyIndices vrt::Tools::getQueueFamilyIndices(VkPhysicalDevic
 
 }
 
-bool vrt::Tools::validateQueueFamilyIndices(QueueFamilyIndices queueFamily) {
+bool gtp::Utilities_EngCore::validateQueueFamilyIndices(QueueFamilyIndices queueFamily) {
 	//see if all queues have been assigned
 	if (queueFamily.graphics >= 0 &&
 		queueFamily.compute >= 0 &&
@@ -75,7 +75,7 @@ bool vrt::Tools::validateQueueFamilyIndices(QueueFamilyIndices queueFamily) {
 }
 
 // -- ouput surface capabilities
-void vrt::Tools::outputSurfaceCapabilities(const VkSurfaceCapabilitiesKHR& capabilities) {
+void gtp::Utilities_EngCore::outputSurfaceCapabilities(const VkSurfaceCapabilitiesKHR& capabilities) {
 	std::cout << "Surface Capabilities:" << std::endl;
 	std::cout << "Min Image Count: " << capabilities.minImageCount << std::endl;
 	std::cout << "Max Image Count: " << capabilities.maxImageCount << std::endl;
@@ -91,7 +91,7 @@ void vrt::Tools::outputSurfaceCapabilities(const VkSurfaceCapabilitiesKHR& capab
 }
 
 
-std::string vrt::Tools::physicalDeviceTypeString(VkPhysicalDeviceType type) {
+std::string gtp::Utilities_EngCore::physicalDeviceTypeString(VkPhysicalDeviceType type) {
 	switch (type) {
 #define STR(r) case VK_PHYSICAL_DEVICE_TYPE_ ##r: return #r
 		STR(OTHER);
@@ -104,7 +104,7 @@ std::string vrt::Tools::physicalDeviceTypeString(VkPhysicalDeviceType type) {
 	}
 }
 
-bool vrt::Tools::loadFunctionPointer(PFN_vkVoidFunction& functionPointer, VkDevice logicalDevice, const char* functionName) {
+bool gtp::Utilities_EngCore::loadFunctionPointer(PFN_vkVoidFunction& functionPointer, VkDevice logicalDevice, const char* functionName) {
 	functionPointer = reinterpret_cast<PFN_vkVoidFunction>(vkGetDeviceProcAddr(logicalDevice, functionName));
 	if (functionPointer) {
 		std::cout << " Function: " << functionName << " loaded!" << std::endl;
@@ -116,7 +116,7 @@ bool vrt::Tools::loadFunctionPointer(PFN_vkVoidFunction& functionPointer, VkDevi
 	}
 }
 
-bool vrt::Tools::loadFunctionPointer(PFN_vkVoidFunction& functionPointer, VkInstance instance, const char* functionName) {
+bool gtp::Utilities_EngCore::loadFunctionPointer(PFN_vkVoidFunction& functionPointer, VkInstance instance, const char* functionName) {
 	functionPointer =
 		reinterpret_cast<PFN_vkVoidFunction>(vkGetInstanceProcAddr(instance, functionName));
 	if (functionPointer) {
@@ -129,7 +129,7 @@ bool vrt::Tools::loadFunctionPointer(PFN_vkVoidFunction& functionPointer, VkInst
 	}
 }
 
-void vrt::Tools::setImageLayout(VkCommandBuffer cmdbuffer, VkImage image, VkImageLayout oldImageLayout,
+void gtp::Utilities_EngCore::setImageLayout(VkCommandBuffer cmdbuffer, VkImage image, VkImageLayout oldImageLayout,
 	VkImageLayout newImageLayout, VkImageSubresourceRange subresourceRange, VkPipelineStageFlags srcStageMask,
 	VkPipelineStageFlags dstStageMask) {
 	// Create an image barrier object
@@ -263,7 +263,7 @@ void vrt::Tools::setImageLayout(VkCommandBuffer cmdbuffer, VkImage image, VkImag
 }
 
 
-uint32_t vrt::Tools::alignedSize(uint32_t value, uint32_t alignment) {
+uint32_t gtp::Utilities_EngCore::alignedSize(uint32_t value, uint32_t alignment) {
 	return (value + alignment - 1) & ~(alignment - 1);
 }
 
@@ -271,7 +271,7 @@ size_t alignedSize(size_t value, size_t alignment) {
 	return (value + alignment - 1) & ~(alignment - 1);
 }
 
-VkDescriptorSetLayoutBinding vrt::Tools::VkInitializers::descriptorSetLayoutBinding(uint32_t binding,
+VkDescriptorSetLayoutBinding gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(uint32_t binding,
 	VkDescriptorType descriptorType, uint32_t descriptorCount, VkShaderStageFlags stageFlags, const VkSampler* pImmutableSamplers) {
 	//declare and initialize struct
 	VkDescriptorSetLayoutBinding descriptorSetLayoutBinding{};

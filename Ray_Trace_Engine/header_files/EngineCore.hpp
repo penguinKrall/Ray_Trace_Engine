@@ -4,17 +4,17 @@
 #include <CoreDevice.hpp>
 #include <CoreWindow.hpp>
 #include <CoreSwapchain.hpp>
-#include <ObjCreate.hpp>
+#include <Utilities_CreateObject.hpp>
 #include <stb_image.h>
 
-class CoreBase : public CoreDebug, public CoreWindow, public CoreDevice, public CoreSwapchain {
+class EngineCore : public CoreDebug, public CoreWindow, public CoreDevice, public CoreSwapchain {
 public:
 
 	//instance pointer
-	CoreBase* pCoreBase = this;
+	EngineCore* pEngineCore = this;
 
 	// -- vulkan object create functions
-	ObjCreate objCreate;
+	Utilities_CreateObject objCreate;
 
 	// -- camera
 	Camera* camera;
@@ -50,7 +50,7 @@ public:
 	BaseSettings baseSettings{};
 
 	//ctor
-	CoreBase();
+	EngineCore();
 
 	//funcs
 	VkInstance createInstance(bool enableValidation);
@@ -65,9 +65,9 @@ public:
 	// -- create buffer
 	//@brief func also deals with memory ie. allocate, map, copy, unmap, bind.
 	//@brief maps buffer and buffer memory handles in debug
-	//@return buffer->bind(pCoreBase->devices.logical);
+	//@return buffer->bind(pEngineCore->devices.logical);
 	VkResult CreateBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags,
-		vrt::Buffer* buffer, VkDeviceSize size, void* data);
+		gtp::Buffer* buffer, VkDeviceSize size, void* data);
 
 	VkResult CreateBuffer2(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags,
 		VkDeviceSize size, VkBuffer* buffer, VkDeviceMemory* memory, void* data = nullptr);

@@ -1,30 +1,30 @@
 #pragma once
 
-#include <gltf_viewer_model.hpp>
-#include <Tools.hpp>
+#include <glTFModel.hpp>
+#include <Utilities_EngCore.hpp>
 #include <Shader.hpp>
 #include <filesystem>
 
-class gltf_viewer_compute{
+class ComputeVertex{
 
 public:
 
 	// -- core pointer
-	CoreBase* pCoreBase = nullptr;
+	EngineCore* pEngineCore = nullptr;
 
 	// -- shader
-	Shader shader;
+	gtp::Shader shader;
 
 	// -- gltf_model
 	//this is where the vertex buffers are that will be used by the compute shader and subsequently the ray tracing shaders
-	GVM::Model* model = nullptr;
+	gtp::Model* model = nullptr;
 
 	// -- shader storage buffer
-	vrt::Buffer storageInputBuffer;
-	vrt::Buffer storageOutputBuffer;
+	gtp::Buffer storageInputBuffer;
+	gtp::Buffer storageOutputBuffer;
 
 	// -- uniform buffer
-	vrt::Buffer jointBuffer;
+	gtp::Buffer jointBuffer;
 
 	// -- pipeline data struct
 	struct PipelineData {
@@ -42,13 +42,13 @@ public:
 	PipelineData pipelineData{};
 
 	// -- default constructor
-	gltf_viewer_compute();
+	ComputeVertex();
 
 	// -- init constructor
-	gltf_viewer_compute(CoreBase* coreBase, GVM::Model* modelPtr);
+	ComputeVertex(EngineCore* coreBase, gtp::Model* modelPtr);
 
 	// -- init func
-	void Init_gltf_viewer_compute(CoreBase* coreBase, GVM::Model* modelPtr);
+	void Init_ComputeVertex(EngineCore* coreBase, gtp::Model* modelPtr);
 
 	// -- create buffers
 	void CreateComputeBuffers();
@@ -69,8 +69,8 @@ public:
 	void RecordComputeCommands(int frame);
 
 	// -- retrieve buffer data
-	//std::vector<GVM::Model::Vertex> RetrieveBufferData();
+	//std::vector<gtp::Model::Vertex> RetrieveBufferData();
 
 	// -- destroy
-	void Destroy_gltf_viewer_compute();
+	void Destroy_ComputeVertex();
 };

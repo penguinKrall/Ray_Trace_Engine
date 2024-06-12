@@ -1,6 +1,6 @@
 #pragma once
 
-#include <CoreBase.hpp>
+#include <EngineCore.hpp>
 #include <Shader.hpp>
 
 #include <imgui_internal.h>
@@ -17,10 +17,10 @@ class CoreUI {
 public:
 
 	// -- core pointer
-	CoreBase* pCoreBase = nullptr;
+	EngineCore* pEngineCore = nullptr;
 
 	//shader
-	Shader shader;
+	gtp::Shader shader;
 
 	// -- image data struct
 	struct UIImageData {
@@ -40,8 +40,8 @@ public:
 
 	// -- buffers struct
 	struct UIBuffers {
-		std::vector<vrt::Buffer> vertex{};
-		std::vector<vrt::Buffer> index{};
+		std::vector<gtp::Buffer> vertex{};
+		std::vector<gtp::Buffer> index{};
 		int32_t vertexCount = 0;
 		int32_t indexCount = 0;
 	};
@@ -97,7 +97,7 @@ public:
 
 	// -- ctors
 	CoreUI();
-	CoreUI(CoreBase* coreBase);
+	CoreUI(EngineCore* coreBase);
 
 	// -- initializers
 	// -- init context
@@ -110,7 +110,7 @@ public:
 
 	// -- init core ui
 	//@brief sets core pointer and calls initializer funcs
-	void InitCoreUI(CoreBase* coreBase);
+	void InitCoreUI(EngineCore* coreBase);
 
 	// -- create funcs
 	// -- create font image

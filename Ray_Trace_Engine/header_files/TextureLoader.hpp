@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Tools.hpp>
-#include <CoreBase.hpp>
+#include <Utilities_EngCore.hpp>
+#include <EngineCore.hpp>
 
 #include <iostream>
 #include <filesystem>
@@ -11,11 +11,11 @@
 
 #include <tiny_gltf.h>
 
-namespace vrt {
+namespace gtp {
 
 	// - texture class
 	//@brief
-	class Texture {
+	class TextureLoader {
 
 	public:
 
@@ -32,16 +32,16 @@ namespace vrt {
 		uint32_t index = -1;
 
 		// -- core pointer
-		CoreBase* pCoreBase = nullptr;
+		EngineCore* pEngineCore = nullptr;
 
 		// -- default ctor
-		Texture();
+		TextureLoader();
 
 		// -- init ctor
-		Texture(CoreBase* coreBase);
+		TextureLoader(EngineCore* coreBase);
 
 		// -- init func
-		void InitTexture(CoreBase* coreBase);
+		void InitTextureLoader(EngineCore* coreBase);
 
 		// -- update descriptor
 		void updateDescriptor();
@@ -57,9 +57,9 @@ namespace vrt {
 			VkImageLayout      imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			bool               forceLinear = false);
 
-		void DestroyTexture();
+		void DestroyTextureLoader();
 
-		void fromglTfImage(tinygltf::Image& gltfimage, std::string path, CoreBase* coreBase, VkQueue copyQueue);
+		void fromglTfImage(tinygltf::Image& gltfimage, std::string path, EngineCore* coreBase, VkQueue copyQueue);
 
 
 

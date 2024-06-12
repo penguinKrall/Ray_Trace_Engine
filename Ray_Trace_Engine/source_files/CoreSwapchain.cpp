@@ -13,7 +13,7 @@ void CoreSwapchain::retrieveDeviceSwapchainData(VkPhysicalDevice physicalDevice,
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &swapchainData.surfaceCapabilities);
 
 	//output surface capabilities
-	vrt::Tools::outputSurfaceCapabilities(swapchainData.surfaceCapabilities);
+	gtp::Utilities_EngCore::outputSurfaceCapabilities(swapchainData.surfaceCapabilities);
 
 	//formats
 	uint32_t formatCount = 0;
@@ -179,7 +179,7 @@ std::vector<VkImageView> CoreSwapchain::createSwapchainImageView(VkDevice logica
 
 // -- create swapchain
 VkSwapchainKHR CoreSwapchain::createSwapchain(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, VkSurfaceKHR surface,
-	GLFWwindow* window, vrt::Tools::QueueFamilyIndices queueFamilyIndices) {
+	GLFWwindow* window, gtp::Utilities_EngCore::QueueFamilyIndices queueFamilyIndices) {
 
 	//get swapchain data
 	retrieveDeviceSwapchainData(physicalDevice, surface);

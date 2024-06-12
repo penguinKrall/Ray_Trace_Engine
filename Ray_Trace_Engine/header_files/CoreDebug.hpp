@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tools.hpp>
+#include <Utilities_EngCore.hpp>
 
 class CoreDebug {
 public:

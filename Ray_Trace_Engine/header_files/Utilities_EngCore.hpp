@@ -33,7 +33,7 @@
 
 #include <glm/glm.hpp>
 
-#include <EnumStringHelper.hpp>
+#include <Utilities_EnumStringHelper.hpp>
 #include <Buffer.hpp>
 #include <Camera.hpp>
 
@@ -46,11 +46,11 @@ const int frame_draws = 3;
 
 // -- vulkan ray tracing
 //@brief i'm new to namespaces..
-namespace vrt {
+namespace gtp {
 
 	// -- tools class -- 
 	//@brief static functions used by all levels of program
-	class Tools {
+	class Utilities_EngCore {
 
 	public:
 

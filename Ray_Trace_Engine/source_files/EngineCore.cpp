@@ -1,11 +1,11 @@
-#include "CoreBase.hpp"
+#include "EngineCore.hpp"
 
 // -- ctor
-CoreBase::CoreBase() {
+EngineCore::EngineCore() {
 }
 
 // -- create instance
-VkInstance CoreBase::createInstance(bool enableValidation) {
+VkInstance EngineCore::createInstance(bool enableValidation) {
 	//--enable validation
 	this->baseSettings.validation = enableValidation;
 
@@ -86,7 +86,7 @@ VkInstance CoreBase::createInstance(bool enableValidation) {
 }
 
 // -- create surface
-VkSurfaceKHR CoreBase::createSurface() {
+VkSurfaceKHR EngineCore::createSurface() {
 
 	if (glfwCreateWindowSurface(instance, windowGLFW, nullptr, &this->surface) != VK_SUCCESS) {
 		throw std::invalid_argument("Failed to create surface!");
@@ -97,7 +97,7 @@ VkSurfaceKHR CoreBase::createSurface() {
 }
 
 // -- init core
-void CoreBase::InitCore() {
+void EngineCore::InitCore() {
 
 	//create instance
 	add([this]() { return createInstance(true); }, "instance");
@@ -138,9 +138,9 @@ void CoreBase::InitCore() {
 	//create compute command pool
 	add([this]() { return CreateComputeCommandPool(devices.logical, queue.queueFamilyIndices.compute); }, "ComputeCommandPool");
 
-	//init ObjCreate class with the Vulkan Object Create funcs
+	//init Utilities_CreateObject class with the Vulkan Object Create funcs
 	//MUST be called after command pool is created
-	objCreate = ObjCreate(&devices.physical, &devices.logical, coreExtensions, pCoreDebug, commandPools.graphics);
+	objCreate = Utilities_CreateObject(&devices.physical, &devices.logical, coreExtensions, pCoreDebug, commandPools.graphics);
 
 	//create graphics command buffers
 	addArray([this]() {
@@ -157,36 +157,36 @@ void CoreBase::InitCore() {
 
 }
 
-VkResult CoreBase::CreateBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags,
-	vrt::Buffer* buffer, VkDeviceSize size, void* data) {
+VkResult EngineCore::CreateBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags,
+	gtp::Buffer* buffer, VkDeviceSize size, void* data) {
 
 	buffer->bufferData.usageFlags = usageFlags;
 	buffer->bufferData.size = size;
 	buffer->bufferData.memoryPropertyFlags = memoryPropertyFlags;
 
 	//create buffer object
-	pCoreBase->add([this, buffer, usageFlags, size]() {return buffer->CreateBuffer(this->pCoreBase->devices.physical,
-		this->pCoreBase->devices.logical, usageFlags, size, buffer->bufferData.bufferName);}, buffer->bufferData.bufferName);
+	pEngineCore->add([this, buffer, usageFlags, size]() {return buffer->CreateBuffer(this->pEngineCore->devices.physical,
+		this->pEngineCore->devices.logical, usageFlags, size, buffer->bufferData.bufferName);}, buffer->bufferData.bufferName);
 
 	//allocate buffer memory object
-	pCoreBase->add([this, buffer]() {return buffer->AllocateBufferMemory(this->pCoreBase->devices.physical,
-		this->pCoreBase->devices.logical, buffer->bufferData.bufferMemoryName);}, buffer->bufferData.bufferMemoryName);
+	pEngineCore->add([this, buffer]() {return buffer->AllocateBufferMemory(this->pEngineCore->devices.physical,
+		this->pEngineCore->devices.logical, buffer->bufferData.bufferMemoryName);}, buffer->bufferData.bufferMemoryName);
 
-	buffer->bind(this->pCoreBase->devices.logical, 0);
+	buffer->bind(this->pEngineCore->devices.logical, 0);
 
 	//if void* != null, map buffer and copy data
 	if (data != nullptr) {
 		//map buffer
-		if (buffer->map(pCoreBase->devices.logical, size, 0) != VK_SUCCESS) {
+		if (buffer->map(pEngineCore->devices.logical, size, 0) != VK_SUCCESS) {
 			throw std::invalid_argument("failed to map buffer");
 		}
 		//copy memory to mapped buffer
 		memcpy(buffer->bufferData.mapped, data, size);
 		if ((memoryPropertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
 			//flush buffer
-			buffer->flush(pCoreBase->devices.logical, size, 0);
+			buffer->flush(pEngineCore->devices.logical, size, 0);
 
-		//buffer->unmap(pCoreBase->devices.logical);
+		//buffer->unmap(pEngineCore->devices.logical);
 	}
 
 	//// Initialize a default descriptor that covers the whole buffer size
@@ -198,7 +198,7 @@ VkResult CoreBase::CreateBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyF
 	//return VK_SUCCESS;
 }
 
-VkResult CoreBase::CreateBuffer2(VkBufferUsageFlags usageFlags,
+VkResult EngineCore::CreateBuffer2(VkBufferUsageFlags usageFlags,
 	VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize size,
 	VkBuffer* buffer, VkDeviceMemory* memory, void* data) {
 	// Create the buffer handle
@@ -251,7 +251,7 @@ VkResult CoreBase::CreateBuffer2(VkBufferUsageFlags usageFlags,
 	return VK_SUCCESS;
 }
 
-void CoreBase::CreateQueues() {
+void EngineCore::CreateQueues() {
 
 	add([this]() { return VKCreateQueue(
 		devices.logical, queue.queueFamilyIndices.graphics, 0, &queue.graphics); }, "graphicsQueue");
@@ -267,7 +267,7 @@ void CoreBase::CreateQueues() {
 
 }
 
-void CoreBase::FlushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue, VkCommandPool pool, bool free) {
+void EngineCore::FlushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue, VkCommandPool pool, bool free) {
 	if (commandBuffer == VK_NULL_HANDLE) {
 		return;
 	}
@@ -287,7 +287,7 @@ void CoreBase::FlushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue, 
 	fenceCreateInfo.flags = VK_FLAGS_NONE;
 
 	VkFence fence;
-	if (vkCreateFence(pCoreBase->devices.logical, &fenceCreateInfo, nullptr, &fence) != VK_SUCCESS) {
+	if (vkCreateFence(pEngineCore->devices.logical, &fenceCreateInfo, nullptr, &fence) != VK_SUCCESS) {
 		throw std::invalid_argument("failed to create fence");
 	}
 
@@ -297,18 +297,18 @@ void CoreBase::FlushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue, 
 	}
 
 	// Wait for the fence to signal that command buffer has finished executing
-	if (vkWaitForFences(pCoreBase->devices.logical, 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT) != VK_SUCCESS) {
+	if (vkWaitForFences(pEngineCore->devices.logical, 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT) != VK_SUCCESS) {
 		throw std::invalid_argument("failed to wait for fence");
 	}
 
 	//destroy fence
-	vkDestroyFence(pCoreBase->devices.logical, fence, nullptr);
+	vkDestroyFence(pEngineCore->devices.logical, fence, nullptr);
 	if (free) {
-		vkFreeCommandBuffers(pCoreBase->devices.logical, pool, 1, &commandBuffer);
+		vkFreeCommandBuffers(pEngineCore->devices.logical, pool, 1, &commandBuffer);
 	}
 }
 
-void CoreBase::CreateCoreSwapchain() {
+void EngineCore::CreateCoreSwapchain() {
 	// -- swapchain
 	add([this]() { return createSwapchain(
 		devices.physical, devices.logical, surface, windowGLFW, queue.queueFamilyIndices); }, "swapchain");
@@ -320,7 +320,7 @@ void CoreBase::CreateCoreSwapchain() {
 	addArray([this]() { return createSwapchainImageView(devices.logical); }, VkImageView{}, "swapchainImageView");
 }
 
-void CoreBase::RecreateCoreSwapchain() {
+void EngineCore::RecreateCoreSwapchain() {
 
 
 	//destroy swapchain image views
@@ -341,25 +341,25 @@ void CoreBase::RecreateCoreSwapchain() {
 	//VkImageSubresourceRange subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 
 	//create temporary command buffer for transition/copy
-	VkCommandBuffer cmdBuffer = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer cmdBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	for (const auto& swpchn : swapchainData.swapchainImages.image) {
 		//transition image layout
-		vrt::Tools::setImageLayout(cmdBuffer, swpchn,
+		gtp::Utilities_EngCore::setImageLayout(cmdBuffer, swpchn,
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 			{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
 	}
 
 	//submit temporary command buffer
-	pCoreBase->FlushCommandBuffer(cmdBuffer, queue.graphics, commandPools.graphics, true);
+	pEngineCore->FlushCommandBuffer(cmdBuffer, queue.graphics, commandPools.graphics, true);
 
 	// -- swapchain imageViews
 	addArray([this]() { return createSwapchainImageView(devices.logical); }, VkImageView{}, "swapchainImageView");
 
 }
 
-void CoreBase::CreateSyncObjects() {
+void EngineCore::CreateSyncObjects() {
 	//semaphores
 	//add([this]() {
 	//	return CreatePresentSemaphore(devices.logical); }, "PresentFinishedSemaphore");
@@ -385,7 +385,7 @@ void CoreBase::CreateSyncObjects() {
 
 }
 
-void CoreBase::RecreateSyncObjects() {
+void EngineCore::RecreateSyncObjects() {
 
 	//destroy
 		//--sync
@@ -410,14 +410,14 @@ void CoreBase::RecreateSyncObjects() {
 
 }
 
-void CoreBase::CreateLoadingScreenImage(const std::string& fileName) {
+void EngineCore::CreateLoadingScreenImage(const std::string& fileName) {
 
 	int width;
 	int height;
 	int channels;
 	VkDeviceSize imageSize;
 
-	std::string fileLoc = "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/" + fileName;
+	std::string fileLoc = "C:/Users/akral/vulkan_raytracing/vulkan_raytracing/" + fileName;
 	stbi_uc* image = stbi_load(fileLoc.c_str(), &width, &height, &channels, STBI_rgb_alpha);
 
 	if (!image) {
@@ -426,12 +426,12 @@ void CoreBase::CreateLoadingScreenImage(const std::string& fileName) {
 
 	imageSize = static_cast<VkDeviceSize>(width) * height * 4;
 
-	vrt::Buffer stagingBuffer;
+	gtp::Buffer stagingBuffer;
 
 	stagingBuffer.bufferData.bufferName = "load_screen_image_staging_buffer";
 	stagingBuffer.bufferData.bufferMemoryName = "load_screen_image_staging_bufferMemory";
 
-	if (pCoreBase->CreateBuffer(
+	if (pEngineCore->CreateBuffer(
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 		&stagingBuffer,
@@ -461,12 +461,12 @@ void CoreBase::CreateLoadingScreenImage(const std::string& fileName) {
 	imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	imageCreateInfo.extent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1 };
 	imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-	if (vkCreateImage(pCoreBase->devices.logical, &imageCreateInfo, nullptr, &srcImage));
-	vkGetImageMemoryRequirements(pCoreBase->devices.logical, srcImage, &memReqs);
+	if (vkCreateImage(pEngineCore->devices.logical, &imageCreateInfo, nullptr, &srcImage));
+	vkGetImageMemoryRequirements(pEngineCore->devices.logical, srcImage, &memReqs);
 	memAllocInfo.allocationSize = memReqs.size;
-	memAllocInfo.memoryTypeIndex = pCoreBase->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	if (vkAllocateMemory(pCoreBase->devices.logical, &memAllocInfo, nullptr, &srcImageMemory));
-	if (vkBindImageMemory(pCoreBase->devices.logical, srcImage, srcImageMemory, 0));
+	memAllocInfo.memoryTypeIndex = pEngineCore->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	if (vkAllocateMemory(pEngineCore->devices.logical, &memAllocInfo, nullptr, &srcImageMemory));
+	if (vkBindImageMemory(pEngineCore->devices.logical, srcImage, srcImageMemory, 0));
 
 	VkImageSubresourceRange subresourceRange{};
 	subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -476,7 +476,7 @@ void CoreBase::CreateLoadingScreenImage(const std::string& fileName) {
 	subresourceRange.layerCount = 1;
 
 	//create command buffer
-	VkCommandBuffer commandBuffer = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer commandBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkBufferImageCopy imageRegion = {};
 	imageRegion.bufferOffset = 0;
@@ -489,7 +489,7 @@ void CoreBase::CreateLoadingScreenImage(const std::string& fileName) {
 	imageRegion.imageOffset = { 0, 0, 0, };
 	imageRegion.imageExtent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1 };
 
-	vrt::Tools::setImageLayout(
+	gtp::Utilities_EngCore::setImageLayout(
 		commandBuffer,
 		srcImage,
 		VK_IMAGE_LAYOUT_UNDEFINED,
@@ -500,7 +500,7 @@ void CoreBase::CreateLoadingScreenImage(const std::string& fileName) {
 	vkCmdCopyBufferToImage(commandBuffer, stagingBuffer.bufferData.buffer, srcImage,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageRegion);
 
-	vrt::Tools::setImageLayout(
+	gtp::Utilities_EngCore::setImageLayout(
 		commandBuffer,
 		srcImage,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -509,9 +509,9 @@ void CoreBase::CreateLoadingScreenImage(const std::string& fileName) {
 
 	for (int i = 0; i < this->swapchainData.swapchainImages.image.size(); i++) {
 
-		vrt::Tools::setImageLayout(
+		gtp::Utilities_EngCore::setImageLayout(
 			commandBuffer,
-			pCoreBase->swapchainData.swapchainImages.image[i],
+			pEngineCore->swapchainData.swapchainImages.image[i],
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			subresourceRange);
@@ -521,25 +521,25 @@ void CoreBase::CreateLoadingScreenImage(const std::string& fileName) {
 		copyRegion.srcOffset = { 0, 0, 0 };
 		copyRegion.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
 		copyRegion.dstOffset = { 0, 0, 0 };
-		copyRegion.extent = { pCoreBase->swapchainData.swapchainExtent2D.width, pCoreBase->swapchainData.swapchainExtent2D.height, 1 };
+		copyRegion.extent = { pEngineCore->swapchainData.swapchainExtent2D.width, pEngineCore->swapchainData.swapchainExtent2D.height, 1 };
 
 		vkCmdCopyImage(commandBuffer, srcImage,
-			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, pCoreBase->swapchainData.swapchainImages.image[i],
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, pEngineCore->swapchainData.swapchainImages.image[i],
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
 		//for (int i = 0; i < this->swapchainData.swapchainImages.image.size(); i++) {
-			vrt::Tools::setImageLayout(
+			gtp::Utilities_EngCore::setImageLayout(
 				commandBuffer,
-				pCoreBase->swapchainData.swapchainImages.image[i],
+				pEngineCore->swapchainData.swapchainImages.image[i],
 				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 				VK_IMAGE_LAYOUT_GENERAL,
 				subresourceRange);
 		//}
 
 		//for (int i = 0; i < this->swapchainData.swapchainImages.image.size(); i++) {
-			vrt::Tools::setImageLayout(
+			gtp::Utilities_EngCore::setImageLayout(
 				commandBuffer,
-				pCoreBase->swapchainData.swapchainImages.image[i],
+				pEngineCore->swapchainData.swapchainImages.image[i],
 				VK_IMAGE_LAYOUT_GENERAL,
 				VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 				subresourceRange);
@@ -548,7 +548,7 @@ void CoreBase::CreateLoadingScreenImage(const std::string& fileName) {
 	}
 
 	//flush one time submit command buffer
-	this->FlushCommandBuffer(commandBuffer, pCoreBase->queue.graphics, pCoreBase->commandPools.graphics, true);
+	this->FlushCommandBuffer(commandBuffer, pEngineCore->queue.graphics, pEngineCore->commandPools.graphics, true);
 
 	// Destroy staging buffers
 	stagingBuffer.destroy(this->devices.logical);
@@ -557,7 +557,7 @@ void CoreBase::CreateLoadingScreenImage(const std::string& fileName) {
 
 }
 
-void CoreBase::LoadingScreen() {
+void EngineCore::LoadingScreen() {
 	// -- -- -- -- LOADING SCREEN  -- -- -- -- //
 
 	CreateLoadingScreenImage("gondola_proj/loading_1920x1080.jpg");
@@ -583,7 +583,7 @@ void CoreBase::LoadingScreen() {
 		UINT64_MAX, sync.presentFinishedSemaphore[0], VK_NULL_HANDLE, &imageIndex);
 
 	//create command buffer
-	VkCommandBuffer commandBuffer = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkCommandBuffer commandBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	//end and submit command buffer
 	vkEndCommandBuffer(commandBuffer);
@@ -630,7 +630,7 @@ void CoreBase::LoadingScreen() {
 }
 
 // -- destroy
-void CoreBase::DestroyCore() {
+void EngineCore::DestroyCore() {
 	//swapchain
 	DestroySwapchain(devices.logical);
 

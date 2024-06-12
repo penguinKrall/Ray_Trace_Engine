@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "vulkan/vulkan.h"
-#include "CoreBase.hpp"
+#include "EngineCore.hpp"
 
 #include <ktx.h>
 #include <ktxvulkan.h>
@@ -21,7 +21,7 @@
 
 #define MAX_NUM_JOINTS 128u
 
-namespace GVM
+namespace gtp
 {
 
 	enum FileLoadingFlags {
@@ -52,7 +52,7 @@ namespace GVM
 	};
 
 	struct Texture {
-		CoreBase* coreBase;
+		EngineCore* coreBase;
 		VkImage image;
 		VkImageLayout imageLayout;
 		VkDeviceMemory deviceMemory;
@@ -66,7 +66,7 @@ namespace GVM
 		void updateDescriptor();
 		void destroy();
 		// Load a texture from a glTF image (stored as vector of chars loaded via stb_image) and generate a full mip chaing for it
-		void fromglTfImage(tinygltf::Image& gltfimage, TextureSampler textureSampler, CoreBase* coreBase, VkQueue copyQueue);
+		void fromglTfImage(tinygltf::Image& gltfimage, TextureSampler textureSampler, EngineCore* coreBase, VkQueue copyQueue);
 	};
 
 	struct Material {
@@ -77,11 +77,11 @@ namespace GVM
 		float roughnessFactor = 1.0f;
 		glm::vec4 baseColorFactor = glm::vec4(1.0f);
 		glm::vec4 emissiveFactor = glm::vec4(0.0f);
-		GVM::Texture* baseColorTexture;
-		GVM::Texture* metallicRoughnessTexture;
-		GVM::Texture* normalTexture;
-		GVM::Texture* occlusionTexture;
-		GVM::Texture* emissiveTexture;
+		gtp::Texture* baseColorTexture;
+		gtp::Texture* metallicRoughnessTexture;
+		gtp::Texture* normalTexture;
+		gtp::Texture* occlusionTexture;
+		gtp::Texture* emissiveTexture;
 		bool doubleSided = false;
 		struct TexCoordSets {
 			uint8_t baseColor = 0;
@@ -92,8 +92,8 @@ namespace GVM
 			uint8_t emissive = 0;
 		} texCoordSets;
 		struct Extension {
-			GVM::Texture* specularGlossinessTexture;
-			GVM::Texture* diffuseTexture;
+			gtp::Texture* specularGlossinessTexture;
+			gtp::Texture* diffuseTexture;
 			glm::vec4 diffuseFactor = glm::vec4(1.0f);
 			glm::vec3 specularFactor = glm::vec3(0.0f);
 		} extension;
@@ -120,7 +120,7 @@ namespace GVM
 	};
 
 	struct Mesh {
-		CoreBase* coreBase;
+		EngineCore* coreBase;
 		std::vector<Primitive*> primitives;
 		BoundingBox bb;
 		BoundingBox aabb;
@@ -136,7 +136,7 @@ namespace GVM
 			glm::mat4 jointMatrix[MAX_NUM_JOINTS]{};
 			float jointcount{ 0 };
 		} uniformBlock;
-		Mesh(CoreBase* coreBase, glm::mat4 matrix);
+		Mesh(EngineCore* coreBase, glm::mat4 matrix);
 		~Mesh();
 		void setBoundingBox(glm::vec3 min, glm::vec3 max);
 	};
@@ -193,7 +193,7 @@ namespace GVM
 
 	struct Model {
 
-		CoreBase* coreBase;
+		EngineCore* coreBase;
 
 		struct Vertex {
 			glm::vec4 pos;
@@ -247,16 +247,16 @@ namespace GVM
 		size_t indexBufferSize = 0;
 
 		void destroy(VkDevice device);
-		void loadNode(GVM::Node* parent, const tinygltf::Node& node, uint32_t nodeIndex, const tinygltf::Model& model, LoaderInfo& loaderInfo, float globalscale);
+		void loadNode(gtp::Node* parent, const tinygltf::Node& node, uint32_t nodeIndex, const tinygltf::Model& model, LoaderInfo& loaderInfo, float globalscale);
 		void getNodeProps(const tinygltf::Node& node, const tinygltf::Model& model, size_t& vertexCount, size_t& indexCount);
 		void loadSkins(tinygltf::Model& gltfModel);
-		void loadTextures(tinygltf::Model& gltfModel, CoreBase* coreBase, VkQueue transferQueue);
+		void loadTextures(tinygltf::Model& gltfModel, EngineCore* coreBase, VkQueue transferQueue);
 		VkSamplerAddressMode getVkWrapMode(int32_t wrapMode);
 		VkFilter getVkFilterMode(int32_t filterMode);
 		void loadTextureSamplers(tinygltf::Model& gltfModel);
 		void loadMaterials(tinygltf::Model& gltfModel);
 		void loadAnimations(tinygltf::Model& gltfModel);
-		void loadFromFile(std::string filename, CoreBase* coreBase, VkQueue transferQueue, uint32_t fileLoadingFlags = FileLoadingFlags::None, float scale = 1.0f);
+		void loadFromFile(std::string filename, EngineCore* coreBase, VkQueue transferQueue, uint32_t fileLoadingFlags = FileLoadingFlags::None, float scale = 1.0f);
 		void drawNode(Node* node, VkCommandBuffer commandBuffer);
 		void draw(VkCommandBuffer commandBuffer);
 		void calculateBoundingBox(Node* node, Node* parent);

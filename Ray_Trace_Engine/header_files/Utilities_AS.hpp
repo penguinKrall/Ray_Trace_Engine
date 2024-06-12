@@ -1,8 +1,8 @@
 #pragma once
-#include <CoreBase.hpp>
-#include <gltf_viewer_model.hpp>
+#include <EngineCore.hpp>
+#include <glTFModel.hpp>
 
-class gltf_viewer_rt_utils {
+class Utilities_AS {
 public:
 
 	struct GeometryNode {
@@ -26,7 +26,7 @@ public:
 		uint64_t deviceAddress = 0;
 		VkDeviceMemory memory;
 		VkBuffer buffer;
-		vrt::Buffer scratchBuffer{};
+		gtp::Buffer scratchBuffer{};
 	};
 
 	struct BLASData {
@@ -41,7 +41,7 @@ public:
 		std::vector<VkAccelerationStructureBuildRangeInfoKHR*> pBuildRangeInfos{};
 		VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfo{};
 		VkAccelerationStructureBuildSizesInfoKHR accelerationStructureBuildSizesInfo{};
-		gltf_viewer_rt_utils::AccelerationStructure accelerationStructure{};
+		Utilities_AS::AccelerationStructure accelerationStructure{};
 	};
 
 
@@ -65,24 +65,24 @@ public:
 		VkFormat format;
 	};
 
-	static uint64_t getBufferDeviceAddress(CoreBase* pCoreBase, VkBuffer buffer);
+	static uint64_t getBufferDeviceAddress(EngineCore* pEngineCore, VkBuffer buffer);
 	
-	static void createScratchBuffer(CoreBase* pCoreBase, vrt::Buffer* buffer, VkDeviceSize size, std::string name);
+	static void createScratchBuffer(EngineCore* pEngineCore, gtp::Buffer* buffer, VkDeviceSize size, std::string name);
 	
-	static void createAccelerationStructureBuffer(CoreBase* coreBase, VkDeviceMemory* memory, VkBuffer* buffer,
+	static void createAccelerationStructureBuffer(EngineCore* coreBase, VkDeviceMemory* memory, VkBuffer* buffer,
 		VkAccelerationStructureBuildSizesInfoKHR* buildSizeInfo, std::string bufferName);
 	
-	static void createStorageImage(CoreBase* pCoreBase, StorageImage* storageImage, std::string name);
+	static void createStorageImage(EngineCore* pEngineCore, StorageImage* storageImage, std::string name);
 	
-	static void createBLAS(CoreBase* pCoreBase,
-		std::vector<gltf_viewer_rt_utils::GeometryNode>* geometryNodeBuf,
-		std::vector<gltf_viewer_rt_utils::GeometryIndex>* geometryIndexBuf,
-		gltf_viewer_rt_utils::BLASData* blasData,
-		gltf_viewer_rt_utils::AccelerationStructure* BLAS,
-		GVM::Model* model,
+	static void createBLAS(EngineCore* pEngineCore,
+		std::vector<Utilities_AS::GeometryNode>* geometryNodeBuf,
+		std::vector<Utilities_AS::GeometryIndex>* geometryIndexBuf,
+		Utilities_AS::BLASData* blasData,
+		Utilities_AS::AccelerationStructure* BLAS,
+		gtp::Model* model,
 		uint32_t textureOffset);
 
-	static std::vector<GVM::Model::Vertex> GetVerticesFromBuffer(VkDevice device, GVM::Model* model);
+	static std::vector<gtp::Model::Vertex> GetVerticesFromBuffer(VkDevice device, gtp::Model* model);
 
 };
 

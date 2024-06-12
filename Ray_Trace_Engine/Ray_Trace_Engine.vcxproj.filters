@@ -4,19 +4,13 @@
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Buffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Build_Scene.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Commands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Complex_Scene.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\CoreBase.cpp">
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\ComputeVertex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\CoreDebug.cpp">
@@ -40,22 +34,7 @@
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Engine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\EnumStringHelper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Math_Compute.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Multi_Model.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\ObjCreate.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\RTObjects.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Raytracing.cpp">
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\EngineCore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Shader.cpp">
@@ -64,64 +43,28 @@
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\ShaderBindingTable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\TFMaterial.cpp">
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\TextureLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\TFMesh.cpp">
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Utilities_AS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\TFModel.cpp">
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Utilities_CreateObject.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\TFNode.cpp">
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Utilities_EngCore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Texture.cpp">
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Utilities_EnumStringHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Tools.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\VulkanglTFModel.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\glTFAnimation.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\glTFShadows.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\glTFTextured.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\glTF_Compute.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\glTF_PBR.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\glTF_Reflections.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\glTF_model.cpp">
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\glTFModel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\gltf_viewer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\gltf_viewer_compute.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\gltf_viewer_model.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\gltf_viewer_rt_utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\multi_blas.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\raytrace_main.cpp">
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\dependencies\imgui\imgui.cpp">
@@ -150,19 +93,13 @@
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Buffer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Build_Scene.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Camera.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Commands.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Complex_Scene.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\CoreBase.hpp">
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\ComputeVertex.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\CoreDebug.hpp">
@@ -186,22 +123,7 @@
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Engine.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\EnumStringHelper.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Math_Compute.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Multi_Model.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\ObjCreate.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\RTObjects.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Raytracing.hpp">
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\EngineCore.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Shader.hpp">
@@ -210,64 +132,28 @@
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\ShaderBindingTable.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\TFMaterial.hpp">
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\TextureLoader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\TFMesh.hpp">
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Utilities_AS.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\TFModel.hpp">
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Utilities_CreateObject.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\TFNode.hpp">
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Utilities_EngCore.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Texture.hpp">
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Utilities_EnumStringHelper.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Tools.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\VulkanglTFModel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\glTFAnimation.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\glTFShadows.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\glTFTextured.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\glTF_Compute.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\glTF_PBR.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\glTF_Reflections.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\glTF_model.hpp">
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\glTFModel.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\gltf_viewer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\gltf_viewer_compute.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\gltf_viewer_model.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\gltf_viewer_rt_utils.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\multi_blas.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\raytrace_main.hpp">
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\main.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\stb_image.h">

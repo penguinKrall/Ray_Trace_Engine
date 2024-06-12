@@ -7,7 +7,7 @@
 #include <array>
 #include <assert.h>
 
-namespace vrt {
+namespace gtp {
 
 	// -- buffer helper class
 	class Buffer {

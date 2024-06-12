@@ -1,165 +1,385 @@
-#include "multi_blas.hpp"
+#include "glTFAnimation.hpp"
 
+#define VK_GLTF_MATERIAL_IDS
 
-multi_blas::multi_blas()
+void glTFAnimation::CreateTestUBO() {
+	ubo.bufferData.bufferName = "testUBOBuffer";
+	ubo.bufferData.bufferMemoryName = "testUBOBufferMemory";
+
+	if (pCoreBase->CreateBuffer(
+		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		&testUBO, sizeof(TestUniformData), &testUniformData) != VK_SUCCESS) {
+		throw std::invalid_argument("failed to create test uniform buffer!");
+	}
+}
+
+glTFAnimation::glTFAnimation()
 {
 }
 
-multi_blas::multi_blas(CoreBase* coreBase) {
-
-	Init_multi_blas(coreBase);
-
+glTFAnimation::glTFAnimation(CoreBase* coreBase) {
+	InitglTFAnimation(coreBase);
 }
 
-void multi_blas::Init_multi_blas(CoreBase* coreBase) {
+void glTFAnimation::DestroyglTFAnimation() {
 
+	//destroy compute
+	this->gltf_compute.Destroy_glTF_Compute();
+
+	//descriptor pool
+	vkDestroyDescriptorPool(pCoreBase->devices.logical, this->pipelineData.descriptorPool, nullptr);
+
+	//shader binding tables
+	raygenShaderBindingTable.destroy(pCoreBase->devices.logical);
+	hitShaderBindingTable.destroy(pCoreBase->devices.logical);
+	missShaderBindingTable.destroy(pCoreBase->devices.logical);
+
+	//shaders
+	shader.DestroyShader();
+
+	//pipeline and layout
+	vkDestroyPipeline(this->pCoreBase->devices.logical, this->pipelineData.pipeline, nullptr);
+	vkDestroyPipelineLayout(this->pCoreBase->devices.logical, this->pipelineData.pipelineLayout, nullptr);
+
+	//descriptor set layout
+	vkDestroyDescriptorSetLayout(this->pCoreBase->devices.logical, this->pipelineData.descriptorSetLayout, nullptr);
+
+	//test ubo
+	testUBO.destroy(this->pCoreBase->devices.logical);
+	//uniform buffer
+	ubo.destroy(this->pCoreBase->devices.logical);
+
+	//storage image
+	vkDestroyImageView(pCoreBase->devices.logical, this->storageImage.view, nullptr);
+	vkDestroyImage(pCoreBase->devices.logical, this->storageImage.image, nullptr);
+	vkFreeMemory(pCoreBase->devices.logical, this->storageImage.memory, nullptr);
+
+	//TLAS 
+	pCoreBase->coreExtensions->vkDestroyAccelerationStructureKHR(
+		pCoreBase->devices.logical, this->TLAS.accelerationStructureKHR, nullptr);
+
+	//tlas buffers
+	buffers.tlas_scratch.destroy(this->pCoreBase->devices.logical);
+	buffers.tlas_instancesBuffer.destroy(this->pCoreBase->devices.logical);
+	vkDestroyBuffer(pCoreBase->devices.logical, this->TLAS.buffer, nullptr);
+	vkFreeMemory(pCoreBase->devices.logical, this->TLAS.memory, nullptr);
+
+	//BLAS
+	pCoreBase->coreExtensions->vkDestroyAccelerationStructureKHR(
+		pCoreBase->devices.logical, this->BLAS.accelerationStructureKHR, nullptr);
+
+	//blas buffers
+	buffers.blas_scratch.destroy(this->pCoreBase->devices.logical);
+	vkDestroyBuffer(pCoreBase->devices.logical, this->BLAS.buffer, nullptr);
+	vkFreeMemory(pCoreBase->devices.logical, this->BLAS.memory, nullptr);
+
+
+	//buffers
+	this->buffers.geometryNodesBuffer.destroy(this->pCoreBase->devices.logical);
+	this->buffers.transformBuffer.destroy(this->pCoreBase->devices.logical);
+
+	//model
+	//this->gltf_model->DestroyModel();
+
+	// -- new model
+	//this->gltf_model->Destroy_glTF_model();
+
+	//new new model
+	model->DestroyModel();
+}
+
+void glTFAnimation::InitglTFAnimation(CoreBase* coreBase) {
 	//init core pointer
 	this->pCoreBase = coreBase;
 
-	//shader
-	shader = Shader(pCoreBase);
+	//init shader
+	shader = Shader(coreBase);
 
 	//load assets
-	this->LoadAssets();
+	LoadAssets();
 
-	this->PreTransformModel();
+	//INIT COMPUTE
+	this->gltf_compute = glTF_Compute(coreBase, this->model);
 
-	vkDeviceWaitIdle(this->pCoreBase->devices.logical);
+	//create BLAS
+	CreateBLAS();
 
-	//compute
-	this->gltf_compute = glTF_Compute(pCoreBase, this->assets.animatedModel);
-
-	//create bottom level acceleration structure
-	this->CreateBottomLevelAccelerationStructures();
-
-	//create geometry nodes buffer
-	this->CreateGeometryNodesBuffer();
-
-	//create top level acceleration structure
-	this->CreateTLAS();
+	//create TLAS
+	CreateTLAS();
 
 	//create storage image
-	this->CreateStorageImage();
+	CreateStorageImage();
 
 	//create uniform buffer
-	this->CreateUniformBuffer();
+	CreateUniformBuffer();
 
-	//create ray tracing pipeline
-	this->CreateRayTracingPipeline();
+	//test ubo
+	CreateTestUBO();
 
-	//create shader binding tables
-	this->CreateShaderBindingTable();
+	//create raytracing pipeline
+	CreateRayTracingPipeline();
+
+	//create shader binding table
+	CreateShaderBindingTable();
 
 	//create descriptor set
-	this->CreateDescriptorSet();
+	CreateDescriptorSet();
 
-	//setup buffer region device addresses
-	this->SetupBufferRegionAddresses();
+	//setup buffer device address regions
+	SetupBufferRegionAddresses();
 
 	//build command buffers
-	this->BuildCommandBuffers();
+	BuildCommandBuffers();
 
+	////std::cout << "" << gltf_model->nodes.size() << std::endl;
 
 }
 
-void multi_blas::LoadAssets() {
+void glTFAnimation::LoadAssets() {
 
-	const uint32_t glTFLoadingFlags =
-		vkglTF::FileLoadingFlags::PreTransformVertices |
-		vkglTF::FileLoadingFlags::PreMultiplyVertexColors;
+	//std::cout << "\nCreating glTFAnimation BLAS\n-------------------------\n" << std::endl;
 
-	this->assets.animatedModel = new vkglTF::Model(pCoreBase);
-	this->assets.animatedModel->loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/CesiumMan/glTF/CesiumMan.gltf",
+	// -- init memory property flags
+	this->memoryPropertyFlags =
+		VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+		VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+
+	//this->gltf_model = glTF_model(this->pCoreBase, "C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/FlightHelmet/glTF/FlightHelmet.gltf");
+	//this->gltf_model = glTF_model(this->pCoreBase, "C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/CesiumMan/glTF/CesiumMan.gltf");
+
+	//sacha model loading file
+	model = new vkglTF::Model(this->pCoreBase);
+
+	//model->loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/FlightHelmet/glTF/FlightHelmet.gltf",
+	//	pCoreBase, pCoreBase->queue.graphics);
+
+	model->loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/CesiumMan/glTF/CesiumMan.gltf",
 		pCoreBase, pCoreBase->queue.graphics);
 
-	this->assets.models.push_back(this->assets.animatedModel);
+	//model->loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/gunther2/gunther.gltf",
+	//	pCoreBase, pCoreBase->queue.graphics);
 
-	this->assets.helmetModel = new vkglTF::Model(pCoreBase);
-	this->assets.helmetModel->loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/FlightHelmet/glTF/FlightHelmet.gltf",
-		pCoreBase, pCoreBase->queue.graphics, glTFLoadingFlags, 1.0f);
+	//model->loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/gltf_direction_cube/gltf_direction_cube_negy.gltf",
+	//	pCoreBase, pCoreBase->queue.graphics);
 
-	this->assets.models.push_back(this->assets.helmetModel);
+	//this->gltf_model = glTF_model(this->pCoreBase,
+	//	"C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/gltf_direction_cube/gltf_direction_cube_negy.gltf");
 
-	this->assets.reflectionSceneModel = new vkglTF::Model(pCoreBase);
-	this->assets.reflectionSceneModel->loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/reflection_scene.gltf",
-		pCoreBase, pCoreBase->queue.graphics, glTFLoadingFlags, 1.0f);
-
-	this->assets.models.push_back(this->assets.reflectionSceneModel);
-
-	//this->assets.sampleBuildingModel = new vkglTF::Model(pCoreBase);
-	//this->assets.sampleBuildingModel->loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/samplebuilding.gltf",
-	//	pCoreBase, pCoreBase->queue.graphics, glTFLoadingFlags, 1.0f);
-	//
-	//this->assets.models.push_back(this->assets.sampleBuildingModel);
-
+	//this->gltf_model = glTF_model(this->pCoreBase,
+	//	"C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/gltf_direction_cube/gltf_direction_cube_posy.gltf");
 }
 
-void multi_blas::CreateBottomLevelAccelerationStructures() {
+void glTFAnimation::CreateBLAS() {
 
-	//texture offset - imperative to index textures via geometries in ray trace shaders
-	uint32_t textureOffset = 0;
+	// Use transform matrices from the glTF nodes
+	std::vector<VkTransformMatrixKHR> transformMatrices{};
 
-	//resize bottom level acceleration structures as per loaded models
-	this->bottomLevelAccelerationStructures.resize(this->assets.models.size());
-
-	//create bottom level acceleration structures
-	for (int i = 0; i < this->bottomLevelAccelerationStructures.size(); i++) {
-		vrt::RTObjects::createBLAS(
-			this->pCoreBase,
-			&this->geometryNodeBuf,
-			&this->geometryIndexBuf,
-			&this->bottomLevelAccelerationStructures[i],
-			&this->bottomLevelAccelerationStructures[i].accelerationStructure,
-			this->assets.models[i],
-			textureOffset);
-
-		//increment offset by size of models texture array
-		textureOffset += static_cast<uint32_t>(this->assets.models[i]->textures.size());
+	for (auto node : model->linearNodes) {
+		if (node->mesh) {
+			for (auto primitive : node->mesh->primitives) {
+				if (primitive->indexCount > 0) {
+					VkTransformMatrixKHR localTransformMatrix{};
+					auto m = glm::mat3x4(glm::transpose(node->getMatrix()));
+					memcpy(&localTransformMatrix, (void*)&m, sizeof(glm::mat3x4));
+					transformMatrices.push_back(localTransformMatrix);
+				}
+			}
+		}
 	}
 
+	// Transform buffer
+	if (pCoreBase->CreateBuffer(
+		VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		&buffers.transformBuffer,
+		static_cast<uint32_t>(transformMatrices.size()) * sizeof(VkTransformMatrixKHR),
+		transformMatrices.data()) != VK_SUCCESS) {
+		throw std::invalid_argument("failed to create glTFAnimation transform buffer");
+	}
+
+	// Build
+	// One geometry per glTF node, so we can index materials using gl_GeometryIndexEXT
+	//uint32_t maxPrimCount{ 0 };
+	//std::vector<uint32_t> maxPrimitiveCounts{};
+	//std::vector<VkAccelerationStructureGeometryKHR> geometries{};
+	//std::vector<VkAccelerationStructureBuildRangeInfoKHR> buildRangeInfos{};
+	//std::vector<VkAccelerationStructureBuildRangeInfoKHR*> pBuildRangeInfos{};
+	std::vector<GeometryNode> geometryNodes{};
+	//VkDeviceOrHostAddressConstKHR vertexBufferDeviceAddress{};
+	//VkDeviceOrHostAddressConstKHR indexBufferDeviceAddress{};
+	//VkDeviceOrHostAddressConstKHR transformBufferDeviceAddress{};
+
+	for (auto& node : model->linearNodes) {
+		if (node->mesh) {
+			for (auto& primitive : node->mesh->primitives) {
+				if (primitive->indexCount > 0) {
+
+					blasData.vertexBufferDeviceAddress.deviceAddress =
+						vrt::RTObjects::getBufferDeviceAddress(this->pCoreBase,
+							model->vertices.buffer.bufferData.buffer);// +primitive.firstVertex * sizeof(vkglTF::Vertex);
+					blasData.indexBufferDeviceAddress.deviceAddress =
+						vrt::RTObjects::getBufferDeviceAddress(this->pCoreBase,
+							model->indices.buffer.bufferData.buffer) + primitive->firstIndex * sizeof(uint32_t);
+
+					blasData.transformBufferDeviceAddress.deviceAddress =
+						vrt::RTObjects::getBufferDeviceAddress(this->pCoreBase,
+							buffers.transformBuffer.bufferData.buffer) + static_cast<uint32_t>(geometryNodes.size()) * sizeof(VkTransformMatrixKHR);
+
+					VkAccelerationStructureGeometryKHR geometry{};
+					geometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+					geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+					geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
+					geometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
+					geometry.geometry.triangles.vertexData = blasData.vertexBufferDeviceAddress;
+					geometry.geometry.triangles.maxVertex = model->modelVertexBuffer.size();
+					std::cout << "model->vertices.count: " << model->vertices.count << std::endl;
+					geometry.geometry.triangles.vertexStride = sizeof(vkglTF::Vertex);
+					geometry.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
+					geometry.geometry.triangles.indexData = blasData.indexBufferDeviceAddress;
+					geometry.geometry.triangles.transformData = blasData.transformBufferDeviceAddress;
+					blasData.geometries.push_back(geometry);
+					blasData.maxPrimitiveCounts.push_back(primitive->indexCount / 3);
+					blasData.maxPrimCount += primitive->indexCount / 3;
+
+					VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo{};
+					buildRangeInfo.firstVertex = 0;
+					buildRangeInfo.primitiveOffset = 0; // primitive.firstIndex * sizeof(uint32_t);
+					buildRangeInfo.primitiveCount = primitive->indexCount / 3;
+					buildRangeInfo.transformOffset = 0;
+					blasData.buildRangeInfos.push_back(buildRangeInfo);
+
+					GeometryNode geometryNode{};
+					geometryNode.vertexBufferDeviceAddress = blasData.vertexBufferDeviceAddress.deviceAddress;
+					geometryNode.indexBufferDeviceAddress = blasData.indexBufferDeviceAddress.deviceAddress;
+					geometryNode.textureIndexBaseColor = primitive->material.baseColorTexture->index;
+					geometryNode.textureIndexOcclusion = primitive->material.occlusionTexture ? primitive->material.occlusionTexture->index : -1;
+					geometryNodes.push_back(geometryNode);
+				}
+			}
+		}
+	}
+
+	for (auto& rangeInfo : blasData.buildRangeInfos) {
+		blasData.pBuildRangeInfos.push_back(&rangeInfo);
+	}
+
+	buffers.geometryNodesBuffer.bufferData.bufferName = "glTFAnimation_GeometryNodesBuffer";
+	buffers.geometryNodesBuffer.bufferData.bufferMemoryName = "glTFAnimation_GeometryNodesBufferMemory";
+
+	// @todo: stage to device
+	if (pCoreBase->CreateBuffer(
+		VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		&buffers.geometryNodesBuffer,
+		static_cast<uint32_t>(geometryNodes.size()) * sizeof(GeometryNode),
+		geometryNodes.data()) != VK_SUCCESS) {
+		throw std::invalid_argument("failed to create glTFAnimation geometry nodes buffer");
+	}
+
+	// Get size info
+	/*VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfo{};*/
+	blasData.accelerationStructureBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+	blasData.accelerationStructureBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+	blasData.accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+	blasData.accelerationStructureBuildGeometryInfo.geometryCount = static_cast<uint32_t>(blasData.geometries.size());
+	blasData.accelerationStructureBuildGeometryInfo.pGeometries = blasData.geometries.data();
+
+	const uint32_t numTriangles = blasData.maxPrimitiveCounts[0];
+
+	/*VkAccelerationStructureBuildSizesInfoKHR accelerationStructureBuildSizesInfo{};*/
+	blasData.accelerationStructureBuildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
+	this->pCoreBase->coreExtensions->vkGetAccelerationStructureBuildSizesKHR(
+		this->pCoreBase->devices.logical,
+		VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+		&blasData.accelerationStructureBuildGeometryInfo,
+		blasData.maxPrimitiveCounts.data(),
+		&blasData.accelerationStructureBuildSizesInfo);
+
+	vrt::RTObjects::createAccelerationStructureBuffer(this->pCoreBase, &this->BLAS.memory, &this->BLAS.buffer,
+		&blasData.accelerationStructureBuildSizesInfo, "glTFAnimation_AccelerationStructureBuffer");
+
+	VkAccelerationStructureCreateInfoKHR accelerationStructureCreateInfo{};
+	accelerationStructureCreateInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
+	accelerationStructureCreateInfo.buffer = BLAS.buffer;
+	accelerationStructureCreateInfo.size = blasData.accelerationStructureBuildSizesInfo.accelerationStructureSize;
+	accelerationStructureCreateInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+
+	//create acceleration structure
+	pCoreBase->add([this, &accelerationStructureCreateInfo]()
+		{return pCoreBase->objCreate.VKCreateAccelerationStructureKHR(&accelerationStructureCreateInfo, nullptr,
+			&BLAS.accelerationStructureKHR);}, "glTFAnimation_BLASAccelerationStructureKHR");
+
+	//create scratch buffer for acceleration structure build
+	//vrt::Buffer scratchBuffer;
+	vrt::RTObjects::createScratchBuffer(this->pCoreBase, &buffers.blas_scratch, blasData.accelerationStructureBuildSizesInfo.buildScratchSize, "glTFAnimation_ScratchBufferBLAS");
+
+	blasData.accelerationStructureBuildGeometryInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+	blasData.accelerationStructureBuildGeometryInfo.dstAccelerationStructure = this->BLAS.accelerationStructureKHR;
+	blasData.accelerationStructureBuildGeometryInfo.scratchData.deviceAddress = buffers.blas_scratch.bufferData.bufferDeviceAddress.deviceAddress;
+
+	const VkAccelerationStructureBuildRangeInfoKHR* buildOffsetInfo = blasData.buildRangeInfos.data();
+
+	//Build the acceleration structure on the device via a one-time command buffer submission
+	//create command buffer
+	VkCommandBuffer commandBuffer = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+	//build BLAS
+	pCoreBase->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
+		commandBuffer,
+		1,
+		&blasData.accelerationStructureBuildGeometryInfo,
+		blasData.pBuildRangeInfos.data());
+
+	//end and submit and destroy command buffer
+	pCoreBase->FlushCommandBuffer(commandBuffer, pCoreBase->queue.graphics, pCoreBase->commandPools.graphics, true);
+
+	//get acceleration structure device address
+	VkAccelerationStructureDeviceAddressInfoKHR accelerationDeviceAddressInfo{};
+	accelerationDeviceAddressInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
+	accelerationDeviceAddressInfo.accelerationStructure = this->BLAS.accelerationStructureKHR;
+	this->BLAS.deviceAddress =
+		pCoreBase->coreExtensions->vkGetAccelerationStructureDeviceAddressKHR(pCoreBase->devices.logical,
+			&accelerationDeviceAddressInfo);
+
 }
 
-void multi_blas::CreateTLAS() {
-
-	// -- instances transform matrix
+void glTFAnimation::CreateTLAS() {
+	// We flip the matrix [1][1] = -1.0f to accomodate for the glTF up vector
 	VkTransformMatrixKHR transformMatrix = {
 		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f };
 
-	// -- array of instances
-	std::vector<VkAccelerationStructureInstanceKHR> blasInstances;
+	VkAccelerationStructureInstanceKHR instance{};
+	instance.transform = transformMatrix;
+	instance.instanceCustomIndex = 0;
+	instance.mask = 0xFF;
+	instance.instanceShaderBindingTableRecordOffset = 0;
+	instance.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+	////std::cout << "this->BLAS.deviceAddress" << this->BLAS.deviceAddress << std::endl;
+	instance.accelerationStructureReference = this->BLAS.deviceAddress;
 
-	//resize array
-	blasInstances.resize(this->bottomLevelAccelerationStructures.size());
+	//buffer for instance data
+	/*vrt::Buffer instancesBuffer;*/
 
-	//initialize instances array
-	for (int i = 0; i < blasInstances.size(); i++) {
-		blasInstances[i].transform = transformMatrix;
-		blasInstances[i].instanceCustomIndex = i;
-		blasInstances[i].mask = 0xFF;
-		blasInstances[i].instanceShaderBindingTableRecordOffset = 0;
-		blasInstances[i].accelerationStructureReference = this->bottomLevelAccelerationStructures[i].accelerationStructure.deviceAddress;
-		std::cout << "this->secondBLAS.deviceAddress" << this->bottomLevelAccelerationStructures[i].accelerationStructure.deviceAddress << std::endl;
-	}
-
-	// -- create instances buffer
-	buffers.tlas_instancesBuffer.bufferData.bufferName = "multi_blas_TLASInstancesBuffer";
-	buffers.tlas_instancesBuffer.bufferData.bufferMemoryName = "multi_blas_TLASInstancesBufferMemory";
+	buffers.tlas_instancesBuffer.bufferData.bufferName = "gltfAnimation_TLASInstancesBuffer";
+	buffers.tlas_instancesBuffer.bufferData.bufferMemoryName = "gltfAnimation_TLASInstancesBufferMemory";
 
 	if (pCoreBase->CreateBuffer(
 		VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 		&buffers.tlas_instancesBuffer,
-		sizeof(VkAccelerationStructureInstanceKHR) * static_cast<uint32_t>(blasInstances.size()),
-		blasInstances.data()) != VK_SUCCESS) {
-		throw std::invalid_argument("failed to create multi_blas instances buffer");
+		sizeof(VkAccelerationStructureInstanceKHR),
+		&instance) != VK_SUCCESS) {
+		throw std::invalid_argument("failed to create glTFAnimation instances buffer");
 	}
 
-	// -- instance buffer device address
+	//instance buffer device address
+	//VkDeviceOrHostAddressConstKHR instanceDataDeviceAddress{};
 	tlasData.instanceDataDeviceAddress.deviceAddress = vrt::RTObjects::getBufferDeviceAddress(this->pCoreBase, buffers.tlas_instancesBuffer.bufferData.buffer);
 
-	// -- acceleration Structure Geometry{};
+	//VkAccelerationStructureGeometryKHR accelerationStructureGeometry{};
 	tlasData.accelerationStructureGeometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
 	tlasData.accelerationStructureGeometry.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
 	tlasData.accelerationStructureGeometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
@@ -167,85 +387,85 @@ void multi_blas::CreateTLAS() {
 	tlasData.accelerationStructureGeometry.geometry.instances.arrayOfPointers = VK_FALSE;
 	tlasData.accelerationStructureGeometry.geometry.instances.data = tlasData.instanceDataDeviceAddress;
 
-
-	//  -- Get size info -- //
-	//Acceleration Structure Build Geometry Info
+	// Get size info
+	/*
+	The pSrcAccelerationStructure, dstAccelerationStructure, and mode members of pBuildInfo are ignored.
+	Any VkDeviceOrHostAddressKHR members of pBuildInfo are ignored by this command, except that the hostAddress
+	member of VkAccelerationStructureGeometryTrianglesDataKHR::transformData will be examined to check if it is NULL.*
+	*/
+	//VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfo{};
 	tlasData.accelerationStructureBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
 	tlasData.accelerationStructureBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-	tlasData.accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
+	tlasData.accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
 	tlasData.accelerationStructureBuildGeometryInfo.geometryCount = 1;
 	tlasData.accelerationStructureBuildGeometryInfo.pGeometries = &tlasData.accelerationStructureGeometry;
 
-	// -- tlas data member
-	//primitive count
-	tlasData.primitive_count = static_cast<uint32_t>(blasInstances.size());
+	uint32_t primitive_count = 1;
 
-	// -- acceleration Structure Build Sizes Info
+	//VkAccelerationStructureBuildSizesInfoKHR accelerationStructureBuildSizesInfo{};
 	tlasData.accelerationStructureBuildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 
-	// -- get acceleration structure build sizes
 	pCoreBase->coreExtensions->vkGetAccelerationStructureBuildSizesKHR(
 		pCoreBase->devices.logical,
 		VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
 		&tlasData.accelerationStructureBuildGeometryInfo,
-		&tlasData.primitive_count,
+		&primitive_count,
 		&tlasData.accelerationStructureBuildSizesInfo);
 
-	// -- create acceleration structure buffer
 	vrt::RTObjects::createAccelerationStructureBuffer(this->pCoreBase, &this->TLAS.memory, &this->TLAS.buffer, &tlasData.accelerationStructureBuildSizesInfo,
 		"glTFAnimation_TLASBuffer");
 
-	// -- acceleration structure create info
 	VkAccelerationStructureCreateInfoKHR accelerationStructureCreateInfo{};
 	accelerationStructureCreateInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
 	accelerationStructureCreateInfo.buffer = this->TLAS.buffer;
 	accelerationStructureCreateInfo.size = tlasData.accelerationStructureBuildSizesInfo.accelerationStructureSize;
 	accelerationStructureCreateInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
 
-	// -- create acceleration structure
+	//create acceleration structure
 	pCoreBase->add([this, &accelerationStructureCreateInfo]()
 		{return pCoreBase->objCreate.VKCreateAccelerationStructureKHR(&accelerationStructureCreateInfo, nullptr,
-			&TLAS.accelerationStructureKHR);}, "multi_blas_accelerationStructureKHR");
+			&TLAS.accelerationStructureKHR);}, "gltfAnimation_accelerationStructureKHR");
 
-	// -- create scratch buffer
+	//create scratch buffer
+	//vrt::Buffer scratchBuffer;
 	vrt::RTObjects::createScratchBuffer(this->pCoreBase,
 		&buffers.tlas_scratch, tlasData.accelerationStructureBuildSizesInfo.buildScratchSize, "glTFAnimation_ScratchBufferTLAS");
 
-	// acceleration Build Geometry Info{};
+	//VkAccelerationStructureBuildGeometryInfoKHR accelerationBuildGeometryInfo{};
 	tlasData.accelerationBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
 	tlasData.accelerationBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-	tlasData.accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
+	tlasData.accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
 	tlasData.accelerationBuildGeometryInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
 	tlasData.accelerationBuildGeometryInfo.dstAccelerationStructure = this->TLAS.accelerationStructureKHR;
 	tlasData.accelerationBuildGeometryInfo.geometryCount = 1;
 	tlasData.accelerationBuildGeometryInfo.pGeometries = &tlasData.accelerationStructureGeometry;
 	tlasData.accelerationBuildGeometryInfo.scratchData.deviceAddress = buffers.tlas_scratch.bufferData.bufferDeviceAddress.deviceAddress;
 
-	// acceleration structure build range info
 	VkAccelerationStructureBuildRangeInfoKHR accelerationStructureBuildRangeInfo{};
-	accelerationStructureBuildRangeInfo.primitiveCount = tlasData.primitive_count;
+	accelerationStructureBuildRangeInfo.primitiveCount = 1;
 	accelerationStructureBuildRangeInfo.primitiveOffset = 0;
 	accelerationStructureBuildRangeInfo.firstVertex = 0;
 	accelerationStructureBuildRangeInfo.transformOffset = 0;
 
-	// array of acceleration structure build range info
+	//std::vector<VkAccelerationStructureBuildRangeInfoKHR*> accelerationBuildStructureRangeInfos = { &accelerationStructureBuildRangeInfo };
+
 	tlasData.accelerationBuildStructureRangeInfos = { &accelerationStructureBuildRangeInfo };
 
 	//build the acceleration structure on the device via a one-time command buffer submission
-	//implementations can support acceleration structure building on host (VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands)
-	//device builds are preferred
-	
-	//create one time submit command buffer
+	//some implementations may support acceleration structure building on the host
+	//(VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands), but we prefer device builds
+	//create command buffer
 	VkCommandBuffer commandBuffer = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-	//build acceleration structure/s
+	//this is where i start next
+	//build acceleration structures
 	pCoreBase->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
 		commandBuffer,
 		1,
 		&tlasData.accelerationBuildGeometryInfo,
 		tlasData.accelerationBuildStructureRangeInfos.data());
 
-	//flush one time submit command buffer
+	//flush command buffer
 	pCoreBase->FlushCommandBuffer(commandBuffer, pCoreBase->queue.graphics, pCoreBase->commandPools.graphics, true);
 
 	//get acceleration structure device address
@@ -253,34 +473,71 @@ void multi_blas::CreateTLAS() {
 	accelerationDeviceAddressInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
 	accelerationDeviceAddressInfo.accelerationStructure = this->TLAS.accelerationStructureKHR;
 
-	//get and assign tlas acceleration structure device address value
 	this->TLAS.deviceAddress = pCoreBase->coreExtensions->vkGetAccelerationStructureDeviceAddressKHR(pCoreBase->devices.logical,
 		&accelerationDeviceAddressInfo);
 
+
+
+	//destroy scratch buffer
+	//scratchBuffer.destroy(this->pCoreBase->devices.logical);
+
+	//destroy instances buffer
+	//instancesBuffer.destroy(this->pCoreBase->devices.logical);
+
 }
 
-void multi_blas::CreateStorageImage() {
+void glTFAnimation::RecreateAccelerationStructures() {
 
+	//vkDeviceWaitIdle(this->pCoreBase->devices.logical);
+	//
+	////TLAS 
+	//pCoreBase->coreExtensions->vkDestroyAccelerationStructureKHR(
+	//	pCoreBase->devices.logical, this->TLAS.accelerationStructureKHR, nullptr);
+	//
+	////tlas buffers
+	//vkDestroyBuffer(pCoreBase->devices.logical, this->TLAS.buffer, nullptr);
+	//vkFreeMemory(pCoreBase->devices.logical, this->TLAS.memory, nullptr);
+	//
+	////BLAS
+	//pCoreBase->coreExtensions->vkDestroyAccelerationStructureKHR(
+	//	pCoreBase->devices.logical, this->BLAS.accelerationStructureKHR, nullptr);
+	//
+	////blas buffers
+	//vkDestroyBuffer(pCoreBase->devices.logical, this->BLAS.buffer, nullptr);
+	//vkFreeMemory(pCoreBase->devices.logical, this->BLAS.memory, nullptr);
+
+	CreateBLAS();
+	CreateTLAS();
+}
+
+void glTFAnimation::CreateStorageImage() {
 	vrt::RTObjects::createStorageImage(this->pCoreBase, &this->storageImage, "glTFAnimation_storageImage");
-
 }
 
-void multi_blas::CreateUniformBuffer() {
+void glTFAnimation::CreateUniformBuffer() {
 
-	buffers.ubo.bufferData.bufferName = "shadowUBOBuffer";
-	buffers.ubo.bufferData.bufferMemoryName = "shadowUBOBufferMemory";
+	ubo.bufferData.bufferName = "shadowUBOBuffer";
+	ubo.bufferData.bufferMemoryName = "shadowUBOBufferMemory";
 
 	if (pCoreBase->CreateBuffer(
 		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		&buffers.ubo, sizeof(UniformData), &uniformData) != VK_SUCCESS) {
+		&ubo, sizeof(UniformData), &uniformData) != VK_SUCCESS) {
 		throw std::invalid_argument("failed to create shadow uniform buffer!");
 	}
+
+	//if (ubo.map(pCoreBase->devices.logical, sizeof(UniformData), 0) != VK_SUCCESS) {
+	//	throw std::invalid_argument("failed to map shadow uniform buffer");
+	//}
+
+	//ubo.unmap(pCoreBase->devices.logical);
 
 	UpdateUniformBuffer(0.0f);
 
 }
 
-void multi_blas::UpdateUniformBuffer(float deltaTime) {
+void glTFAnimation::UpdateUniformBuffer(float deltaTime) {
+
+
 	float rotationTime = deltaTime * 0.10f;
 
 	//projection matrix
@@ -295,26 +552,25 @@ void multi_blas::UpdateUniformBuffer(float deltaTime) {
 	//light position
 	//uniformData.lightPos = glm::vec4(cos(glm::radians(rotationTime * 360.0f)) * 150.0f, 100.0f + sin(glm::radians(rotationTime * 360.0f))
 	//	* 50.0f, 100.0f + sin(glm::radians(rotationTime * 360.0f)) * 150.0f, 1.0f);
-	uniformData.lightPos =
-		glm::vec4(cos(glm::radians(rotationTime * 360.0f)) * 40.0f,
-			-20.0f + sin(glm::radians(rotationTime * 360.0f)) * 20.0f,
-			25.0f + sin(glm::radians(rotationTime * 360.0f)) * 5.0f,
-			0.0f);
 
-	memcpy(buffers.ubo.bufferData.mapped, &uniformData, sizeof(UniformData));
+	uniformData.lightPos = glm::vec4(0.0f, 10.0f, -20.0f, 0.0f);
+
+	//uniformData.testMat = glm::mat4(20.0f);
+
+	// This value is used to accumulate multiple frames into the finale picture
+	// It's required as ray tracing needs to do multiple passes for transparency
+	// In this sample we use noise offset by this frame index to shoot rays for transparency into different directions
+	// Once enough frames with random ray directions have been accumulated, it looks like proper transparency
+	uniformData.frame++;
+	memcpy(ubo.bufferData.mapped, &uniformData, sizeof(UniformData));
 }
 
-void multi_blas::CreateRayTracingPipeline() {
-
+void glTFAnimation::CreateRayTracingPipeline() {
+	// @todo:
 	uint32_t imageCount{ 0 };
-	for (int i = 0; i < assets.models.size(); i++) {
-		imageCount += assets.models[i]->textures.size();
-	}
-	//imageCount = static_cast<uint32_t>(this->assets.animatedModel->textures.size()) +
-	//	static_cast<uint32_t>(this->assets.helmetModel->textures.size()) +
-	//	static_cast<uint32_t>(this->assets.reflectionSceneModel->textures.size());
+	imageCount = static_cast<uint32_t>(model->textures.size());
 
-	std::cout << "multi_blas raytracing pipeline_  imagecount: " << imageCount << std::endl;
+	//std::cout << "gltfAnimation raytracing pipeline_  imagecount: " << imageCount << std::endl;
 
 	//acceleration structure layout binding
 	VkDescriptorSetLayoutBinding accelerationStructureLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
@@ -332,25 +588,13 @@ void multi_blas::CreateRayTracingPipeline() {
 	VkDescriptorSetLayoutBinding textureImageLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
 		3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR, nullptr);
 
-	////geometry node layout binding
-	//VkDescriptorSetLayoutBinding geometryNodeLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
-	//	4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
-	//
-	////second geometry node layout binding
-	//VkDescriptorSetLayoutBinding secondGeometryNodeLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
-	//	5, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
-
-	//g_node_buffer layout binding
-	VkDescriptorSetLayoutBinding g_node_bufferLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
-		4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
-
-	//g_node_indices layout binding
-	VkDescriptorSetLayoutBinding g_node_indicesLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
-		5, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
+	//geometry node layout binding
+	VkDescriptorSetLayoutBinding geometryNodeLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
+		4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR, nullptr);
 
 	//texture image layout binding
 	VkDescriptorSetLayoutBinding allTextureImagesLayoutBinding = vrt::Tools::VkInitializers::descriptorSetLayoutBinding(
-		6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageCount, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR, nullptr);
+		5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageCount, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR, nullptr);
 
 
 	//bindings array
@@ -359,10 +603,7 @@ void multi_blas::CreateRayTracingPipeline() {
 		storageImageLayoutBinding,
 		uniformBufferLayoutBinding,
 		textureImageLayoutBinding,
-		//geometryNodeLayoutBinding,
-		//secondGeometryNodeLayoutBinding,
-		g_node_bufferLayoutBinding,
-		g_node_indicesLayoutBinding,
+		geometryNodeLayoutBinding,
 		allTextureImagesLayoutBinding,
 
 		});
@@ -370,9 +611,8 @@ void multi_blas::CreateRayTracingPipeline() {
 	// Unbound set
 	VkDescriptorSetLayoutBindingFlagsCreateInfoEXT setLayoutBindingFlags{};
 	setLayoutBindingFlags.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
-	setLayoutBindingFlags.bindingCount = 7;
+	setLayoutBindingFlags.bindingCount = 6;
 	std::vector<VkDescriptorBindingFlagsEXT> descriptorBindingFlags = {
-		0,
 		0,
 		0,
 		0,
@@ -426,8 +666,8 @@ void multi_blas::CreateRayTracingPipeline() {
 
 	// Ray generation group
 	{
-		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/multi_blas_raygen.rgen.spv", VK_SHADER_STAGE_RAYGEN_BIT_KHR,
-			"multi_blas_raygen"));
+		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/gltfAnim2_raygen.rgen.spv", VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+			"gltfAnimation_raygen"));
 		shaderStages.back().pSpecializationInfo = &specializationInfo;
 		VkRayTracingShaderGroupCreateInfoKHR shaderGroup{};
 		shaderGroup.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
@@ -441,8 +681,8 @@ void multi_blas::CreateRayTracingPipeline() {
 
 	// Miss group
 	{
-		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/multi_blas_miss.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR,
-			"multi_blas_miss"));
+		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/gltfAnim2_miss.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR,
+			"gltfAnimation_miss"));
 		VkRayTracingShaderGroupCreateInfoKHR shaderGroup{};
 		shaderGroup.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		shaderGroup.type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
@@ -452,16 +692,16 @@ void multi_blas::CreateRayTracingPipeline() {
 		shaderGroup.intersectionShader = VK_SHADER_UNUSED_KHR;
 		shaderGroups.push_back(shaderGroup);
 		// Second shader for glTFShadows
-		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/multi_blas_shadow.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR,
-			"multi_blas_shadowmiss"));
+		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/gltfAnim2_shadow.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR,
+			"gltfAnimation_shadowmiss"));
 		shaderGroup.generalShader = static_cast<uint32_t>(shaderStages.size()) - 1;
 		shaderGroups.push_back(shaderGroup);
 	}
 
 	// Closest hit group for doing texture lookups
 	{
-		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/multi_blas_closesthit.rchit.spv", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
-			"multi_blas_closestHit"));
+		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/gltfAnim2_closesthit.rchit.spv", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
+			"gltfAnimation_closestHit"));
 		VkRayTracingShaderGroupCreateInfoKHR shaderGroup{};
 		shaderGroup.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		shaderGroup.type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
@@ -469,11 +709,12 @@ void multi_blas::CreateRayTracingPipeline() {
 		shaderGroup.closestHitShader = static_cast<uint32_t>(shaderStages.size()) - 1;
 		shaderGroup.intersectionShader = VK_SHADER_UNUSED_KHR;
 		// This group also uses an anyhit shader for doing transparency (see anyhit.rahit for details)
-		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/multi_blas_anyhit.rahit.spv", VK_SHADER_STAGE_ANY_HIT_BIT_KHR,
-			"multi_blas_anyhit"));
+		shaderStages.push_back(shader.loadShader(projDirectory.string() + "/shaders/compiled/gltfAnim2_anyhit.rahit.spv", VK_SHADER_STAGE_ANY_HIT_BIT_KHR,
+			"gltfAnimation_anyhit"));
 		shaderGroup.anyHitShader = static_cast<uint32_t>(shaderStages.size()) - 1;
 		shaderGroups.push_back(shaderGroup);
 	}
+
 
 	//	Create the ray tracing pipeline
 	VkRayTracingPipelineCreateInfoKHR rayTracingPipelineCreateInfo{};
@@ -492,7 +733,8 @@ void multi_blas::CreateRayTracingPipeline() {
 
 }
 
-void multi_blas::CreateShaderBindingTable() {
+void glTFAnimation::CreateShaderBindingTable() {
+
 	// handle size
 	const uint32_t handleSize = pCoreBase->deviceProperties.rayTracingPipelineKHR.shaderGroupHandleSize;
 
@@ -563,33 +805,29 @@ void multi_blas::CreateShaderBindingTable() {
 		memcpy(hitShaderBindingTable.bufferData.mapped, shaderHandleStorage.data() + handleSizeAligned * 3, handleSize * 2);
 		hitShaderBindingTable.unmap(pCoreBase->devices.logical);
 	}
-
 	catch (const std::exception& e) {
 		std::cerr << "Error creating shader binding table: " << e.what() << std::endl;
 		// Handle error (e.g., cleanup resources, rethrow, etc.)
 		// You may want to add additional error handling here based on your application's requirements
 		throw;
 	}
-
 }
 
-void multi_blas::CreateDescriptorSet() {
+void glTFAnimation::CreateDescriptorSet() {
 
 	//image count
-	uint32_t imageCount{ 0 };
-	for (int i = 0; i < assets.models.size(); i++) {
-		imageCount += assets.models[i]->textures.size();
-	}
+	uint32_t imageCount = static_cast<uint32_t>(this->model->textures.size());
 
-	//std::cout << "!!!!!!!!!!!CREATEDESCRIPTORSETS!!!!!!!!!!!\nstatic_cast<uint32_t>(this->assets.animatedModel->textures.size(): " 
-	//	<< static_cast<uint32_t>(this->assets.animatedModel->textures.size()) << std::endl;
+	//std::cout << "!!!!!!!!!!!CREATEDESCRIPTORSETS!!!!!!!!!!!\nstatic_cast<uint32_t>(this->model->textures.size(): " 
+	//	<< static_cast<uint32_t>(this->model->textures.size()) << std::endl;
 	//descriptor pool sizes
 	std::vector<VkDescriptorPoolSize> poolSizes = {
 		{ VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 10 },
 		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 10 },
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 150 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 10 },
 		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(this->model->textures.size()) }
 	};
 	//descriptor pool create info
 	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
@@ -649,9 +887,9 @@ void multi_blas::CreateDescriptorSet() {
 
 	//ubo descriptor info
 	VkDescriptorBufferInfo uboDescriptor{};
-	uboDescriptor.buffer = buffers.ubo.bufferData.buffer;
+	uboDescriptor.buffer = ubo.bufferData.buffer;
 	uboDescriptor.offset = 0;
-	uboDescriptor.range = buffers.ubo.bufferData.size;
+	uboDescriptor.range = ubo.bufferData.size;
 
 	//ubo descriptor write info
 	VkWriteDescriptorSet uniformBufferWrite{};
@@ -662,34 +900,20 @@ void multi_blas::CreateDescriptorSet() {
 	uniformBufferWrite.pBufferInfo = &uboDescriptor;
 	uniformBufferWrite.descriptorCount = 1;
 
-	// g_nodes_buffer
-	VkDescriptorBufferInfo g_nodes_BufferDescriptor{
-		this->buffers.g_nodes_buffer.bufferData.buffer,
-		0, this->buffers.g_nodes_buffer.bufferData.size };
+
+	// geometry -- vertex/index descriptor info
+	VkDescriptorBufferInfo geometryBufferDescriptor{
+		this->buffers.geometryNodesBuffer.bufferData.buffer,
+		0, this->buffers.geometryNodesBuffer.bufferData.size };
 
 	//geometry descriptor write info
-	VkWriteDescriptorSet g_nodes_bufferWrite{};
-	g_nodes_bufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	g_nodes_bufferWrite.dstSet = pipelineData.descriptorSet;
-	g_nodes_bufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	g_nodes_bufferWrite.dstBinding = 4;
-	g_nodes_bufferWrite.pBufferInfo = &g_nodes_BufferDescriptor;
-	g_nodes_bufferWrite.descriptorCount = 1;
-
-	// g_nodes_indices
-	VkDescriptorBufferInfo g_nodes_indicesDescriptor{
-		this->buffers.g_nodes_indices.bufferData.buffer,
-		0, this->buffers.g_nodes_indices.bufferData.size };
-
-	//geometry descriptor write info
-	VkWriteDescriptorSet g_nodes_indicesWrite{};
-	g_nodes_indicesWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	g_nodes_indicesWrite.dstSet = pipelineData.descriptorSet;
-	g_nodes_indicesWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	g_nodes_indicesWrite.dstBinding = 5;
-	g_nodes_indicesWrite.pBufferInfo = &g_nodes_indicesDescriptor;
-	g_nodes_indicesWrite.descriptorCount = 1;
-
+	VkWriteDescriptorSet geometryBufferWrite{};
+	geometryBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	geometryBufferWrite.dstSet = pipelineData.descriptorSet;
+	geometryBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	geometryBufferWrite.dstBinding = 4;
+	geometryBufferWrite.pBufferInfo = &geometryBufferDescriptor;
+	geometryBufferWrite.descriptorCount = 1;
 
 	std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
 		// Binding 0: Top level acceleration structure
@@ -698,41 +922,34 @@ void multi_blas::CreateDescriptorSet() {
 		storageImageWrite,
 		// Binding 2: Uniform data
 		uniformBufferWrite,
-		// Binding 4: g_nodes_buffer write
-		g_nodes_bufferWrite,
-		// Binding 5: g_nodes_indices write
-		g_nodes_indicesWrite
+		// Binding 4: Geometry node information SSBO
+		geometryBufferWrite,
 	};
 
 	// Image descriptors for the image array
 	std::vector<VkDescriptorImageInfo> textureDescriptors{};
-
-	for (int i = 0; i < assets.models.size(); i++) {
-		for (int j = 0; j < assets.models[i]->textures.size(); j++) {
-			VkDescriptorImageInfo descriptor{};
-			descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			descriptor.sampler = assets.models[i]->textures[j].sampler;
-			descriptor.imageView = assets.models[i]->textures[j].view;
-			textureDescriptors.push_back(descriptor);
-		}
+	for (auto texture : model->textures) {
+		VkDescriptorImageInfo descriptor{};
+		descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		descriptor.sampler = texture.sampler;
+		descriptor.imageView = texture.view;
+		textureDescriptors.push_back(descriptor);
 	}
 
 	VkWriteDescriptorSet writeDescriptorImgArray{};
 	writeDescriptorImgArray.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	writeDescriptorImgArray.dstBinding = 6;
+	writeDescriptorImgArray.dstBinding = 5;
 	writeDescriptorImgArray.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	writeDescriptorImgArray.descriptorCount = textureDescriptors.size();
+	writeDescriptorImgArray.descriptorCount = imageCount;
 	writeDescriptorImgArray.dstSet = this->pipelineData.descriptorSet;
 	writeDescriptorImgArray.pImageInfo = textureDescriptors.data();
 	writeDescriptorSets.push_back(writeDescriptorImgArray);
 
 	vkUpdateDescriptorSets(this->pCoreBase->devices.logical,
 		static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, VK_NULL_HANDLE);
-
 }
 
-void multi_blas::SetupBufferRegionAddresses() {
-
+void glTFAnimation::SetupBufferRegionAddresses() {
 	//setup buffer regions pointing to shaders in shader binding table
 	const uint32_t handleSizeAligned = vrt::Tools::alignedSize(
 		pCoreBase->deviceProperties.rayTracingPipelineKHR.shaderGroupHandleSize,
@@ -752,11 +969,9 @@ void multi_blas::SetupBufferRegionAddresses() {
 	hitStridedDeviceAddressRegion.deviceAddress = vrt::RTObjects::getBufferDeviceAddress(this->pCoreBase, hitShaderBindingTable.bufferData.buffer);
 	hitStridedDeviceAddressRegion.stride = handleSizeAligned;
 	hitStridedDeviceAddressRegion.size = handleSizeAligned * 2;
-
 }
 
-void multi_blas::BuildCommandBuffers() {
-
+void glTFAnimation::BuildCommandBuffers() {
 	//if (resized)
 	//{
 	//	handleResize();
@@ -842,10 +1057,129 @@ void multi_blas::BuildCommandBuffers() {
 		}
 
 	}
+}
+
+void glTFAnimation::UpdateVertexBuffers() {
+
+	//copy from staging buffers
+	//create temporary command buffer
+	VkCommandBuffer cmdBuffer = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+	VkBufferCopy copyRegion{};
+	copyRegion.srcOffset = 0;
+	copyRegion.dstOffset = 0;
+
+	copyRegion.size = this->gltf_compute.storageInputBuffer.bufferData.size;
+
+	//std::cout << "this->gltf_compute.storageInputBuffer.bufferData.size: " << this->gltf_compute.storageInputBuffer.bufferData.size << std::endl;
+	//std::cout << "this->model->vertices.buffer.bufferData.size: " << this->model->vertices.buffer.bufferData.size << std::endl;
+	//std::cout << "vertexBufferSize: " << vertexBufferSize << std::endl;
+	vkCmdCopyBuffer(cmdBuffer, this->gltf_compute.storageInputBuffer.bufferData.buffer, this->model->vertices.buffer.bufferData.buffer, 1, &copyRegion);
+
+	//submit temporary command buffer and destroy command buffer/memory
+	pCoreBase->FlushCommandBuffer(cmdBuffer, pCoreBase->queue.graphics, pCoreBase->commandPools.graphics, true);
 
 }
 
-void multi_blas::RebuildCommandBuffers(int frame) {
+void glTFAnimation::UpdateBLAS(float timer) {
+
+	// Build
+	//via a one-time command buffer submission
+	VkCommandBuffer commandBuffer = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+	//build BLAS
+	pCoreBase->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
+		commandBuffer,
+		1,
+		&blasData.accelerationStructureBuildGeometryInfo,
+		blasData.pBuildRangeInfos.data());
+
+	//end and submit and destroy command buffer
+	pCoreBase->FlushCommandBuffer(commandBuffer, pCoreBase->queue.graphics, pCoreBase->commandPools.graphics, true);
+
+}
+
+void glTFAnimation::UpdateTLAS() {
+
+	VkAccelerationStructureGeometryKHR accelerationStructureGeometry{};
+	accelerationStructureGeometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+	accelerationStructureGeometry.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
+	accelerationStructureGeometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+	accelerationStructureGeometry.geometry.instances.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
+	accelerationStructureGeometry.geometry.instances.arrayOfPointers = VK_FALSE;
+	accelerationStructureGeometry.geometry.instances.data = tlasData.instanceDataDeviceAddress;
+
+	// Get size info
+	/*
+	The pSrcAccelerationStructure, dstAccelerationStructure, and mode members of pBuildInfo are ignored.
+	Any VkDeviceOrHostAddressKHR members of pBuildInfo are ignored by this command, except that the hostAddress
+	member of VkAccelerationStructureGeometryTrianglesDataKHR::transformData will be examined to check if it is NULL.*
+	*/
+	VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfo{};
+	accelerationStructureBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+	accelerationStructureBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+	accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+	accelerationStructureBuildGeometryInfo.geometryCount = 1;
+	accelerationStructureBuildGeometryInfo.pGeometries = &accelerationStructureGeometry;
+
+	uint32_t primitive_count = 1;
+
+	VkAccelerationStructureBuildSizesInfoKHR accelerationStructureBuildSizesInfo{};
+	accelerationStructureBuildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
+
+	pCoreBase->coreExtensions->vkGetAccelerationStructureBuildSizesKHR(
+		pCoreBase->devices.logical,
+		VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+		&accelerationStructureBuildGeometryInfo,
+		&primitive_count,
+		&accelerationStructureBuildSizesInfo);
+
+	VkAccelerationStructureBuildGeometryInfoKHR accelerationBuildGeometryInfo{};
+	accelerationBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+	accelerationBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+	accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+	accelerationBuildGeometryInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+	accelerationBuildGeometryInfo.dstAccelerationStructure = this->TLAS.accelerationStructureKHR;
+	accelerationBuildGeometryInfo.geometryCount = 1;
+	accelerationBuildGeometryInfo.pGeometries = &accelerationStructureGeometry;
+	accelerationBuildGeometryInfo.scratchData.deviceAddress = buffers.tlas_scratch.bufferData.bufferDeviceAddress.deviceAddress;
+
+	VkAccelerationStructureBuildRangeInfoKHR accelerationStructureBuildRangeInfo{};
+	accelerationStructureBuildRangeInfo.primitiveCount = 1;
+	accelerationStructureBuildRangeInfo.primitiveOffset = 0;
+	accelerationStructureBuildRangeInfo.firstVertex = 0;
+	accelerationStructureBuildRangeInfo.transformOffset = 0;
+
+	std::vector<VkAccelerationStructureBuildRangeInfoKHR*> accelerationBuildStructureRangeInfos = { &accelerationStructureBuildRangeInfo };
+
+	//build the acceleration structure on the device via a one-time command buffer submission
+	//some implementations may support acceleration structure building on the host
+	//(VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands), but we prefer device builds
+	//create command buffer
+	VkCommandBuffer commandBuffer = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+	//this is where i start next
+	//build acceleration structures
+	pCoreBase->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
+		commandBuffer,
+		1,
+		&accelerationBuildGeometryInfo,
+		accelerationBuildStructureRangeInfos.data());
+
+	//flush command buffer
+	pCoreBase->FlushCommandBuffer(commandBuffer, pCoreBase->queue.graphics, pCoreBase->commandPools.graphics, true);
+
+	//get acceleration structure device address
+	VkAccelerationStructureDeviceAddressInfoKHR accelerationDeviceAddressInfo{};
+	accelerationDeviceAddressInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
+	accelerationDeviceAddressInfo.accelerationStructure = this->TLAS.accelerationStructureKHR;
+
+	this->TLAS.deviceAddress = pCoreBase->coreExtensions->vkGetAccelerationStructureDeviceAddressKHR(pCoreBase->devices.logical,
+		&accelerationDeviceAddressInfo);
+
+}
+
+void glTFAnimation::RebuildCommandBuffers(int frame) {
 
 	//subresource range
 	VkImageSubresourceRange subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
@@ -913,241 +1247,4 @@ void multi_blas::RebuildCommandBuffers(int frame) {
 		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		VK_IMAGE_LAYOUT_GENERAL,
 		subresourceRange);
-
 }
-
-void multi_blas::UpdateBLAS() {
-	// Build
-	//via a one-time command buffer submission
-	VkCommandBuffer commandBuffer = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-
-	//build BLAS
-	pCoreBase->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
-		commandBuffer,
-		1,
-		&this->bottomLevelAccelerationStructures[0].accelerationStructureBuildGeometryInfo,
-		this->bottomLevelAccelerationStructures[0].pBuildRangeInfos.data());
-
-	//end and submit and destroy command buffer
-	pCoreBase->FlushCommandBuffer(commandBuffer, pCoreBase->queue.graphics, pCoreBase->commandPools.graphics, true);
-
-	//std::cout << "this->BLAS.deviceAddress" << this->BLAS.deviceAddress << std::endl;
-}
-
-void multi_blas::UpdateTLAS() {
-
-	VkAccelerationStructureGeometryKHR accelerationStructureGeometry{};
-	accelerationStructureGeometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
-	accelerationStructureGeometry.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
-	accelerationStructureGeometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
-	accelerationStructureGeometry.geometry.instances.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
-	accelerationStructureGeometry.geometry.instances.arrayOfPointers = VK_FALSE;
-	accelerationStructureGeometry.geometry.instances.data = tlasData.instanceDataDeviceAddress;
-
-	// Get size info
-	/*
-	The pSrcAccelerationStructure, dstAccelerationStructure, and mode members of pBuildInfo are ignored.
-	Any VkDeviceOrHostAddressKHR members of pBuildInfo are ignored by this command, except that the hostAddress
-	member of VkAccelerationStructureGeometryTrianglesDataKHR::transformData will be examined to check if it is NULL.*
-	*/
-	//VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfo{};
-	//accelerationStructureBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-	//accelerationStructureBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-	//accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
-	//accelerationStructureBuildGeometryInfo.geometryCount = 1;
-	//accelerationStructureBuildGeometryInfo.pGeometries = &accelerationStructureGeometry;
-
-	VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfo{};
-	accelerationStructureBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-	accelerationStructureBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-	accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
-	accelerationStructureBuildGeometryInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
-	accelerationStructureBuildGeometryInfo.dstAccelerationStructure = this->TLAS.accelerationStructureKHR;
-	accelerationStructureBuildGeometryInfo.geometryCount = 1;
-	accelerationStructureBuildGeometryInfo.pGeometries = &accelerationStructureGeometry;
-	accelerationStructureBuildGeometryInfo.scratchData.deviceAddress = buffers.tlas_scratch.bufferData.bufferDeviceAddress.deviceAddress;
-
-	//uint32_t primitive_count = buffers.tlas_instancesBuffer.;
-
-	VkAccelerationStructureBuildSizesInfoKHR accelerationStructureBuildSizesInfo{};
-	accelerationStructureBuildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
-
-	pCoreBase->coreExtensions->vkGetAccelerationStructureBuildSizesKHR(
-		pCoreBase->devices.logical,
-		VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
-		&accelerationStructureBuildGeometryInfo,
-		&tlasData.primitive_count,
-		&accelerationStructureBuildSizesInfo);
-
-
-	VkAccelerationStructureBuildRangeInfoKHR accelerationStructureBuildRangeInfo{};
-	accelerationStructureBuildRangeInfo.primitiveCount = tlasData.primitive_count;
-	accelerationStructureBuildRangeInfo.primitiveOffset = 0;
-	accelerationStructureBuildRangeInfo.firstVertex = 0;
-	accelerationStructureBuildRangeInfo.transformOffset = 0;
-
-	std::vector<VkAccelerationStructureBuildRangeInfoKHR*> accelerationBuildStructureRangeInfos = { &accelerationStructureBuildRangeInfo };
-
-	//build the acceleration structure on the device via a one-time command buffer submission
-	//some implementations may support acceleration structure building on the host
-	//(VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands), but we prefer device builds
-	//create command buffer
-	VkCommandBuffer commandBuffer = pCoreBase->objCreate.VKCreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-
-	//this is where i start next
-	//build acceleration structures
-	pCoreBase->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
-		commandBuffer,
-		1,
-		&accelerationStructureBuildGeometryInfo,
-		accelerationBuildStructureRangeInfos.data());
-
-	//flush command buffer
-	pCoreBase->FlushCommandBuffer(commandBuffer, pCoreBase->queue.graphics, pCoreBase->commandPools.graphics, true);
-
-	//get acceleration structure device address
-	VkAccelerationStructureDeviceAddressInfoKHR accelerationDeviceAddressInfo{};
-	accelerationDeviceAddressInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
-	accelerationDeviceAddressInfo.accelerationStructure = this->TLAS.accelerationStructureKHR;
-
-	this->TLAS.deviceAddress = pCoreBase->coreExtensions->vkGetAccelerationStructureDeviceAddressKHR(pCoreBase->devices.logical,
-		&accelerationDeviceAddressInfo);
-
-}
-
-void multi_blas::PreTransformModel() {
-
-	//pre transform animation model
-	//animation uses bone local transform matrices to reposition model vertices
-	//update the model transform matrix to apply an initial transform that will remain
-	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 2.0f));
-	for (auto& node : this->assets.animatedModel->linearNodes) {
-		if (node->mesh) {
-			node->matrix *= glm::transpose(rotationMatrix);
-			node->matrix *= translationMatrix;
-		}
-	}
-
-	//the scene model geometry is -currently- left alone throughout render -- transform vertices by vertex here
-	for (auto& sceneVtx : this->assets.helmetModel->modelVertexBuffer) {
-		sceneVtx.pos.y += 0.5f;
-		sceneVtx.pos.z += -0.5f;
-	}
-
-	//update scene model vertices buffer
-	this->assets.helmetModel->vertices.buffer.map(this->pCoreBase->devices.logical, this->assets.helmetModel->vertices.buffer.bufferData.size, 0);
-	this->assets.helmetModel->vertices.buffer.copyTo(this->assets.helmetModel->modelVertexBuffer.data(), this->assets.helmetModel->vertices.buffer.bufferData.size);
-
-
-}
-
-void multi_blas::CreateGeometryNodesBuffer() {
-
-	buffers.g_nodes_buffer.bufferData.bufferName = "g_nodes_buffer";
-	buffers.g_nodes_buffer.bufferData.bufferMemoryName = "g_nodes_bufferMemory";
-
-	if (pCoreBase->CreateBuffer(
-		VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		&buffers.g_nodes_buffer,
-		static_cast<uint32_t>(geometryNodeBuf.size()) * sizeof(vrt::RTObjects::GeometryNode),
-		geometryNodeBuf.data()) != VK_SUCCESS) {
-		throw std::invalid_argument("failed to create g_nodes_buffer");
-	}
-
-	buffers.g_nodes_indices.bufferData.bufferName = "g_nodes_indicesBuffer";
-	buffers.g_nodes_indices.bufferData.bufferMemoryName = "g_nodes_indicesBufferMemory";
-
-	if (pCoreBase->CreateBuffer(
-		VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		&buffers.g_nodes_indices,
-		static_cast<uint32_t>(geometryIndexBuf.size()) * sizeof(int),
-		geometryIndexBuf.data()) != VK_SUCCESS) {
-		throw std::invalid_argument("failed to create g_nodes_index buffer");
-	}
-
-}
-
-
-
-void multi_blas::Destroy_multi_blas() {
-
-	// -- descriptor pool
-	vkDestroyDescriptorPool(pCoreBase->devices.logical, this->pipelineData.descriptorPool, nullptr);
-
-	// -- shader binding tables
-	raygenShaderBindingTable.destroy(pCoreBase->devices.logical);
-	hitShaderBindingTable.destroy(pCoreBase->devices.logical);
-	missShaderBindingTable.destroy(pCoreBase->devices.logical);
-
-	// -- shaders
-	shader.DestroyShader();
-
-	// -- pipeline and layout
-	vkDestroyPipeline(this->pCoreBase->devices.logical, this->pipelineData.pipeline, nullptr);
-	vkDestroyPipelineLayout(this->pCoreBase->devices.logical, this->pipelineData.pipelineLayout, nullptr);
-
-	// -- descriptor set layout
-	vkDestroyDescriptorSetLayout(this->pCoreBase->devices.logical, this->pipelineData.descriptorSetLayout, nullptr);
-
-	// -- uniform buffer
-	buffers.ubo.destroy(this->pCoreBase->devices.logical);
-
-	// -- storage image
-	vkDestroyImageView(pCoreBase->devices.logical, this->storageImage.view, nullptr);
-	vkDestroyImage(pCoreBase->devices.logical, this->storageImage.image, nullptr);
-	vkFreeMemory(pCoreBase->devices.logical, this->storageImage.memory, nullptr);
-
-	//g node buffer
-	this->buffers.g_nodes_buffer.destroy(this->pCoreBase->devices.logical);
-
-	//g node indices buffer
-	this->buffers.g_nodes_indices.destroy(this->pCoreBase->devices.logical);
-
-	// -- bottom level acceleration structure & related buffers -- //
-	for (int i = 0; i < this->bottomLevelAccelerationStructures.size(); i++) {
-
-	//accel. structure
-	pCoreBase->coreExtensions->vkDestroyAccelerationStructureKHR(
-		pCoreBase->devices.logical, this->bottomLevelAccelerationStructures[i].accelerationStructure.accelerationStructureKHR, nullptr);
-	
-	//scratch buffer
-	this->bottomLevelAccelerationStructures[i].accelerationStructure.scratchBuffer.destroy(this->pCoreBase->devices.logical);
-
-	//accel structure buffer and memory
-	vkDestroyBuffer(pCoreBase->devices.logical, this->bottomLevelAccelerationStructures[i].accelerationStructure.buffer, nullptr);
-	vkFreeMemory(pCoreBase->devices.logical, this->bottomLevelAccelerationStructures[i].accelerationStructure.memory, nullptr);
-	
-	}
-
-	// -- top level acceleration structure & related buffers -- //
-	
-	//accel. structure
-	pCoreBase->coreExtensions->vkDestroyAccelerationStructureKHR(
-		pCoreBase->devices.logical, this->TLAS.accelerationStructureKHR, nullptr);
-
-	//scratch buffer
-	buffers.tlas_scratch.destroy(this->pCoreBase->devices.logical);
-
-	//instances buffer
-	buffers.tlas_instancesBuffer.destroy(this->pCoreBase->devices.logical);
-
-	//accel. structure buffer and memory
-	vkDestroyBuffer(pCoreBase->devices.logical, this->TLAS.buffer, nullptr);
-	vkFreeMemory(pCoreBase->devices.logical, this->TLAS.memory, nullptr);
-
-	//transforms buffer
-	this->buffers.transformBuffer.destroy(this->pCoreBase->devices.logical);
-
-	// -- compute class
-	this->gltf_compute.Destroy_glTF_Compute();
-
-	// -- models
-	this->assets.reflectionSceneModel->DestroyModel();
-	this->assets.helmetModel->DestroyModel();
-	this->assets.animatedModel->DestroyModel();
-
-}
-
