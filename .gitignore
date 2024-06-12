@@ -1,0 +1,13 @@
+Ray_Trace_Engine/.vs/
+Ray_Trace_Engine/build/
+Ray_Trace_Engine/dependencies/
+Ray_Trace_Engine/object/
+Ray_Trace_Engine/oglObject/
+Ray_Trace_Engine/out/
+Ray_Trace_Engine/Debug/
+Ray_Trace_Engine/x64/
+Ray_Trace_Engine/Ray_Trace_Engine.dir/
+Ray_Trace_Engine/Ray_Trace_Engine/
+Ray_Trace_Engine/CMakeFiles/
+Ray_Trace_Engine/imgui.dir/
+Ray_Trace_Engine/shaders/compiled/

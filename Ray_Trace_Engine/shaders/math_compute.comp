@@ -1,0 +1,26 @@
+#version 450
+
+layout(local_size_x = 256) in;
+
+struct ComputeTestData {
+    vec4 testvec4_a;
+    vec4 testvec4_b;
+};
+
+layout(std140, binding = 0) buffer Data {
+    ComputeTestData ctData[];
+};
+
+void main() {
+
+    uint index = gl_GlobalInvocationID.x;
+
+    if(index > ctData.length()){
+        return;
+    }
+
+    ctData[index].testvec4_a *= vec4(2.0f); // Example operation: multiply each coordinate by 2.0
+    ctData[index].testvec4_b *= vec4(2.0f);
+    ctData[index].testvec4_b -= vec4(1.0, 0.0f, 0.0f, 0.0f);
+
+}

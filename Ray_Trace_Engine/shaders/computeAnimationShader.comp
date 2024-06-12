@@ -1,0 +1,61 @@
+#version 450 		// Use GLSL 4.5
+
+const int MAX_BONES = 15;
+const int MAX_BONE_INFLUENCE = 4;
+
+layout(local_size_x = 256) in;
+
+struct Vertex {
+    vec4 pos;
+    vec4 col;
+    vec4 tex;
+    vec4 norm;
+    ivec4 mBoneIDs;             // Only a single ivec4, not an array
+    vec4 mWeights;  // Only the weights remain as an array
+};
+
+struct ComputeTransform {
+    mat4 transforms;
+};
+
+layout(std430, binding = 0) buffer LastFrameBuffer {
+    Vertex lastFrameVertices[]; 
+};
+
+layout(std430, binding = 1) buffer CurrentFrameBuffer {
+    Vertex currentFrameVertices[]; 
+};
+
+layout(std430, binding = 2) buffer TransformBuffer {
+    ComputeTransform transforms[];
+};
+
+void main() {
+
+    uint vertexId = gl_GlobalInvocationID.x;
+
+    if(vertexId >= lastFrameVertices.length()) {
+        return; 
+    }
+
+    mat4 finalBoneTransform = mat4(0.0);
+    mat3 normalTransform = mat3(0.0);
+
+    for(int i = 0; i < MAX_BONE_INFLUENCE; i++) {
+
+        finalBoneTransform += 
+        transforms[lastFrameVertices[vertexId].mBoneIDs[i]].transforms * lastFrameVertices[vertexId].mWeights[i].x;
+        
+        normalTransform += 
+        mat3(transforms[lastFrameVertices[vertexId].mBoneIDs[i]].transforms) * lastFrameVertices[vertexId].mWeights[i].x;
+
+    }
+
+    currentFrameVertices[vertexId].pos = finalBoneTransform * lastFrameVertices[vertexId].pos;
+    currentFrameVertices[vertexId].norm.xyz = normalize(normalTransform * lastFrameVertices[vertexId].norm.xyz);
+    currentFrameVertices[vertexId].col = lastFrameVertices[vertexId].col;
+    currentFrameVertices[vertexId].tex = lastFrameVertices[vertexId].tex;
+    currentFrameVertices[vertexId].mBoneIDs = lastFrameVertices[vertexId].mBoneIDs;
+
+}
+
