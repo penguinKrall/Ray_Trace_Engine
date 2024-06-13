@@ -9,6 +9,7 @@ public:
     uint64_t indexBufferDeviceAddress = 0;
     int textureIndexBaseColor = 0;
     int textureIndexOcclusion = 0;
+    int semiTransparentFlag = 0;
   };
 
   struct GeometryIndex {

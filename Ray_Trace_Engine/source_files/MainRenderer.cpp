@@ -109,7 +109,7 @@ void MainRenderer::LoadAssets() {
       "C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/"
       "test_scene/pool_water_surface/pool_water_surface.gltf",
       pEngineCore, pEngineCore->queue.graphics, glTFLoadingFlags);
-
+  this->assets.waterSurface->semiTransparentFlag = 1;
   this->assets.models.push_back(this->assets.waterSurface);
 
   // std::cout << "this->assets.waterSurface->textures.size(): " <<

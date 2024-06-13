@@ -251,6 +251,7 @@ struct Model {
   size_t indexCount = 0;
   size_t vertexBufferSize = 0;
   size_t indexBufferSize = 0;
+  int semiTransparentFlag = 0;
 
   void destroy(VkDevice device);
   void loadNode(gtp::Node *parent, const tinygltf::Node &node,

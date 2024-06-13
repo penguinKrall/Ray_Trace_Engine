@@ -12,6 +12,7 @@ struct RayPayload {
     float accumulatedAlpha;
     float index;
     vec3 bgTest;
+    int semiTransparentFlag;
 };
 
 layout(location = 0) rayPayloadInEXT RayPayload rayPayload;

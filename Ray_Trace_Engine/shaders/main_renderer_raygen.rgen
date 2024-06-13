@@ -12,6 +12,7 @@ struct RayPayload {
     float accumulatedAlpha;
     float index;
 		vec3 bgTest;
+		int semiTransparentFlag;
 };
 
 layout(location = 0) rayPayloadEXT RayPayload rayPayload;
@@ -66,7 +67,7 @@ void main(){
 
 										traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, origin.xyz, tmin, direction.xyz, tmax, 0);
 
-										if(rayPayload.index == 2){
+										if(rayPayload.semiTransparentFlag == 1){
 												traceRayEXT(topLevelAS, gl_RayFlagsNoneEXT, 0xff, 0, 0, 0, origin.xyz, tmin, direction.xyz, tmax, 0);
 										}
 

@@ -18,6 +18,7 @@ struct RayPayload {
     float accumulatedAlpha;
     float index;
     vec3 bgTest;
+    int semiTransparentFlag;
 };
 
 layout(location = 0) rayPayloadInEXT RayPayload rayPayload;
@@ -36,6 +37,7 @@ struct GeometryNode {
     uint64_t indexBufferDeviceAddress;
     int textureIndexBaseColor;
     int textureIndexOcclusion;
+    int semiTransparentFlag;
 };
 
 struct GeometryIndex {
@@ -71,11 +73,6 @@ void main() {
         color *= transparency;
     }
 
-    //if (geometryNode.textureIndexOcclusion > -1) {
-    //    float occlusion = texture(textures[nonuniformEXT(geometryNode.textureIndexOcclusion)], tri.uv).r;
-    //    color *= occlusion;
-    //}
-
     rayPayload.distance = gl_RayTmaxEXT;
     rayPayload.normal = normalize(tri.normal.xyz);
     rayPayload.color = color.rgb;
@@ -96,6 +93,8 @@ void main() {
     rayPayload.reflector = ((color.r == 1.0f) && (color.g == 1.0f) && (color.b == 1.0f)) ? 1.0f : 0.0f;
 
     rayPayload.index = float(gl_InstanceCustomIndexEXT);
+
+    rayPayload.semiTransparentFlag = geometryNode.semiTransparentFlag;
 
     // Trace shadow ray and offset indices to match shadow hit/miss shader group indices
     traceRayEXT(topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT | gl_RayFlagsSkipClosestHitShaderEXT,

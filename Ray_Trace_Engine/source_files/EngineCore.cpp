@@ -325,9 +325,7 @@ void EngineCore::FlushCommandBuffer(VkCommandBuffer commandBuffer,
     return;
   }
 
-  if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-    throw std::invalid_argument("failed to end recording command buffer");
-  }
+  validate_vk_result(vkEndCommandBuffer(commandBuffer));
 
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -340,21 +338,15 @@ void EngineCore::FlushCommandBuffer(VkCommandBuffer commandBuffer,
   fenceCreateInfo.flags = VK_FLAGS_NONE;
 
   VkFence fence;
-  if (vkCreateFence(pEngineCore->devices.logical, &fenceCreateInfo, nullptr,
-                    &fence) != VK_SUCCESS) {
-    throw std::invalid_argument("failed to create fence");
-  }
+  validate_vk_result(vkCreateFence(pEngineCore->devices.logical,
+                                   &fenceCreateInfo, nullptr, &fence));
 
   // Submit to the queue
-  if (vkQueueSubmit(queue, 1, &submitInfo, fence) != VK_SUCCESS) {
-    throw std::invalid_argument("failed to submit command buffer to queue");
-  }
+  validate_vk_result(vkQueueSubmit(queue, 1, &submitInfo, fence));
 
   // Wait for the fence to signal that command buffer has finished executing
-  if (vkWaitForFences(pEngineCore->devices.logical, 1, &fence, VK_TRUE,
-                      DEFAULT_FENCE_TIMEOUT) != VK_SUCCESS) {
-    throw std::invalid_argument("failed to wait for fence");
-  }
+  validate_vk_result(vkWaitForFences(pEngineCore->devices.logical, 1, &fence,
+                                     VK_TRUE, DEFAULT_FENCE_TIMEOUT));
 
   // destroy fence
   vkDestroyFence(pEngineCore->devices.logical, fence, nullptr);
@@ -511,14 +503,12 @@ void EngineCore::CreateLoadingScreenImage(const std::string &fileName) {
   stagingBuffer.bufferData.bufferMemoryName =
       "load_screen_image_staging_bufferMemory";
 
-  if (pEngineCore->CreateBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+  validate_vk_result(
+      pEngineCore->CreateBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                &stagingBuffer, imageSize,
-                                image) != VK_SUCCESS) {
-    throw std::invalid_argument(
-        "failed to create load_screen_image_staging buffer");
-  }
+                                &stagingBuffer, imageSize, image));
+
   VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
   VkImage srcImage;
   VkDeviceMemory srcImageMemory;
@@ -545,10 +535,9 @@ void EngineCore::CreateLoadingScreenImage(const std::string &fileName) {
   imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT |
                           VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
                           VK_IMAGE_USAGE_SAMPLED_BIT;
-  if (vkCreateImage(pEngineCore->devices.logical, &imageCreateInfo, nullptr,
-                    &srcImage) != VK_SUCCESS) {
-    std::cerr << "\nfailed to create image in EngineCore";
-  }
+
+  validate_vk_result(vkCreateImage(pEngineCore->devices.logical,
+                                   &imageCreateInfo, nullptr, &srcImage));
 
   vkGetImageMemoryRequirements(pEngineCore->devices.logical, srcImage,
                                &memReqs);

@@ -278,6 +278,8 @@ void Utilities_AS::createBLAS(
                         textureOffset)
                   : -1;
 
+          geometryNode.semiTransparentFlag = model->semiTransparentFlag;
+
           // geometryNode.textureIndexBaseColor =
           // primitive->material.baseColorTexture ?
           // static_cast<int>(primitive->material.texCoordSets.baseColor) +

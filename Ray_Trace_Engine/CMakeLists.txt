@@ -104,6 +104,7 @@ file(GLOB SOURCES
     shaders/*.rchit
     shaders/*.rahit
     shaders/*.rmiss
+    shaders/*.glsl
 )
 
 # Organize source files into folders

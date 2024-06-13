@@ -14,11 +14,11 @@ struct RayPayload {
     float distance;
     vec3 normal;
     float reflector;
-    //vec4 rgbaColorData;
     vec4 accumulatedColor;
     float accumulatedAlpha;
     float index;
     vec3 bgTest;
+    int semiTransparentFlag;
 };
 
 layout(location = 0) rayPayloadInEXT RayPayload rayPayload;
@@ -28,6 +28,7 @@ struct GeometryNode {
     uint64_t indexBufferDeviceAddress;
     int textureIndexBaseColor;
     int textureIndexOcclusion;
+    int semiTransparentFlag;
 };
 
 struct GeometryIndex {
@@ -61,12 +62,12 @@ void main() {
         }
     }
 
-    if (gl_InstanceCustomIndexEXT == 2) {
+    if (geometryNode.semiTransparentFlag == 1) {
         Triangle tri = unpackTriangle2(gl_PrimitiveID, 112);
         vec4 color = texture(glassTexture, tri.uv);
 
         rayPayload.bgTest = color.rgb;
-
+        //rayPayload.semiTransparentFlag = 1.0f;
         // Composite the color with the accumulated color
         rayPayload.accumulatedColor.rgb = mix(rayPayload.accumulatedColor.rgb, color.rgb, color.a);
         rayPayload.accumulatedAlpha = mix(rayPayload.accumulatedAlpha, 1.0, color.a);
