@@ -56,11 +56,17 @@ void main() {
     uint instanceCustomIndex = gl_InstanceCustomIndexEXT;
     Triangle tri = unpackTriangle2(gl_PrimitiveID, 112);
     GeometryNode geometryNode = g_nodes_buffer.nodes[gl_GeometryIndexEXT + g_nodes_indices.indices[instanceCustomIndex].offset];
+    rayPayload.semiTransparentFlag = geometryNode.semiTransparentFlag;
 
     vec4 color = vec4(1.0f); // Default color
 
     if (geometryNode.textureIndexBaseColor > -1) {
+
         color = texture(textures[nonuniformEXT(geometryNode.textureIndexBaseColor)], tri.uv);
+
+        if(color.a < 1.0f){
+            rayPayload.semiTransparentFlag = 1;
+        }
     } 
     
     else {
@@ -68,9 +74,14 @@ void main() {
     }
 
     // Apply transparency only to the third model (custom index 2)
-    if (instanceCustomIndex == 2) {
+    if (geometryNode.semiTransparentFlag == 1) {
         float transparency = 0.2; // Example transparency value
         color *= transparency;
+    }
+
+    if (geometryNode.textureIndexOcclusion > -1) {
+        float occlusion = texture(textures[nonuniformEXT(geometryNode.textureIndexOcclusion)], tri.uv).r;
+        color *= occlusion;
     }
 
     rayPayload.distance = gl_RayTmaxEXT;
@@ -93,8 +104,6 @@ void main() {
     rayPayload.reflector = ((color.r == 1.0f) && (color.g == 1.0f) && (color.b == 1.0f)) ? 1.0f : 0.0f;
 
     rayPayload.index = float(gl_InstanceCustomIndexEXT);
-
-    rayPayload.semiTransparentFlag = geometryNode.semiTransparentFlag;
 
     // Trace shadow ray and offset indices to match shadow hit/miss shader group indices
     traceRayEXT(topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT | gl_RayFlagsSkipClosestHitShaderEXT,

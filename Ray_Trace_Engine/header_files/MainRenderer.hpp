@@ -47,26 +47,18 @@ public:
     // animation model
     gtp::Model *animatedModel;
 
-    ////static/scene model
-    // gtp::Model helmetModel;
-    //
-    ////static/scene model
-    // gtp::Model reflectionSceneModel;
-    //
+    //static/scene model
+     gtp::Model* helmetModel;
+
     ////static/scene model
     gtp::Model *testScene;
-    //
-    ////static/scene model
-    // gtp::Model directionCube;
-    //
+
     ////building glass model
     gtp::Model *waterSurface;
-    //
+
     // colored glass texture
     gtp::TextureLoader coloredGlassTexture;
-    //
-    ////gondola model
-    // gtp::Model* gondola;
+
   };
 
   // -- pipeline data struct
@@ -110,15 +102,6 @@ public:
 
   // -- bottom level acceleration structures
   std::vector<Utilities_AS::BLASData> bottomLevelAccelerationStructures;
-
-  //// -- BLAS data
-  // Utilities_AS::BLASData blasData{};
-  //
-  //// -- BLAS data
-  // Utilities_AS::BLASData secondBlasData{};
-  //
-  //// -- BLAS data
-  // Utilities_AS::BLASData thirdBlasData{};
 
   // -- TLAS data
   Utilities_AS::TLASData tlasData{};

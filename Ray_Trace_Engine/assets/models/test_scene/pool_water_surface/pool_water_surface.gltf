@@ -18,9 +18,22 @@
 			"name":"Plane.001"
 		}
 	],
+	"materials":[
+		{
+			"doubleSided":true,
+			"name":"Material",
+			"pbrMetallicRoughness":{
+				"baseColorTexture":{
+					"index":0
+				},
+				"metallicFactor":0,
+				"roughnessFactor":0.5
+			}
+		}
+	],
 	"meshes":[
 		{
-			"name":"Plane.002",
+			"name":"Plane.001",
 			"primitives":[
 				{
 					"attributes":{
@@ -28,76 +41,98 @@
 						"NORMAL":1,
 						"TEXCOORD_0":2
 					},
-					"indices":3
+					"indices":3,
+					"material":0
 				}
 			]
+		}
+	],
+	"textures":[
+		{
+			"sampler":0,
+			"source":0
+		}
+	],
+	"images":[
+		{
+			"mimeType":"image/png",
+			"name":"water_surface",
+			"uri":"water_surface.png"
 		}
 	],
 	"accessors":[
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":4,
+			"count":186,
 			"max":[
-				-11.48623275756836,
-				-0.4314413070678711,
-				19.102338790893555
+				-10.312941551208496,
+				4.096830368041992,
+				-9.899087905883789
 			],
 			"min":[
-				-78.00453186035156,
-				-0.4314413070678711,
-				-57.42957305908203
+				-40.98248291015625,
+				4.096830368041992,
+				-39.2730712890625
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":4,
+			"count":186,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":4,
+			"count":186,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":6,
+			"count":963,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":48,
+			"byteLength":2232,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":48,
-			"byteOffset":48,
+			"byteLength":2232,
+			"byteOffset":2232,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":32,
-			"byteOffset":96,
+			"byteLength":1488,
+			"byteOffset":4464,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":12,
-			"byteOffset":128,
+			"byteLength":1926,
+			"byteOffset":5952,
 			"target":34963
+		}
+	],
+	"samplers":[
+		{
+			"magFilter":9729,
+			"minFilter":9987,
+			"wrapS":33071,
+			"wrapT":33071
 		}
 	],
 	"buffers":[
 		{
-			"byteLength":140,
+			"byteLength":7880,
 			"uri":"pool_water_surface.bin"
 		}
 	]

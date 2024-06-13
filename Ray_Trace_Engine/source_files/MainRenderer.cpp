@@ -122,11 +122,13 @@ void MainRenderer::LoadAssets() {
       VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-  // this->assets.gondola = new gtp::Model();
-  // this->assets.gondola->loadFromFile("C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/test_scene/testScene.gltf",
-  //	pEngineCore, pEngineCore->queue.graphics, glTFLoadingFlags);
-  //
-  // this->assets.models.push_back(this->assets.gondola);
+  this->assets.helmetModel = new gtp::Model();
+  this->assets.helmetModel->loadFromFile(
+      "C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/"
+      "FlightHelmet/glTF/FlightHelmet.gltf",
+      pEngineCore, pEngineCore->queue.graphics, glTFLoadingFlags);
+
+  this->assets.models.push_back(this->assets.helmetModel);
   //
   // std::cout << "this->assets.gondola->textures.size(): " <<
   // this->assets.gondola->textures.size() << std::endl;
@@ -1598,5 +1600,5 @@ void MainRenderer::Destroy_MainRenderer() {
   this->assets.testScene->destroy(this->pEngineCore->devices.logical);
   this->assets.waterSurface->destroy(this->pEngineCore->devices.logical);
   this->assets.coloredGlassTexture.DestroyTextureLoader();
-  // this->assets.gondola->destroy(this->pEngineCore->devices.logical);
+  this->assets.helmetModel->destroy(this->pEngineCore->devices.logical);
 }
