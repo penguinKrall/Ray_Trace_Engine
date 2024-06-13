@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Utilities_EngCore.hpp>
 #include <EngineCore.hpp>
+#include <Utilities_EngCore.hpp>
 
-#include <iostream>
 #include <filesystem>
+#include <iostream>
 
 #include <ktx.h>
 #include <ktxvulkan.h>
@@ -13,56 +13,52 @@
 
 namespace gtp {
 
-	// - texture class
-	//@brief
-	class TextureLoader {
+// - texture class
+//@brief
+class TextureLoader {
 
-	public:
+public:
+  VkImage image;
+  VkImageLayout imageLayout;
+  VkDeviceMemory imageMemory;
+  VkImageView view;
+  uint32_t width, height;
+  uint32_t mipLevels;
+  uint32_t layerCount;
+  VkDescriptorImageInfo descriptor;
+  VkSampler sampler;
 
-		VkImage image;
-		VkImageLayout imageLayout;
-		VkDeviceMemory imageMemory;
-		VkImageView view;
-		uint32_t width, height;
-		uint32_t mipLevels;
-		uint32_t layerCount;
-		VkDescriptorImageInfo descriptor;
-		VkSampler sampler;
+  uint32_t index = -1;
 
-		uint32_t index = -1;
+  // -- core pointer
+  EngineCore *pEngineCore = nullptr;
 
-		// -- core pointer
-		EngineCore* pEngineCore = nullptr;
+  // -- default ctor
+  TextureLoader();
 
-		// -- default ctor
-		TextureLoader();
+  // -- init ctor
+  TextureLoader(EngineCore *coreBase);
 
-		// -- init ctor
-		TextureLoader(EngineCore* coreBase);
+  // -- init func
+  void InitTextureLoader(EngineCore *coreBase);
 
-		// -- init func
-		void InitTextureLoader(EngineCore* coreBase);
+  // -- update descriptor
+  void updateDescriptor();
 
-		// -- update descriptor
-		void updateDescriptor();
+  ktxResult loadKTXFile(std::string filename, ktxTexture **target);
 
-		ktxResult loadKTXFile(std::string filename, ktxTexture** target);
+  // -- load from file
+  //@brief test func to make sure loading ktx files is possible
+  void loadFromFile(
+      std::string filename, VkFormat format,
+      VkImageUsageFlags imageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT,
+      VkImageLayout imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+      bool forceLinear = false);
 
-		// -- load from file
-		//@brief test func to make sure loading ktx files is possible
-		void loadFromFile(
-			std::string        filename,
-			VkFormat           format,
-			VkImageUsageFlags  imageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT,
-			VkImageLayout      imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			bool               forceLinear = false);
+  void DestroyTextureLoader();
 
-		void DestroyTextureLoader();
+  void fromglTfImage(tinygltf::Image &gltfimage, std::string path,
+                     EngineCore *coreBase, VkQueue copyQueue);
+};
 
-		void fromglTfImage(tinygltf::Image& gltfimage, std::string path, EngineCore* coreBase, VkQueue copyQueue);
-
-
-
-	};
-
-}
+} // namespace gtp

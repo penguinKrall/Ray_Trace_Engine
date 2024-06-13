@@ -1,49 +1,46 @@
 #include "CoreWindow.hpp"
 
 // -- ctor
-CoreWindow::CoreWindow()
-{
-}
+CoreWindow::CoreWindow() {}
 
 // -- init window
-GLFWwindow* CoreWindow::initWindow(std::string wName) {
+GLFWwindow *CoreWindow::initWindow(std::string wName) {
 
-	//GLFWwindow* newWindow = nullptr;
+  // GLFWwindow* newWindow = nullptr;
 
-	glfwInit();
+  glfwInit();
 
-	//// Get the primary monitor (you can also get a specific monitor)
-	//GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
-	//if (!primaryMonitor) {
-	//	glfwTerminate();
-	//	return nullptr;
-	//}
-	//
-	//// Get the video mode of the monitor
-	//const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
-	//if (!mode) {
-	//	glfwTerminate();
-	//	return nullptr;
-	//}
+  //// Get the primary monitor (you can also get a specific monitor)
+  // GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
+  // if (!primaryMonitor) {
+  //	glfwTerminate();
+  //	return nullptr;
+  // }
+  //
+  //// Get the video mode of the monitor
+  // const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
+  // if (!mode) {
+  //	glfwTerminate();
+  //	return nullptr;
+  // }
 
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-	//glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); //no border
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+  // glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); //no border
 
-	this->width = 800;
-	this->height = 600;
+  this->width = 800;
+  this->height = 600;
 
-	windowGLFW = glfwCreateWindow(width, height, "Fullscreen Window", nullptr, nullptr);
+  windowGLFW =
+      glfwCreateWindow(width, height, "Fullscreen Window", nullptr, nullptr);
 
-	VkResult result = VK_ERROR_EXTENSION_NOT_PRESENT;
+  VkResult result = VK_ERROR_EXTENSION_NOT_PRESENT;
 
-	if (windowGLFW != nullptr) {
-		result = VK_SUCCESS;
-	}
+  if (windowGLFW != nullptr) {
+    result = VK_SUCCESS;
+  }
 
-	return windowGLFW;
+  return windowGLFW;
 }
 
-void CoreWindow::destroyWindow() {
-	glfwDestroyWindow(windowGLFW);
-}
+void CoreWindow::destroyWindow() { glfwDestroyWindow(windowGLFW); }

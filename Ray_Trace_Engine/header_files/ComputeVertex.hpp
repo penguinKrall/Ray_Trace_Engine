@@ -1,76 +1,76 @@
 #pragma once
 
-#include <glTFModel.hpp>
-#include <Utilities_EngCore.hpp>
 #include <Shader.hpp>
+#include <Utilities_EngCore.hpp>
 #include <filesystem>
+#include <glTFModel.hpp>
 
-class ComputeVertex{
+class ComputeVertex {
 
 public:
+  // -- core pointer
+  EngineCore *pEngineCore = nullptr;
 
-	// -- core pointer
-	EngineCore* pEngineCore = nullptr;
+  // -- shader
+  gtp::Shader shader;
 
-	// -- shader
-	gtp::Shader shader;
+  // -- gltf_model
+  // this is where the vertex buffers are that will be used by the compute
+  // shader and subsequently the ray tracing shaders
+  gtp::Model *model = nullptr;
 
-	// -- gltf_model
-	//this is where the vertex buffers are that will be used by the compute shader and subsequently the ray tracing shaders
-	gtp::Model* model = nullptr;
+  // -- shader storage buffer
+  gtp::Buffer storageInputBuffer;
+  gtp::Buffer storageOutputBuffer;
 
-	// -- shader storage buffer
-	gtp::Buffer storageInputBuffer;
-	gtp::Buffer storageOutputBuffer;
+  // -- uniform buffer
+  gtp::Buffer jointBuffer;
 
-	// -- uniform buffer
-	gtp::Buffer jointBuffer;
+  // -- pipeline data struct
+  struct PipelineData {
+    VkDescriptorPool descriptorPool{};
+    VkDescriptorSetLayout descriptorSetLayout{};
+    VkDescriptorSet descriptorSet{};
+    VkPipeline pipeline{};
+    VkPipelineLayout pipelineLayout{};
+  };
 
-	// -- pipeline data struct
-	struct PipelineData {
-		VkDescriptorPool descriptorPool{};
-		VkDescriptorSetLayout descriptorSetLayout{};
-		VkDescriptorSet descriptorSet{};
-		VkPipeline pipeline{};
-		VkPipelineLayout pipelineLayout{};
-	};
+  // -- command buffers
+  std::vector<VkCommandBuffer> commandBuffers;
 
-	// -- command buffers
-	std::vector<VkCommandBuffer> commandBuffers;
+  // -- pipeline data
+  PipelineData pipelineData{};
 
-	// -- pipeline data
-	PipelineData pipelineData{};
+  // -- default constructor
+  ComputeVertex();
 
-	// -- default constructor
-	ComputeVertex();
+  // -- init constructor
+  ComputeVertex(EngineCore *coreBase, gtp::Model *modelPtr);
 
-	// -- init constructor
-	ComputeVertex(EngineCore* coreBase, gtp::Model* modelPtr);
+  // -- init func
+  void Init_ComputeVertex(EngineCore *coreBase, gtp::Model *modelPtr);
 
-	// -- init func
-	void Init_ComputeVertex(EngineCore* coreBase, gtp::Model* modelPtr);
+  // -- create buffers
+  void CreateComputeBuffers();
 
-	// -- create buffers
-	void CreateComputeBuffers();
+  // -- create pipeline
+  void CreateComputePipeline();
 
-	// -- create pipeline
-	void CreateComputePipeline();
+  // -- create descriptor sets
+  void CreateDescriptorSets();
 
-	// -- create descriptor sets
-	void CreateDescriptorSets();
+  // -- create command buffers
+  void CreateCommandBuffers();
 
-	// -- create command buffers
-	void CreateCommandBuffers();
+  // -- update joint buffers
+  void UpdateJointBuffer();
 
-	// -- update joint buffers
-	void UpdateJointBuffer();
+  // -- record compute commands
+  void RecordComputeCommands(int frame);
 
-	// -- record compute commands
-	void RecordComputeCommands(int frame);
+  // -- retrieve buffer data
+  // std::vector<gtp::Model::Vertex> RetrieveBufferData();
 
-	// -- retrieve buffer data
-	//std::vector<gtp::Model::Vertex> RetrieveBufferData();
-
-	// -- destroy
-	void Destroy_ComputeVertex();
+  // -- destroy
+  void Destroy_ComputeVertex();
 };

@@ -92,6 +92,18 @@ file(GLOB SOURCES
     header_files/*.h
     header_files/*.hpp
     source_files/*.cpp
+    shaders/*.vert
+    shaders/*.frag
+    shaders/*.comp
+    shaders/*.geom
+    shaders/*.tesc
+    shaders/*.tese
+    shaders/*.mesh
+    shaders/*.task
+    shaders/*.rgen
+    shaders/*.rchit
+    shaders/*.rahit
+    shaders/*.rmiss
 )
 
 # Organize source files into folders

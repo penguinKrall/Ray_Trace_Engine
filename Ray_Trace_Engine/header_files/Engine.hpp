@@ -1,99 +1,85 @@
 #pragma once
 
 #include <EngineCore.hpp>
-//#include <Raytracing.hpp>
-//#include <glTFShadows.hpp>
-//#include <glTFTextured.hpp>
-//#include <glTFAnimation.hpp>
+// #include <Raytracing.hpp>
+// #include <glTFShadows.hpp>
+// #include <glTFTextured.hpp>
+// #include <glTFAnimation.hpp>
 #include <CoreUI.hpp>
-//#include <glTF_PBR.hpp>
-//#include <Math_Compute.hpp>
-//#include <glTF_Reflections.hpp>
-//#include <Multi_Model.hpp>
-//#include <Complex_Scene.hpp>
-//#include <multi_blas.hpp>
-//#include <Build_Scene.hpp>
-#include <gltf_viewer.hpp>
+// #include <glTF_PBR.hpp>
+// #include <Math_Compute.hpp>
+// #include <glTF_Reflections.hpp>
+// #include <Multi_Model.hpp>
+// #include <Complex_Scene.hpp>
+// #include <multi_blas.hpp>
+// #include <Build_Scene.hpp>
+#include <MainRenderer.hpp>
 
 namespace gtp {
 
+// -- engine
+//@brief contains core objects and renderers
+class Engine : private EngineCore {
+private:
+  float deltaTime = 0.0f;
+  float lastTime = 0.0f;
+  float timer = 0.0f;
 
-	// -- engine
-	//@brief contains core objects and renderers
-	class Engine : private EngineCore {
-	private:
+  double lastX = 0.0f;
+  double lastY = 0.0f;
 
-		float deltaTime = 0.0f;
-		float lastTime = 0.0f;
-		float timer = 0.0f;
+  double posX = 0.0f;
+  double posY = 0.0f;
 
-		double lastX = 0.0f;
-		double lastY = 0.0f;
+  // -- user input
+  void userInput();
 
-		double posX = 0.0f;
-		double posY = 0.0f;
+  // -- renderers
+  struct Renderers {
+    MainRenderer mainRenderer;
+  };
 
-		// -- user input
-		void userInput();
+  Renderers renderers{};
 
-		// -- renderers
-		struct Renderers {
-			//Raytracing raytracing;
-			//glTFShadows gltfShadows;
-			//glTFTextured gltfTextured;
-			//glTFAnimation gltfAnimation;
-			//glTF_PBR gltfPBR;
-			//Math_Compute mathCompute;
-			//glTF_Reflections gltfReflections;
-			//Multi_Model multiModel;
-			//Complex_Scene complexScene;
-			//multi_blas multiBlas;
-			//Build_Scene buildScene;
-			gltf_viewer gltfViewer;
-		};
+  // UI
+  CoreUI UI{};
 
-		Renderers renderers{};
+  // -- init renderers
+  //@brief passes core instance pointer to renderer/s
+  void InitRenderers();
 
-		//UI
-		CoreUI UI{};
+  // -- init ui
+  //@brief passes core instance pointer to UI
+  void InitUI();
 
-		// -- init renderers
-		//@brief passes core instance pointer to renderer/s
-		void InitRenderers();
+  // -- begin graphics command buffer
+  //@brief begins graphics command buffer
+  void BeginGraphicsCommandBuffer(int currentFrame);
 
-		// -- init ui
-		//@brief passes core instance pointer to UI
-		void InitUI();
+  // -- end graphics command buffer
+  //@brief ends graphics command buffer
+  void EndGraphicsCommandBuffer(int currentFrame);
 
-		// -- begin graphics command buffer
-		//@brief begins graphics command buffer
-		void BeginGraphicsCommandBuffer(int currentFrame);
+public:
+  // -- engine constructor
+  Engine engine();
 
-		// -- end graphics command buffer
-		//@brief ends graphics command buffer
-		void EndGraphicsCommandBuffer(int currentFrame);
+  // -- init engine
+  //@brief calls inherited 'initCore' func and initializes renderers
+  VkResult InitEngine();
 
+  // -- draw
+  //@brief handles update ubos, record command buffers, queue submit, and
+  // present submit
+  void Draw();
 
-	public:
-		// -- engine constructor
-		Engine engine();
+  // -- run
+  //@brief main render loop
+  void Run();
 
-		// -- init engine
-		//@brief calls inherited 'initCore' func and initializes renderers
-		VkResult InitEngine();
+  // -- terminate
+  //@brief destroy. everything.
+  void Terminate();
+};
 
-		// -- draw 
-		//@brief handles update ubos, record command buffers, queue submit, and present submit
-		void Draw();
-
-		// -- run
-		//@brief main render loop
-		void Run();
-
-		// -- terminate
-		//@brief destroy. everything.
-		void Terminate();
-	};
-
-}
-
+} // namespace gtp
