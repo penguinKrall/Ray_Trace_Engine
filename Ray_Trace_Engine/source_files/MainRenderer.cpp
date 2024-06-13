@@ -127,9 +127,9 @@ void MainRenderer::LoadAssets() {
   this->assets.helmetModel = new gtp::Model();
   this->assets.helmetModel->loadFromFile(
       "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
-      "FlightHelmet/glTF/FlightHelmet.gltf",
+      "test_baking_cube/test_baking_cube.gltf",
       pEngineCore, pEngineCore->queue.graphics, glTFLoadingFlags);
-
+  this->assets.helmetModel->semiTransparentFlag = 1;
   this->assets.models.push_back(this->assets.helmetModel);
   //
   // std::cout << "this->assets.gondola->textures.size(): " <<
