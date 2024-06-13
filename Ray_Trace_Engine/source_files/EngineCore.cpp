@@ -487,7 +487,7 @@ void EngineCore::CreateLoadingScreenImage(const std::string &fileName) {
   VkDeviceSize imageSize;
 
   std::string fileLoc =
-      "C:/Users/akral/vulkan_raytracing/vulkan_raytracing/" + fileName;
+      "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/" + fileName;
   stbi_uc *image =
       stbi_load(fileLoc.c_str(), &width, &height, &channels, STBI_rgb_alpha);
 

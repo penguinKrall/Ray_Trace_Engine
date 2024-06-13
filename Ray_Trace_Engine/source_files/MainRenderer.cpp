@@ -90,7 +90,8 @@ void MainRenderer::LoadAssets() {
   this->assets.animatedModel = new gtp::Model();
 
   this->assets.animatedModel->loadFromFile(
-      "C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/Fox2/"
+      "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
+      "Fox2/"
       "Fox2.gltf",
       pEngineCore, pEngineCore->queue.graphics);
 
@@ -98,7 +99,7 @@ void MainRenderer::LoadAssets() {
 
   this->assets.testScene = new gtp::Model();
   this->assets.testScene->loadFromFile(
-      "C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/"
+      "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
       "test_scene/testScene.gltf",
       pEngineCore, pEngineCore->queue.graphics);
 
@@ -106,7 +107,7 @@ void MainRenderer::LoadAssets() {
 
   this->assets.waterSurface = new gtp::Model();
   this->assets.waterSurface->loadFromFile(
-      "C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/"
+      "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
       "test_scene/pool_water_surface/pool_water_surface.gltf",
       pEngineCore, pEngineCore->queue.graphics, glTFLoadingFlags);
   this->assets.waterSurface->semiTransparentFlag = 1;
@@ -117,14 +118,15 @@ void MainRenderer::LoadAssets() {
 
   this->assets.coloredGlassTexture = gtp::TextureLoader(this->pEngineCore);
   this->assets.coloredGlassTexture.loadFromFile(
-      "C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/textures/"
+      "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/"
+      "textures/"
       "colored_glass_rgba.ktx",
       VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
   this->assets.helmetModel = new gtp::Model();
   this->assets.helmetModel->loadFromFile(
-      "C:/Users/akral/vulkan_raytracing/vulkan_raytracing/assets/models/"
+      "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
       "FlightHelmet/glTF/FlightHelmet.gltf",
       pEngineCore, pEngineCore->queue.graphics, glTFLoadingFlags);
 

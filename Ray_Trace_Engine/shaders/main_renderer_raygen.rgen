@@ -64,8 +64,10 @@ void main(){
 				//reflections
 
 						for (int i = 0; i < MAX_RECURSION; i++) {
-
+										
+										//if(rayPayload.semiTransparentFlag == 0){
 										traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, origin.xyz, tmin, direction.xyz, tmax, 0);
+										//}
 
 										if(rayPayload.semiTransparentFlag == 1){
 												traceRayEXT(topLevelAS, gl_RayFlagsNoneEXT, 0xff, 0, 0, 0, origin.xyz, tmin, direction.xyz, tmax, 0);
@@ -75,8 +77,8 @@ void main(){
 										float hitAlpha = rayPayload.accumulatedAlpha;
 
 										// Composite the hit color with the accumulated color
-										rayPayload.accumulatedColor = vec4(mix(rayPayload.accumulatedColor.rgb, hitColor, hitAlpha * (1.0 - rayPayload.accumulatedAlpha)),1.0f);
 										rayPayload.accumulatedAlpha += hitAlpha * (1.0 - rayPayload.accumulatedAlpha);
+										rayPayload.accumulatedColor = vec4(mix(rayPayload.accumulatedColor.rgb, hitColor, hitAlpha * (1.0 - rayPayload.accumulatedAlpha)),rayPayload.accumulatedAlpha);
 
 										if (rayPayload.distance < 0.0f) {
 											hitValues += mix(hitColor, rayPayload.accumulatedColor.rgb, 0.5f);

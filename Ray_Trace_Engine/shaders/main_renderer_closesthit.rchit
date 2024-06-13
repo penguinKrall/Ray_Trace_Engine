@@ -73,11 +73,11 @@ void main() {
         color = vec4(tri.color.rgb, 1.0f); // Use vertex color if no texture
     }
 
-    // Apply transparency only to the third model (custom index 2)
-    if (geometryNode.semiTransparentFlag == 1) {
-        float transparency = 0.2; // Example transparency value
-        color *= transparency;
-    }
+   // Apply transparency only to the third model (custom index 2)
+   //if (geometryNode.semiTransparentFlag == 1) {
+   //    float transparency = 0.5; // Example transparency value
+   //    color *= transparency;
+   //}
 
     if (geometryNode.textureIndexOcclusion > -1) {
         float occlusion = texture(textures[nonuniformEXT(geometryNode.textureIndexOcclusion)], tri.uv).r;

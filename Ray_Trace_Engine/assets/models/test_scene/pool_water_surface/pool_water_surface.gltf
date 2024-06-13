@@ -20,9 +20,16 @@
 	],
 	"materials":[
 		{
+			"alphaMode":"BLEND",
 			"doubleSided":true,
-			"name":"Material",
+			"name":"Material.001",
 			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					1,
+					1,
+					1,
+					0.8981817960739136
+				],
 				"baseColorTexture":{
 					"index":0
 				},
@@ -33,7 +40,7 @@
 	],
 	"meshes":[
 		{
-			"name":"Plane.001",
+			"name":"Plane.002",
 			"primitives":[
 				{
 					"attributes":{
@@ -56,8 +63,8 @@
 	"images":[
 		{
 			"mimeType":"image/png",
-			"name":"water_surface",
-			"uri":"water_surface.png"
+			"name":"baked_water",
+			"uri":"baked_water.png"
 		}
 	],
 	"accessors":[
@@ -66,14 +73,14 @@
 			"componentType":5126,
 			"count":186,
 			"max":[
-				-10.312941551208496,
-				4.096830368041992,
-				-9.899087905883789
+				-9.335332870483398,
+				-0.880183219909668,
+				20.622570037841797
 			],
 			"min":[
-				-40.98248291015625,
-				4.096830368041992,
-				-39.2730712890625
+				-93.2043228149414,
+				-0.880183219909668,
+				-57.130882263183594
 			],
 			"type":"VEC3"
 		},
@@ -125,9 +132,7 @@
 	"samplers":[
 		{
 			"magFilter":9729,
-			"minFilter":9987,
-			"wrapS":33071,
-			"wrapT":33071
+			"minFilter":9987
 		}
 	],
 	"buffers":[

@@ -64,22 +64,29 @@ void main() {
         vec4 color = texture(textures[nonuniformEXT(geometryNode.textureIndexBaseColor)], tri.uv);
 
 
-        // ** test.. trying to figure out making any texture semi transparent...
-       // rayPayload.accumulatedColor.rgb = mix(rayPayload.accumulatedColor.rgb, color.rgb, 0.1f);
-       // rayPayload.accumulatedColor.a = 0.1f;
-       // rayPayload.accumulatedAlpha = 0.5f;
-       // rayPayload.bgTest = color.rgb;
-       // rayPayload.semiTransparentFlag = 1;
-
-       // if (rayPayload.semiTransparentFlag == 1) {
-       //     ignoreIntersectionEXT;
-       // }
+        //// ** test.. trying to figure out making any texture semi transparent...
+        //if (rayPayload.semiTransparentFlag == 1) {
+        // rayPayload.accumulatedColor.rgb = mix(rayPayload.accumulatedColor.rgb, color.rgb, 0.6f);
+        // rayPayload.accumulatedColor.a = 0.1f;
+        // rayPayload.accumulatedAlpha = 0.5f;
+        // rayPayload.bgTest = color.rgb;
+        // rayPayload.semiTransparentFlag = 1;
+        //
+        //    ignoreIntersectionEXT;
+        //}
 
 
         // Ignore intersection if the surface is fully transparent
         if (color.a < 1.0f) {
+
             //set transparency flag so trace rays flag is none in raygen
-            rayPayload.semiTransparentFlag = 1;
+            if(rayPayload.semiTransparentFlag == 1){
+                rayPayload.bgTest = color.rgb;
+                // Composite the color with the accumulated color
+                rayPayload.accumulatedColor.rgb = mix(rayPayload.accumulatedColor.rgb, color.rgb, color.a);
+                rayPayload.accumulatedAlpha = mix(rayPayload.accumulatedAlpha, 1.0, color.a);
+            }
+
             ignoreIntersectionEXT;
         }
 
@@ -87,21 +94,21 @@ void main() {
     }
 
     //semi transparent glass texture currently used for water... grr...
-    if (geometryNode.semiTransparentFlag == 1) {
-        Triangle tri = unpackTriangle2(gl_PrimitiveID, 112);
-        vec4 color = texture(glassTexture, tri.uv);
-    
-        rayPayload.bgTest = color.rgb;
-        //rayPayload.semiTransparentFlag = 1.0f;
-        // Composite the color with the accumulated color
-        rayPayload.accumulatedColor.rgb = mix(rayPayload.accumulatedColor.rgb, color.rgb, color.a);
-        rayPayload.accumulatedAlpha = mix(rayPayload.accumulatedAlpha, 1.0, color.a);
-    
-        // Ignore intersection if the surface is fully transparent
-        if (color.a < 1.0f) {
-            ignoreIntersectionEXT;
-        }
-    }
+    //if (geometryNode.semiTransparentFlag == 1) {
+    //    Triangle tri = unpackTriangle2(gl_PrimitiveID, 112);
+    //    vec4 color = texture(glassTexture, tri.uv);
+    //
+    //    rayPayload.bgTest = color.rgb;
+    //    //rayPayload.semiTransparentFlag = 1.0f;
+    //    // Composite the color with the accumulated color
+    //    rayPayload.accumulatedColor.rgb = mix(rayPayload.accumulatedColor.rgb, color.rgb, color.a);
+    //    rayPayload.accumulatedAlpha = mix(rayPayload.accumulatedAlpha, 1.0, color.a);
+    //
+    //    // Ignore intersection if the surface is fully transparent
+    //    if (color.a < 1.0f) {
+    //        ignoreIntersectionEXT;
+    //    }
+    //}
 
 
 }
