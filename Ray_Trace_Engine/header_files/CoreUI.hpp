@@ -144,14 +144,14 @@ public:
 
   // -- input
   //@brief creates input window draw data
-  void Input();
+  void Input(Utilities_UI::ModelData* pModelData);
 
   // -- draw ui
   //@brief binds render data and draws vertex/index buffers
   void DrawUI(const VkCommandBuffer commandBuffer, int currentFrame);
 
   // -- set model data
-  void SetModelData(Utilities_UI::ModelData* pModelData);
+  void SetModelData(const Utilities_UI::ModelData* pModelData);
 
   // -- destroy ui
   void DestroyUI();

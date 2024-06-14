@@ -13,10 +13,8 @@
 
 class Utilities_UI {
 public:
-
-	struct ModelData {
-		std::vector<std::string> modelName;
-	};
-
+  struct ModelData {
+    int modelIndex = 0;
+    std::vector<std::string> modelName;
+  };
 };
-

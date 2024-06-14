@@ -881,7 +881,7 @@ void CoreUI::update(int currentFrame) {
   }
 }
 
-void CoreUI::Input() {
+void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
 
   ImGui_ImplVulkan_NewFrame();
   ImGui_ImplGlfw_NewFrame();
@@ -928,7 +928,25 @@ void CoreUI::Input() {
 
   if (ImGui::CollapsingHeader("Model Controls")) {
 
-    if (ImGui::BeginCombo("Model", "")) {
+    if (ImGui::BeginCombo(
+            "Model", pModelData->modelName[pModelData->modelIndex].c_str())) {
+
+      for (int i = 0; i < pModelData->modelName.size(); ++i) {
+        bool isSelected = (pModelData->modelIndex == i);
+        if (ImGui::Selectable(pModelData->modelName[i].c_str(), isSelected)) {
+          pModelData->modelIndex = i;
+          // Do something when a new model is selected
+          std::cout << "Selected Model: "
+                    << pModelData->modelName[pModelData->modelIndex]
+                    << std::endl;
+          // Add your code to handle the model selection change here
+        }
+        // Set the initial focus when opening the combo (scrolling + keyboard
+        // navigation focus)
+        if (isSelected) {
+          ImGui::SetItemDefaultFocus();
+        }
+      }
 
       ImGui::EndCombo();
     }
@@ -1064,9 +1082,9 @@ void CoreUI::DrawUI(const VkCommandBuffer commandBuffer, int currentFrame) {
   vkCmdEndRenderPass(commandBuffer);
 }
 
-void CoreUI::SetModelData(Utilities_UI::ModelData* pModelData) {
+void CoreUI::SetModelData(const Utilities_UI::ModelData *pModelData) {
 
-  //set names
+  // set names
   this->modelData = *pModelData;
 
   std::cout << "\n UI - SetModelData() model name List:" << std::endl;
@@ -1074,7 +1092,6 @@ void CoreUI::SetModelData(Utilities_UI::ModelData* pModelData) {
   for (int i = 0; i < this->modelData.modelName.size(); i++) {
     std::cout << "\t" << this->modelData.modelName[i] << std::endl;
   }
-
 }
 
 void CoreUI::DestroyUI() {

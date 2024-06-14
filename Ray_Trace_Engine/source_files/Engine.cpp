@@ -313,7 +313,7 @@ void Engine::Draw() {
   /*-------------------------------*/
 
   // update UI input
-  this->UI.Input();
+  this->UI.Input(&this->renderers.mainRenderer.uiModelData);
 
   // update UI vertex/index buffers
   this->UI.update(currentFrame);
