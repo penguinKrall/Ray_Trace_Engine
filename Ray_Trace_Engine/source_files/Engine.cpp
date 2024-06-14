@@ -45,6 +45,9 @@ void Engine::Run() {
     // handle input
     userInput();
 
+    // update ui
+    this->UpdateUI();
+
     // draw
     Draw();
 
@@ -71,6 +74,14 @@ void Engine::Terminate() {
 
   // core
   DestroyCore();
+}
+
+void Engine::UpdateUI() {
+  if (this->isUIUpdated) {
+    this->renderers.mainRenderer.UpdateUIData();
+    this->UI.SetModelData(&this->renderers.mainRenderer.uiModelData);
+    this->isUIUpdated = false;
+  }
 }
 
 void Engine::userInput() {

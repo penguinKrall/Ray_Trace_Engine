@@ -8,6 +8,13 @@
 class ComputeVertex {
 
 public:
+  // -- transforms struct
+  struct TransformsData {
+    glm::mat4 rotate = glm::mat4(1.0f);
+    glm::mat4 translate = glm::mat4(1.0f);
+    glm::mat4 scale = glm::mat4(1.0f);
+  };
+
   // -- core pointer
   EngineCore *pEngineCore = nullptr;
 
@@ -23,8 +30,12 @@ public:
   gtp::Buffer storageInputBuffer;
   gtp::Buffer storageOutputBuffer;
 
-  // -- uniform buffer
+  // -- joint storage buffer
   gtp::Buffer jointBuffer;
+
+  // -- rotate/translate/scale matrices buffer
+  TransformsData transformsData{};
+  gtp::Buffer transformsBuffer;
 
   // -- pipeline data struct
   struct PipelineData {
@@ -49,6 +60,12 @@ public:
 
   // -- init func
   void Init_ComputeVertex(EngineCore *coreBase, gtp::Model *modelPtr);
+
+  // -- create transforms buffer
+  void CreateTransformsBuffer();
+
+  // -- update transforms buffer
+  void UpdateTransformsBuffer(ComputeVertex::TransformsData *pTransformsData);
 
   // -- create buffers
   void CreateComputeBuffers();

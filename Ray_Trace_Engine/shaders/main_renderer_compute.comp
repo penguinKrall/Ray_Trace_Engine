@@ -21,6 +21,13 @@ struct Joints{
     mat4 joint;
 };
 
+//transforms struct
+struct TransformMatrices{
+    mat4 rotate;
+    mat4 translate;
+    mat4 scale;
+};
+
 // Define storage buffer layout for input vertices and joint data
 layout(std140, binding = 0) buffer InputSSBO {
     Vtx vtx[];
@@ -36,6 +43,10 @@ layout(std140, binding = 2) buffer JointSSBOData {
     Joints joints[100]; // Assuming a maximum of 20 joints
 }jointSSBO;
 
+// Define storage buffer layout for transform matrices
+layout(std140, binding = 3) buffer TransformSSBOData {
+    TransformMatrices transformMatrices;
+}transformSSBO;
 
 void main() {
     
@@ -97,8 +108,8 @@ void main() {
     //joint matrices(bones)
     Joints vBones[100] = jointSSBO.joints;
 
-    //transformation matrix
-    mat4 transform = 
+    //bone transformation matrix
+    mat4 boneTransform = 
     vWeights.x * vBones[vJoints.x].joint+
     vWeights.y * vBones[vJoints.y].joint+
     vWeights.z * vBones[vJoints.z].joint+
@@ -106,15 +117,16 @@ void main() {
     
     //apply rotation and transformation matrices
     //position
-    vec4 newPosition = translationMatrix * rotationMatrix * scaleMatrix * transform * vec4(v.position.xyz, 1.0f);
+    vec4 newPosition = 
+    transformSSBO.transformMatrices.translate * transformSSBO.transformMatrices.rotate * transformSSBO.transformMatrices.scale * boneTransform * vec4(v.position.xyz, 1.0f);
     v.position = vec4(newPosition.x, newPosition.y, newPosition.z, 1.0f);
     
     //normal
-    v.normal = normalize(transform * v.normal);
+    v.normal = normalize(boneTransform * v.normal);
     
     //tangent
     float w = v.tangent.w;
-    v.tangent = normalize((transform * vec4(v.tangent.xyz, 1.0f)));
+    v.tangent = normalize((boneTransform * vec4(v.tangent.xyz, 1.0f)));
     v.tangent.w = w;
     
     //assign declared vertex variable data to vertex

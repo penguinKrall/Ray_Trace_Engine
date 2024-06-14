@@ -1255,6 +1255,14 @@ void Model::loadFromFile(std::string filename, EngineCore *coreBase,
              : gltfContext.LoadASCIIFromFile(&gltfModel, &error, &warning,
                                              filename.c_str());
 
+  // Use std::filesystem to extract the file name without the extension
+  std::filesystem::path filePath(filename);
+  this->modelName =
+      filePath.stem()
+          .string(); // stem() returns the file name without extension
+
+  std::cout << "Model name extracted: " << this->modelName << std::endl;
+
   // LoaderInfo loaderInfo{};
   vertexCount = 0;
   indexCount = 0;

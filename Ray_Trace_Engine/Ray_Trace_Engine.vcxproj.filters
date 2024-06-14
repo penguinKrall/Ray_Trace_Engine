@@ -88,6 +88,10 @@
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\dependencies\imgui\imgui_widgets.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
+    <ClCompile Include="source_files\Utilities_Renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source_files\Utilities_UI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Buffer.hpp">
@@ -159,6 +163,10 @@
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="header_files\Utilities_Renderer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header_files\Utilities_UI.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\CMakeLists.txt" />

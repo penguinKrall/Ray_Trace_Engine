@@ -5,6 +5,8 @@
 #include <Shader.hpp>
 #include <TextureLoader.hpp>
 #include <Utilities_AS.hpp>
+#include <Utilities_Renderer.hpp>
+#include <Utilities_UI.hpp>
 #include <glTFModel.hpp>
 
 #define VK_GLTF_MATERIAL_IDS
@@ -38,6 +40,10 @@ public:
     gtp::Buffer ubo;
   };
 
+ //struct UIData {
+ //  std::vector<std::string> modelNames;
+ //};
+
   // -- assets data struct
   struct Assets {
 
@@ -47,8 +53,8 @@ public:
     // animation model
     gtp::Model *animatedModel;
 
-    //static/scene model
-     gtp::Model* helmetModel;
+    // static/scene model
+    gtp::Model *helmetModel;
 
     ////static/scene model
     gtp::Model *testScene;
@@ -58,7 +64,6 @@ public:
 
     // colored glass texture
     gtp::TextureLoader coloredGlassTexture;
-
   };
 
   // -- pipeline data struct
@@ -114,6 +119,9 @@ public:
 
   // -- pipeline data
   PipelineData pipelineData{};
+
+  // -- ui data
+  Utilities_UI::ModelData uiModelData{};
 
   // -- shader
   gtp::Shader shader;
@@ -173,7 +181,7 @@ public:
   void UpdateTLAS();
 
   // -- pre transform animation model vertices
-  void PreTransformModel();
+  void PreTransformModels();
 
   // -- create geometry nodes buffer
   void CreateGeometryNodesBuffer();
@@ -184,6 +192,9 @@ public:
   // -- handle window resize
   void HandleResize();
 
+  // -- update UI data
+  void UpdateUIData();
+  
   // -- destroy class objects
   void Destroy_MainRenderer();
 };

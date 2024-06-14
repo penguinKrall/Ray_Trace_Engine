@@ -60,6 +60,10 @@ private:
   //@brief ends graphics command buffer
   void EndGraphicsCommandBuffer(int currentFrame);
 
+  // -- ui update flag
+  //@brief set to true to initialize ui data
+  bool isUIUpdated = true;
+
 public:
   // -- engine constructor
   Engine engine();
@@ -80,6 +84,10 @@ public:
   // -- terminate
   //@brief destroy. everything.
   void Terminate();
+
+  // -- update ui
+  void UpdateUI();
+
 };
 
 } // namespace gtp

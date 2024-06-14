@@ -1,15 +1,6 @@
 #pragma once
 
-#include <EngineCore.hpp>
-#include <Shader.hpp>
-
-#include <backends/imgui_impl_glfw.h>
-#include <backends/imgui_impl_vulkan.h>
-#include <imconfig.h>
-#include <imgui.h>
-#include <imgui_internal.h>
-
-#include <filesystem>
+#include <Utilities_UI.hpp>
 
 // -- class to contain ui data -- dear_imgui
 class CoreUI {
@@ -94,6 +85,10 @@ public:
   UIProperties properties{};
   UIBackends backends{};
 
+  //--utilities structs
+  //model data
+  Utilities_UI::ModelData modelData{};
+
   // -- ctors
   CoreUI();
   CoreUI(EngineCore *coreBase);
@@ -144,7 +139,7 @@ public:
 
   // -- update
   //@brief update vertex and index buffer containing the imGui elements when
-  //required
+  // required
   void update(int currentFrame);
 
   // -- input
@@ -154,6 +149,9 @@ public:
   // -- draw ui
   //@brief binds render data and draws vertex/index buffers
   void DrawUI(const VkCommandBuffer commandBuffer, int currentFrame);
+
+  // -- set model data
+  void SetModelData(Utilities_UI::ModelData* pModelData);
 
   // -- destroy ui
   void DestroyUI();

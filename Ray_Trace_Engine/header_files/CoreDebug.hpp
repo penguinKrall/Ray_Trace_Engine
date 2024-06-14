@@ -54,14 +54,14 @@ public:
     // Add error handling or return value checks if necessary
     if (handleValue != 0) {
       objectMap.obj[handleValue] = name;
-      std::cout << "\nCreated Object:\n```````````````\n"
-                << " Name: " << name << "\n"
-                << " Handle: " << std::hex << handleValue << std::endl;
+      // std::cout << "\nCreated Object:\n```````````````\n"
+      //           << " Name: " << name << "\n"
+      //           << " Handle: " << std::hex << handleValue << std::endl;
     } else {
       std::cerr << "\n Failed to create " << name << std::endl;
     }
 
-    std::cout << "\n" << std::dec;
+    // std::cout << "\n" << std::dec;
   }
 
   // add array
@@ -86,9 +86,9 @@ public:
       // Add error handling or return value checks if necessary
       if (handleValue != 0) {
         objectMap.obj[handleValue] = modifiedName;
-        std::cout << "\nCreated Object:\n```````````````\n"
-                  << " Name: " << modifiedName << "\n"
-                  << " Handle: " << std::hex << handleValue << std::endl;
+        // std::cout << "\nCreated Object:\n```````````````\n"
+        //           << " Name: " << modifiedName << "\n"
+        //           << " Handle: " << std::hex << handleValue << std::endl;
       } else {
         std::cerr << "\n Failed to create " << modifiedName << std::endl;
       }
@@ -97,7 +97,7 @@ public:
       counter++;
     }
 
-    std::cout << "\n" << std::dec;
+    // std::cout << "\n" << std::dec;
   }
 
   // structs

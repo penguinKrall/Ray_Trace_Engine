@@ -20,7 +20,7 @@ void MainRenderer::Init_MainRenderer(EngineCore *coreBase) {
 
   std::cout << "\nfinished loading assets." << std::endl;
 
-  this->PreTransformModel();
+  this->PreTransformModels();
   //
   vkDeviceWaitIdle(this->pEngineCore->devices.logical);
   //
@@ -127,13 +127,15 @@ void MainRenderer::LoadAssets() {
   this->assets.helmetModel = new gtp::Model();
   this->assets.helmetModel->loadFromFile(
       "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
-      "test_baking_cube/test_baking_cube.gltf",
+      "FlightHelmet/glTF/FlightHelmet.gltf",
       pEngineCore, pEngineCore->queue.graphics, glTFLoadingFlags);
-  this->assets.helmetModel->semiTransparentFlag = 1;
+  // this->assets.helmetModel->semiTransparentFlag = 1;
   this->assets.models.push_back(this->assets.helmetModel);
   //
   // std::cout << "this->assets.gondola->textures.size(): " <<
   // this->assets.gondola->textures.size() << std::endl;
+
+  this->UpdateUIData();
 }
 
 void MainRenderer::CreateBottomLevelAccelerationStructures() {
@@ -1250,75 +1252,15 @@ void MainRenderer::UpdateTLAS() {
           pEngineCore->devices.logical, &accelerationDeviceAddressInfo);
 }
 
-void MainRenderer::PreTransformModel() {
+void MainRenderer::PreTransformModels() {
 
-  // pre transform animation model
-  // animation uses bone local transform matrices to reposition model vertices
-  // update the model transform matrix to apply an initial transform that will
-  // remain glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f),
-  // glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)); glm::mat4
-  // translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 1.0f,
-  // 0.0f)); for (auto& node : this->assets.animatedModel->linearNodes) {
-  // if
-  //(node->mesh) {
-  //		//node->matrix *= glm::transpose(rotationMatrix);
-  //		node->matrix *= translationMatrix;
-  //
-  //	}
-  // }
+  Utilities_Renderer::TransformsData transformsData{};
+  transformsData.model = this->assets.helmetModel;
+  transformsData.translate =
+      glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
+  transformsData.scale = glm::scale(glm::mat4(1.0f), glm::vec3(10.0f));
 
-  ////pre transform water surface
-  // std::vector<gtp::Model::Vertex> waterSurfaceVerticesBuffer;
-  // waterSurfaceVerticesBuffer =
-  // Utilities_AS::GetVerticesFromBuffer(this->pEngineCore->devices.logical,
-  // this->assets.waterSurface); VkDeviceSize waterSurfaceBufferSize =
-  // static_cast<uint32_t>(waterSurfaceVerticesBuffer.size()) *
-  // sizeof(gtp::Model::Vertex);
-  //
-  // std::cout << "waterSurfaceVerticesBuffer.size(): " <<
-  // waterSurfaceVerticesBuffer.size() << std::endl;
-  //
-  // for (int i = 0; i < waterSurfaceVerticesBuffer.size(); i++) {
-  //	waterSurfaceVerticesBuffer[i].pos.y -= 4.0f;
-  // }
-  //
-  // void* waterSurfaceVerticesData;
-  //
-  // vkMapMemory(this->pEngineCore->devices.logical,
-  //	this->assets.waterSurface->vertices.memory, 0,
-  //	waterSurfaceBufferSize, 0, &waterSurfaceVerticesData);
-  //
-  // memcpy(waterSurfaceVerticesData, waterSurfaceVerticesBuffer.data(),
-  // waterSurfaceBufferSize);
-  //
-  // vkUnmapMemory(this->pEngineCore->devices.logical,
-  // this->assets.waterSurface->vertices.memory);
-  //
-  ////pre transform scene
-  // std::vector<gtp::Model::Vertex> tempSceneVerticesBuffer;
-  // tempSceneVerticesBuffer =
-  // Utilities_AS::GetVerticesFromBuffer(this->pEngineCore->devices.logical,
-  // this->assets.testScene); VkDeviceSize tempSceneBufferSize =
-  // static_cast<uint32_t>(tempSceneVerticesBuffer.size()) *
-  // sizeof(gtp::Model::Vertex);
-  //
-  // std::cout << "tempSceneVerticesBuffer.size(): " <<
-  // tempSceneVerticesBuffer.size() << std::endl;
-  //
-  // for (int i = 0; i < tempSceneVerticesBuffer.size(); i++) {
-  //	tempSceneVerticesBuffer[i].pos.y -= 4.0f;
-  // }
-  //
-  // void* verticesData;
-  //
-  // vkMapMemory(this->pEngineCore->devices.logical,
-  //	this->assets.testScene->vertices.memory, 0,
-  //	tempSceneBufferSize, 0, &verticesData);
-  //
-  // memcpy(verticesData, tempSceneVerticesBuffer.data(), tempSceneBufferSize);
-  //
-  // vkUnmapMemory(this->pEngineCore->devices.logical,
-  // this->assets.testScene->vertices.memory);
+  Utilities_Renderer::TransformModel(this->pEngineCore, &transformsData);
 }
 
 void MainRenderer::CreateGeometryNodesBuffer() {
@@ -1505,6 +1447,21 @@ void MainRenderer::HandleResize() {
 
   // Update descriptor
   this->UpdateDescriptorSet();
+}
+
+void MainRenderer::UpdateUIData() {
+
+  Utilities_UI::ModelData tempUIData{};
+
+  std::cout << "\nUpdateUIData() Model List:" << std::endl;
+
+  for (int i = 0; i < this->assets.models.size(); i++) {
+    tempUIData.modelName.push_back(this->assets.models[i]->modelName);
+    std::cout << "\t" << tempUIData.modelName[i] << std::endl;
+  }
+
+  this->uiModelData = tempUIData;
+
 }
 
 void MainRenderer::Destroy_MainRenderer() {

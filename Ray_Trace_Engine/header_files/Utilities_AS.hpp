@@ -7,8 +7,11 @@ public:
   struct GeometryNode {
     uint64_t vertexBufferDeviceAddress = 0;
     uint64_t indexBufferDeviceAddress = 0;
-    int textureIndexBaseColor = 0;
-    int textureIndexOcclusion = 0;
+    int textureIndexBaseColor = -1;
+    int textureIndexOcclusion = -1;
+    int textureIndexMetallicRoughness = -1;
+    int textureIndexNormal = -1;
+    int textureIndexEmissive = -1;
     int semiTransparentFlag = 0;
   };
 

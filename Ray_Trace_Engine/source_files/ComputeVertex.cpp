@@ -8,11 +8,24 @@ ComputeVertex::ComputeVertex(EngineCore *coreBase, gtp::Model *modelPtr) {
 
   CreateComputeBuffers();
 
+  CreateTransformsBuffer();
+
   CreateComputePipeline();
 
   CreateDescriptorSets();
 
   CreateCommandBuffers();
+
+  // test transforms buffer update delete later and put where needed
+  this->transformsData.rotate = glm::rotate(
+      glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+  this->transformsData.translate =
+      glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 0.0f, 0.0f));
+
+  this->transformsData.scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.05f));
+
+  UpdateTransformsBuffer(&this->transformsData);
 }
 
 void ComputeVertex::Init_ComputeVertex(EngineCore *coreBase,
@@ -21,6 +34,32 @@ void ComputeVertex::Init_ComputeVertex(EngineCore *coreBase,
   this->pEngineCore = coreBase;
   this->model = modelPtr;
   this->shader = gtp::Shader(coreBase);
+}
+
+void ComputeVertex::CreateTransformsBuffer() {
+
+  VkDeviceSize transformsBufferSize = sizeof(ComputeVertex::TransformsData);
+
+  this->transformsBuffer.bufferData.bufferName =
+      "gltf_compute_transformsStorageBuffer_";
+  this->transformsBuffer.bufferData.bufferMemoryName =
+      "gltf_compute_transformsStorageBufferMemory_";
+
+  this->pEngineCore->CreateBuffer(
+      VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+          VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+          VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+      &this->transformsBuffer, transformsBufferSize, &transformsData);
+}
+
+void ComputeVertex::UpdateTransformsBuffer(
+    ComputeVertex::TransformsData *pTransformsData) {
+
+  VkDeviceSize transformsBufferSize = sizeof(ComputeVertex::TransformsData);
+
+  this->transformsBuffer.copyTo(pTransformsData, transformsBufferSize);
 }
 
 void ComputeVertex::CreateComputeBuffers() {
@@ -127,9 +166,10 @@ void ComputeVertex::Destroy_ComputeVertex() {
                                this->pipelineData.descriptorSetLayout, nullptr);
 
   // storage buffers
+  this->transformsBuffer.destroy(this->pEngineCore->devices.logical);
+  this->jointBuffer.destroy(this->pEngineCore->devices.logical);
   this->storageInputBuffer.destroy(this->pEngineCore->devices.logical);
   this->storageOutputBuffer.destroy(this->pEngineCore->devices.logical);
-  this->jointBuffer.destroy(this->pEngineCore->devices.logical);
 }
 
 void ComputeVertex::CreateComputePipeline() {
@@ -150,10 +190,15 @@ void ComputeVertex::CreateComputePipeline() {
           2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT,
           nullptr);
 
+  VkDescriptorSetLayoutBinding transformsStorageBufferLayoutBinding =
+      gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
+          3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT,
+          nullptr);
+
   // array of bindings
   std::vector<VkDescriptorSetLayoutBinding> bindings(
       {inputStorageBufferLayoutBinding, outputStorageBufferLayoutBinding,
-       jointStorageBufferLayoutBinding});
+       jointStorageBufferLayoutBinding, transformsStorageBufferLayoutBinding});
 
   // descriptor set layout create info
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
@@ -193,18 +238,19 @@ void ComputeVertex::CreateComputePipeline() {
   // Setup ray tracing shader groups
   VkPipelineShaderStageCreateInfo computeShaderStageCreateInfo;
 
-  computeShaderStageCreateInfo = shader.loadShader(
-      projDirectory.string() + "/shaders/compiled/gltf_viewer_compute.comp.spv",
-      VK_SHADER_STAGE_COMPUTE_BIT, "gltf_compute_shader");
+  computeShaderStageCreateInfo =
+      shader.loadShader(projDirectory.string() +
+                            "/shaders/compiled/main_renderer_compute.comp.spv",
+                        VK_SHADER_STAGE_COMPUTE_BIT, "gltf_compute_shader");
   VkComputePipelineCreateInfo computePipelineCreateInfo = {};
   computePipelineCreateInfo.sType =
       VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
   computePipelineCreateInfo.stage = computeShaderStageCreateInfo;
   computePipelineCreateInfo.layout = this->pipelineData.pipelineLayout;
 
-  validate_vk_result(vkCreateComputePipelines(pEngineCore->devices.logical, VK_NULL_HANDLE, 1,
-                               &computePipelineCreateInfo, nullptr,
-                               &this->pipelineData.pipeline));
+  validate_vk_result(vkCreateComputePipelines(
+      pEngineCore->devices.logical, VK_NULL_HANDLE, 1,
+      &computePipelineCreateInfo, nullptr, &this->pipelineData.pipeline));
 }
 
 void ComputeVertex::CreateCommandBuffers() {
@@ -217,9 +263,8 @@ void ComputeVertex::CreateCommandBuffers() {
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   allocInfo.commandBufferCount = frame_draws;
 
-  validate_vk_result(vkAllocateCommandBuffers(pEngineCore->devices.logical, &allocInfo,
-                               commandBuffers.data()));
- 
+  validate_vk_result(vkAllocateCommandBuffers(
+      pEngineCore->devices.logical, &allocInfo, commandBuffers.data()));
 }
 
 void ComputeVertex::CreateDescriptorSets() {
@@ -315,8 +360,24 @@ void ComputeVertex::CreateDescriptorSets() {
   jointBufferWrite.pBufferInfo = &jointBufferDescriptor;
   jointBufferWrite.descriptorCount = 1;
 
+  // transforms buffer descriptor info
+  VkDescriptorBufferInfo transformsBufferDescriptor{};
+  transformsBufferDescriptor.buffer = transformsBuffer.bufferData.buffer;
+  transformsBufferDescriptor.offset = 0;
+  transformsBufferDescriptor.range = transformsBuffer.bufferData.size;
+
+  // transforms buffer descriptor write info
+  VkWriteDescriptorSet transformsBufferWrite{};
+  transformsBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  transformsBufferWrite.dstSet = pipelineData.descriptorSet;
+  transformsBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  transformsBufferWrite.dstBinding = 3;
+  transformsBufferWrite.pBufferInfo = &transformsBufferDescriptor;
+  transformsBufferWrite.descriptorCount = 1;
+
   std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
-      storageInputBufferWrite, storageOutputBufferWrite, jointBufferWrite};
+      storageInputBufferWrite, storageOutputBufferWrite, jointBufferWrite,
+      transformsBufferWrite};
 
   vkUpdateDescriptorSets(this->pEngineCore->devices.logical,
                          static_cast<uint32_t>(writeDescriptorSets.size()),
@@ -344,7 +405,7 @@ void ComputeVertex::RecordComputeCommands(int frame) {
 //	//
 //	//vkMapMemory(
 //	//	this->pEngineCore->devices.logical,
-//this->storageInputBuffer.bufferData.memory,
+// this->storageInputBuffer.bufferData.memory,
 //	//	0, static_cast<uint32_t>(this->model->modelVertexBuffer.size())
 //* sizeof(gtp::Vertex), 0, &data);
 //	//
@@ -354,10 +415,10 @@ void ComputeVertex::RecordComputeCommands(int frame) {
 //	//
 //	//memcpy(tempVertex.data(), data,
 //(size_t)static_cast<uint32_t>(this->model->modelVertexBuffer.size()) *
-//sizeof(gtp::Vertex));
+// sizeof(gtp::Vertex));
 //	//
 //	//vkUnmapMemory(this->pEngineCore->devices.logical,
-//this->storageInputBuffer.bufferData.memory);
+// this->storageInputBuffer.bufferData.memory);
 //	//
 //	//return tempVertex;
 //

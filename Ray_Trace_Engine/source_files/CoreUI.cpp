@@ -134,7 +134,7 @@ void CoreUI::CreateFontImage() {
                                          &fontImage.texHeight);
 
   ////SRS - Set ImGui style scale factor to handle retina and other HiDPI
-  ///displays (same as font scaling above)
+  /// displays (same as font scaling above)
   ImGuiStyle &locStyle = ImGui::GetStyle();
   locStyle.ScaleAllSizes(properties.scale);
 
@@ -926,11 +926,13 @@ void CoreUI::Input() {
 
   ImGui::Begin("controls");
 
-  if (ImGui::CollapsingHeader("Menu controls")) {
-    // ImGui::Checkbox("test", 0);
-  }
+  if (ImGui::CollapsingHeader("Model Controls")) {
 
-  // ImGui::Checkbox("test", 0);
+    if (ImGui::BeginCombo("Model", "")) {
+
+      ImGui::EndCombo();
+    }
+  }
 
   ImGui::End();
 
@@ -1060,6 +1062,19 @@ void CoreUI::DrawUI(const VkCommandBuffer commandBuffer, int currentFrame) {
 
   // end render pass
   vkCmdEndRenderPass(commandBuffer);
+}
+
+void CoreUI::SetModelData(Utilities_UI::ModelData* pModelData) {
+
+  //set names
+  this->modelData = *pModelData;
+
+  std::cout << "\n UI - SetModelData() model name List:" << std::endl;
+
+  for (int i = 0; i < this->modelData.modelName.size(); i++) {
+    std::cout << "\t" << this->modelData.modelName[i] << std::endl;
+  }
+
 }
 
 void CoreUI::DestroyUI() {

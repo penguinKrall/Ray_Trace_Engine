@@ -271,11 +271,25 @@ void Utilities_AS::createBLAS(
                         primitive->material.baseColorTexture->index +
                         textureOffset)
                   : -1;
+
           geometryNode.textureIndexOcclusion =
               primitive->material.occlusionTexture
                   ? static_cast<int>(
                         primitive->material.occlusionTexture->index +
                         textureOffset)
+                  : -1;
+
+          geometryNode.textureIndexMetallicRoughness =
+              primitive->material.metallicRoughnessTexture
+                  ? static_cast<int>(
+                        primitive->material.metallicRoughnessTexture->index +
+                        textureOffset)
+                  : -1;
+
+          geometryNode.textureIndexNormal =
+              primitive->material.normalTexture
+                  ? static_cast<int>(primitive->material.normalTexture->index +
+                                     textureOffset)
                   : -1;
 
           geometryNode.semiTransparentFlag = model->semiTransparentFlag;

@@ -198,6 +198,8 @@ struct Model {
 
   EngineCore *coreBase;
 
+  std::string modelName;
+
   struct Vertex {
     glm::vec4 pos;
     glm::vec4 normal;

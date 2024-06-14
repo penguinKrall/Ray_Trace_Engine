@@ -37,6 +37,9 @@ struct GeometryNode {
     uint64_t indexBufferDeviceAddress;
     int textureIndexBaseColor;
     int textureIndexOcclusion;
+    int textureIndexMetallicRoughness;
+    int textureIndexNormal;
+    int textureIndexEmissive;
     int semiTransparentFlag;
 };
 
