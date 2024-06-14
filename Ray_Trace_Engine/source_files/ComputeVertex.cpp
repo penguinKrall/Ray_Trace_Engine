@@ -16,16 +16,7 @@ ComputeVertex::ComputeVertex(EngineCore *coreBase, gtp::Model *modelPtr) {
 
   CreateCommandBuffers();
 
-  // test transforms buffer update delete later and put where needed
-  this->transformsData.rotate = glm::rotate(
-      glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-  this->transformsData.translate =
-      glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 0.0f, 0.0f));
-
-  this->transformsData.scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.05f));
-
-  UpdateTransformsBuffer(&this->transformsData);
+  UpdateTransformsBuffer(&this->transformMatrices);
 }
 
 void ComputeVertex::Init_ComputeVertex(EngineCore *coreBase,
@@ -38,8 +29,7 @@ void ComputeVertex::Init_ComputeVertex(EngineCore *coreBase,
 
 void ComputeVertex::CreateTransformsBuffer() {
 
-  VkDeviceSize transformsBufferSize = sizeof(ComputeVertex::TransformsData);
-
+  VkDeviceSize transformsBufferSize = sizeof(Utilities_UI::TransformMatrices);
   this->transformsBuffer.bufferData.bufferName =
       "gltf_compute_transformsStorageBuffer_";
   this->transformsBuffer.bufferData.bufferMemoryName =
@@ -51,15 +41,15 @@ void ComputeVertex::CreateTransformsBuffer() {
           VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-      &this->transformsBuffer, transformsBufferSize, &transformsData);
+      &this->transformsBuffer, transformsBufferSize, &transformMatrices);
 }
 
 void ComputeVertex::UpdateTransformsBuffer(
-    ComputeVertex::TransformsData *pTransformsData) {
+    Utilities_UI::TransformMatrices *pTransformMatricesData) {
 
-  VkDeviceSize transformsBufferSize = sizeof(ComputeVertex::TransformsData);
+  VkDeviceSize transformsBufferSize = sizeof(Utilities_UI::TransformMatrices);
 
-  this->transformsBuffer.copyTo(pTransformsData, transformsBufferSize);
+  this->transformsBuffer.copyTo(pTransformMatricesData, transformsBufferSize);
 }
 
 void ComputeVertex::CreateComputeBuffers() {

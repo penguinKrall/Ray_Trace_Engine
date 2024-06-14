@@ -2,6 +2,7 @@
 
 #include <Shader.hpp>
 #include <Utilities_EngCore.hpp>
+#include <Utilities_UI.hpp>
 #include <filesystem>
 #include <glTFModel.hpp>
 
@@ -9,11 +10,11 @@ class ComputeVertex {
 
 public:
   // -- transforms struct
-  struct TransformsData {
-    glm::mat4 rotate = glm::mat4(1.0f);
-    glm::mat4 translate = glm::mat4(1.0f);
-    glm::mat4 scale = glm::mat4(1.0f);
-  };
+  // struct Utilities_UI::TransformMatrices {
+  //  glm::mat4 rotate = glm::mat4(1.0f);
+  //  glm::mat4 translate = glm::mat4(1.0f);
+  //  glm::mat4 scale = glm::mat4(1.0f);
+  //};
 
   // -- core pointer
   EngineCore *pEngineCore = nullptr;
@@ -34,7 +35,9 @@ public:
   gtp::Buffer jointBuffer;
 
   // -- rotate/translate/scale matrices buffer
-  TransformsData transformsData{};
+  Utilities_UI::TransformMatrices transformMatrices{};
+  //Utilities_UI::ModelData uiModelData{};
+
   gtp::Buffer transformsBuffer;
 
   // -- pipeline data struct
@@ -65,7 +68,24 @@ public:
   void CreateTransformsBuffer();
 
   // -- update transforms buffer
-  void UpdateTransformsBuffer(ComputeVertex::TransformsData *pTransformsData);
+  void UpdateTransformsBuffer(Utilities_UI::TransformMatrices* pTransformMatricesData);
+
+  // -- initialize model data
+  void SetModelData(Utilities_UI::ModelData* pModelData, int modelIndex) {
+    //this->modelData.transformMatrices.rotate = glm::rotate(
+    //  glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+    //this->modelData.transformMatrices.translate =
+    //  glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 0.0f, 0.0f));
+
+    //this->modelData.transformMatrices.scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.05f));
+    
+    //initialize model data values
+   // this->modelData.transformMatrices = pModelData->transformMatrices;
+
+    this->UpdateTransformsBuffer(&pModelData->transformMatrices[modelIndex]);
+
+  }
 
   // -- create buffers
   void CreateComputeBuffers();

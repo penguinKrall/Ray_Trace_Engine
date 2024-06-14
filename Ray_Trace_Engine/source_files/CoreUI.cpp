@@ -745,7 +745,7 @@ void CoreUI::CreateFontImageDescriptor() {
                          0, nullptr);
 }
 
-void CoreUI::update(int currentFrame) {
+void CoreUI::UpdateBuffers(int currentFrame) {
 
   // get draw data
   backends.drawData = ImGui::GetDrawData();
@@ -924,6 +924,7 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
 
   ImGui::End();
 
+  // floating window
   ImGui::Begin("controls");
 
   if (ImGui::CollapsingHeader("Model Controls")) {
@@ -935,20 +936,33 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
         bool isSelected = (pModelData->modelIndex == i);
         if (ImGui::Selectable(pModelData->modelName[i].c_str(), isSelected)) {
           pModelData->modelIndex = i;
-          // Do something when a new model is selected
+
           std::cout << "Selected Model: "
                     << pModelData->modelName[pModelData->modelIndex]
                     << std::endl;
-          // Add your code to handle the model selection change here
         }
-        // Set the initial focus when opening the combo (scrolling + keyboard
-        // navigation focus)
+
         if (isSelected) {
           ImGui::SetItemDefaultFocus();
         }
       }
 
       ImGui::EndCombo();
+    }
+
+    if (ImGui::CollapsingHeader("Model Transform Values")) {
+
+      ImGui::SliderFloat4("Rotate",
+                          (float *)&this->modelData.transformValues[this->modelData.modelIndex].rotate,
+                          -180.0f, 180.0f);
+
+      ImGui::SliderFloat4("Translate",
+                          (float *)&this->modelData.transformValues[this->modelData.modelIndex].translate,
+                          -20.0f, 20.0f);
+
+      ImGui::SliderFloat4("Scale",
+                          (float *)&this->modelData.transformValues[this->modelData.modelIndex].scale,
+                          0.001f, 10.0f);
     }
   }
 

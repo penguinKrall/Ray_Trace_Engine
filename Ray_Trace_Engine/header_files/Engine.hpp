@@ -88,6 +88,9 @@ public:
   // -- update ui
   void UpdateUI();
 
+  // -- handle ui
+  void HandleUI();
+
 };
 
 } // namespace gtp

@@ -49,6 +49,7 @@ public:
 
     // models
     std::vector<gtp::Model *> models;
+    Utilities_UI::ModelData modelData;
 
     // animation model
     gtp::Model *animatedModel;
@@ -121,7 +122,7 @@ public:
   PipelineData pipelineData{};
 
   // -- ui data
-  Utilities_UI::ModelData uiModelData{};
+  //Utilities_UI::ModelData uiModelData{};
 
   // -- shader
   gtp::Shader shader;
@@ -193,7 +194,7 @@ public:
   void HandleResize();
 
   // -- update UI data
-  void UpdateUIData();
+  void UpdateUIData(Utilities_UI::ModelData* pModelData);
   
   // -- destroy class objects
   void Destroy_MainRenderer();

@@ -78,10 +78,22 @@ void Engine::Terminate() {
 
 void Engine::UpdateUI() {
   if (this->isUIUpdated) {
-    this->renderers.mainRenderer.UpdateUIData();
-    this->UI.SetModelData(&this->renderers.mainRenderer.uiModelData);
+    this->renderers.mainRenderer.UpdateUIData(
+        &this->renderers.mainRenderer.assets.modelData);
+    this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
     this->isUIUpdated = false;
   }
+}
+
+void Engine::HandleUI() {
+  // update UI input
+  this->UI.Input(&this->renderers.mainRenderer.assets.modelData);
+
+  // update UI vertex/index buffers
+  this->UI.UpdateBuffers(currentFrame);
+
+  // draw UI
+  this->UI.DrawUI(commandBuffers.graphics[currentFrame], currentFrame);
 }
 
 void Engine::userInput() {
@@ -312,14 +324,7 @@ void Engine::Draw() {
   //     render dearImGui           //
   /*-------------------------------*/
 
-  // update UI input
-  this->UI.Input(&this->renderers.mainRenderer.uiModelData);
-
-  // update UI vertex/index buffers
-  this->UI.update(currentFrame);
-
-  // draw UI
-  this->UI.DrawUI(commandBuffers.graphics[currentFrame], currentFrame);
+  this->HandleUI();
 
   /*------------------------------------*/
   //    end record command buffer      //

@@ -26,7 +26,10 @@ void MainRenderer::Init_MainRenderer(EngineCore *coreBase) {
   //
   ////compute
   this->gltfCompute = ComputeVertex(pEngineCore, this->assets.animatedModel);
-  //
+
+  this->gltfCompute.SetModelData(&this->assets.modelData, 0);
+  // this->UpdateUIData(&this->assets.modelData);
+
   ////create bottom level acceleration structure
   this->CreateBottomLevelAccelerationStructures();
 
@@ -86,18 +89,54 @@ void MainRenderer::LoadAssets() {
       gtp::FileLoadingFlags::PreTransformVertices |
       gtp::FileLoadingFlags::PreMultiplyVertexColors;
 
-  // this->assets.animatedModel = new gtp::MainRenderer_model(pEngineCore);
+  // animated model
   this->assets.animatedModel = new gtp::Model();
 
+  // load from file
   this->assets.animatedModel->loadFromFile(
       "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
       "Fox2/"
       "Fox2.gltf",
       pEngineCore, pEngineCore->queue.graphics);
 
+  // add model to model list
   this->assets.models.push_back(this->assets.animatedModel);
 
+  // init modelData struct
+  this->assets.modelData.modelName.push_back(
+      this->assets.animatedModel->modelName);
+
+  this->assets.modelData.modelIndex = 0;
+
+  // pre transforms
+  // matrices
+  Utilities_UI::TransformMatrices animatedTransformMatrices{};
+
+  animatedTransformMatrices.rotate = glm::rotate(
+      glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+  animatedTransformMatrices.translate =
+      glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 0.0f, 0.0f));
+
+  animatedTransformMatrices.scale =
+      glm::scale(glm::mat4(1.0f), glm::vec3(0.05f));
+
+  // vectors of xyzw values
+  Utilities_UI::TransformValues animatedTransformValues{};
+
+  animatedTransformValues.rotate =
+      animatedTransformMatrices.rotate * glm::vec4(1.0f);
+  animatedTransformValues.translate =
+      animatedTransformMatrices.translate * glm::vec4(1.0f);
+  animatedTransformValues.scale =
+      animatedTransformMatrices.scale * glm::vec4(1.0f);
+
+  this->assets.modelData.transformMatrices.push_back(animatedTransformMatrices);
+  this->assets.modelData.transformValues.push_back(animatedTransformValues);
+
+  // -- load scene
   this->assets.testScene = new gtp::Model();
+
   this->assets.testScene->loadFromFile(
       "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
       "test_scene/testScene.gltf",
@@ -135,7 +174,22 @@ void MainRenderer::LoadAssets() {
   // std::cout << "this->assets.gondola->textures.size(): " <<
   // this->assets.gondola->textures.size() << std::endl;
 
-  this->UpdateUIData();
+  // Utilities_UI::ModelData tempModelData{};
+
+  // tempModelData.transformMatrices.rotate = glm::rotate(
+  //     glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+  //
+  // tempModelData.transformMatrices.translate =
+  //     glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 0.0f, 0.0f));
+  //
+  // tempModelData.transformMatrices.scale =
+  //     glm::scale(glm::mat4(1.0f), glm::vec3(0.05f));
+  //
+  // tempModelData.modelName = this->assets.animatedModel->modelName;
+  //
+  // this->gltfCompute.SetModelData(&this->assets.modelData, 0);
+  ////
+  // this->UpdateUIData(&this->assets.modelData);
 }
 
 void MainRenderer::CreateBottomLevelAccelerationStructures() {
@@ -1449,19 +1503,18 @@ void MainRenderer::HandleResize() {
   this->UpdateDescriptorSet();
 }
 
-void MainRenderer::UpdateUIData() {
+void MainRenderer::UpdateUIData(Utilities_UI::ModelData *pModelData) {
 
-  Utilities_UI::ModelData tempUIData{};
+  // Utilities_UI::ModelData tempUIData{};
+  //
+  // std::cout << "\nUpdateUIData() Model List:" << std::endl;
+  //
+  // for (int i = 0; i < this->assets.models.size(); i++) {
+  //   tempUIData.modelName.push_back(this->assets.models[i]->modelName);
+  //   std::cout << "\t" << tempUIData.modelName[i] << std::endl;
+  // }
 
-  std::cout << "\nUpdateUIData() Model List:" << std::endl;
-
-  for (int i = 0; i < this->assets.models.size(); i++) {
-    tempUIData.modelName.push_back(this->assets.models[i]->modelName);
-    std::cout << "\t" << tempUIData.modelName[i] << std::endl;
-  }
-
-  this->uiModelData = tempUIData;
-
+  this->assets.modelData = *pModelData;
 }
 
 void MainRenderer::Destroy_MainRenderer() {

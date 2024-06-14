@@ -140,7 +140,7 @@ public:
   // -- update
   //@brief update vertex and index buffer containing the imGui elements when
   // required
-  void update(int currentFrame);
+  void UpdateBuffers(int currentFrame);
 
   // -- input
   //@brief creates input window draw data
