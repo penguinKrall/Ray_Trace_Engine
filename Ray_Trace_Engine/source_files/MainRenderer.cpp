@@ -25,10 +25,9 @@ void MainRenderer::Init_MainRenderer(EngineCore *coreBase) {
   vkDeviceWaitIdle(this->pEngineCore->devices.logical);
   //
   ////compute
-  this->gltfCompute = ComputeVertex(pEngineCore, this->assets.animatedModel);
+  this->gltfCompute = ComputeVertex(pEngineCore, this->assets.models[0]);
 
   this->gltfCompute.SetModelData(&this->assets.modelData, 0);
-  // this->UpdateUIData(&this->assets.modelData);
 
   ////create bottom level acceleration structure
   this->CreateBottomLevelAccelerationStructures();
@@ -83,33 +82,61 @@ void MainRenderer::Init_MainRenderer(EngineCore *coreBase) {
   std::cout << "\nfinished building command buffers" << std::endl;
 }
 
+void MainRenderer::LoadModel(
+    std::string filename, uint32_t fileLoadingFlags, bool isAnimated,
+    bool isSemiTransparent,
+    Utilities_UI::TransformMatrices *pTransformMatrices) {
+
+  // animated model
+  auto *tempModel = new gtp::Model();
+
+  // load from file
+  tempModel->loadFromFile(filename, pEngineCore, pEngineCore->queue.graphics,
+                          fileLoadingFlags);
+
+  tempModel->semiTransparentFlag = static_cast<int>(isSemiTransparent);
+
+  // add model to model list
+  this->assets.models.push_back(tempModel);
+
+  // init modelData struct
+  this->assets.modelData.modelName.push_back(tempModel->modelName);
+
+  // pre transforms
+  // matrices
+  Utilities_UI::TransformMatrices transformMatrices{};
+
+  if (pTransformMatrices != nullptr) {
+
+    transformMatrices.rotate = pTransformMatrices->rotate;
+
+    transformMatrices.translate = pTransformMatrices->translate;
+
+    transformMatrices.scale = pTransformMatrices->scale;
+  }
+
+  // vectors of xyzw values
+  Utilities_UI::TransformValues transformValues{};
+
+  transformValues.rotate = transformMatrices.rotate * glm::vec4(1.0f);
+
+  transformValues.translate = transformMatrices.translate * glm::vec4(1.0f);
+
+  transformValues.scale = transformMatrices.scale * glm::vec4(1.0f);
+
+  this->assets.modelData.transformMatrices.push_back(transformMatrices);
+  this->assets.modelData.transformValues.push_back(transformValues);
+  this->assets.modelData.animatedModelIndex.push_back(
+      static_cast<int>(isAnimated));
+}
+
 void MainRenderer::LoadAssets() {
 
   const uint32_t glTFLoadingFlags =
       gtp::FileLoadingFlags::PreTransformVertices |
       gtp::FileLoadingFlags::PreMultiplyVertexColors;
 
-  // animated model
-  this->assets.animatedModel = new gtp::Model();
-
-  // load from file
-  this->assets.animatedModel->loadFromFile(
-      "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
-      "Fox2/"
-      "Fox2.gltf",
-      pEngineCore, pEngineCore->queue.graphics);
-
-  // add model to model list
-  this->assets.models.push_back(this->assets.animatedModel);
-
-  // init modelData struct
-  this->assets.modelData.modelName.push_back(
-      this->assets.animatedModel->modelName);
-
-  this->assets.modelData.modelIndex = 0;
-
-  // pre transforms
-  // matrices
+  // -- load animation
   Utilities_UI::TransformMatrices animatedTransformMatrices{};
 
   animatedTransformMatrices.rotate = glm::rotate(
@@ -121,28 +148,25 @@ void MainRenderer::LoadAssets() {
   animatedTransformMatrices.scale =
       glm::scale(glm::mat4(1.0f), glm::vec3(0.05f));
 
-  // vectors of xyzw values
-  Utilities_UI::TransformValues animatedTransformValues{};
-
-  animatedTransformValues.rotate =
-      animatedTransformMatrices.rotate * glm::vec4(1.0f);
-  animatedTransformValues.translate =
-      animatedTransformMatrices.translate * glm::vec4(1.0f);
-  animatedTransformValues.scale =
-      animatedTransformMatrices.scale * glm::vec4(1.0f);
-
-  this->assets.modelData.transformMatrices.push_back(animatedTransformMatrices);
-  this->assets.modelData.transformValues.push_back(animatedTransformValues);
+  this->LoadModel("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/"
+                  "assets/models/Fox2/Fox2.gltf",
+                  gtp::FileLoadingFlags::None, true, false,
+                  &animatedTransformMatrices);
 
   // -- load scene
-  this->assets.testScene = new gtp::Model();
-
-  this->assets.testScene->loadFromFile(
+  this->LoadModel(
       "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
       "test_scene/testScene.gltf",
-      pEngineCore, pEngineCore->queue.graphics);
+      gtp::FileLoadingFlags::None, false, false, nullptr);
 
-  this->assets.models.push_back(this->assets.testScene);
+  // this->assets.testScene = new gtp::Model();
+  //
+  // this->assets.testScene->loadFromFile(
+  //     "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
+  //     "test_scene/testScene.gltf",
+  //     pEngineCore, pEngineCore->queue.graphics);
+  //
+  // this->assets.models.push_back(this->assets.testScene);
 
   this->assets.waterSurface = new gtp::Model();
   this->assets.waterSurface->loadFromFile(
@@ -1608,8 +1632,8 @@ void MainRenderer::Destroy_MainRenderer() {
   this->gltfCompute.Destroy_ComputeVertex();
 
   // -- models
-  this->assets.animatedModel->destroy(this->pEngineCore->devices.logical);
-  this->assets.testScene->destroy(this->pEngineCore->devices.logical);
+  this->assets.models[0]->destroy(this->pEngineCore->devices.logical);
+  this->assets.models[1]->destroy(this->pEngineCore->devices.logical);
   this->assets.waterSurface->destroy(this->pEngineCore->devices.logical);
   this->assets.coloredGlassTexture.DestroyTextureLoader();
   this->assets.helmetModel->destroy(this->pEngineCore->devices.logical);

@@ -33,6 +33,7 @@ public:
     std::vector<std::string> modelName;
     std::vector<TransformMatrices> transformMatrices{};
     std::vector<TransformValues> transformValues{};
+    std::vector<int> animatedModelIndex;
   };
 
 };

@@ -301,8 +301,7 @@ void Engine::Draw() {
   /*----------------------------------*/
 
   // update model class animation
-  this->renderers.mainRenderer.assets.animatedModel->updateAnimation(2,
-                                                                     deltaTime);
+  this->renderers.mainRenderer.assets.models[0]->updateAnimation(2, deltaTime);
 
   // update compute class joint buffer
   this->renderers.mainRenderer.gltfCompute.UpdateJointBuffer();

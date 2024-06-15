@@ -40,10 +40,6 @@ public:
     gtp::Buffer ubo;
   };
 
- //struct UIData {
- //  std::vector<std::string> modelNames;
- //};
-
   // -- assets data struct
   struct Assets {
 
@@ -52,13 +48,13 @@ public:
     Utilities_UI::ModelData modelData;
 
     // animation model
-    gtp::Model *animatedModel;
+    //gtp::Model *animatedModel;
 
     // static/scene model
     gtp::Model *helmetModel;
 
     ////static/scene model
-    gtp::Model *testScene;
+    //gtp::Model *testScene;
 
     ////building glass model
     gtp::Model *waterSurface;
@@ -122,7 +118,7 @@ public:
   PipelineData pipelineData{};
 
   // -- ui data
-  //Utilities_UI::ModelData uiModelData{};
+  // Utilities_UI::ModelData uiModelData{};
 
   // -- shader
   gtp::Shader shader;
@@ -138,6 +134,11 @@ public:
 
   // -- init class function
   void Init_MainRenderer(EngineCore *coreBase);
+
+  // -- load model
+  void LoadModel(std::string filename, uint32_t fileLoadingFlags = 0,
+                 bool isAnimated = false, bool isSemiTransparent = false,
+                 Utilities_UI::TransformMatrices *pTransformMatrices = nullptr);
 
   // -- load assets
   void LoadAssets();
@@ -194,8 +195,8 @@ public:
   void HandleResize();
 
   // -- update UI data
-  void UpdateUIData(Utilities_UI::ModelData* pModelData);
-  
+  void UpdateUIData(Utilities_UI::ModelData *pModelData);
+
   // -- destroy class objects
   void Destroy_MainRenderer();
 };
