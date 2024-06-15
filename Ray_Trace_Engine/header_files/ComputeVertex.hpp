@@ -9,12 +9,6 @@
 class ComputeVertex {
 
 public:
-  // -- transforms struct
-  // struct Utilities_UI::TransformMatrices {
-  //  glm::mat4 rotate = glm::mat4(1.0f);
-  //  glm::mat4 translate = glm::mat4(1.0f);
-  //  glm::mat4 scale = glm::mat4(1.0f);
-  //};
 
   // -- core pointer
   EngineCore *pEngineCore = nullptr;

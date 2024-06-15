@@ -20,7 +20,7 @@ void MainRenderer::Init_MainRenderer(EngineCore *coreBase) {
 
   std::cout << "\nfinished loading assets." << std::endl;
 
-  this->PreTransformModels();
+  // this->PreTransformModels();
   //
   vkDeviceWaitIdle(this->pEngineCore->devices.logical);
   //
@@ -83,16 +83,24 @@ void MainRenderer::Init_MainRenderer(EngineCore *coreBase) {
 }
 
 void MainRenderer::LoadModel(
-    std::string filename, uint32_t fileLoadingFlags, bool isAnimated,
-    bool isSemiTransparent,
+    std::string filename, uint32_t fileLoadingFlags,
+    Utilities_Renderer::ModelLoadingFlags modelLoadingFlags,
     Utilities_UI::TransformMatrices *pTransformMatrices) {
 
   // animated model
   auto *tempModel = new gtp::Model();
 
+  auto modelIdx = static_cast<int>(this->assets.models.size());
+
   // load from file
   tempModel->loadFromFile(filename, pEngineCore, pEngineCore->queue.graphics,
                           fileLoadingFlags);
+
+  const bool isSemiTransparent =
+      modelLoadingFlags ==
+              Utilities_Renderer::ModelLoadingFlags::SemiTransparent
+          ? 1
+          : 0;
 
   tempModel->semiTransparentFlag = static_cast<int>(isSemiTransparent);
 
@@ -126,8 +134,29 @@ void MainRenderer::LoadModel(
 
   this->assets.modelData.transformMatrices.push_back(transformMatrices);
   this->assets.modelData.transformValues.push_back(transformValues);
+
+  const bool isAnimated =
+      modelLoadingFlags == Utilities_Renderer::ModelLoadingFlags::Animated ? 1
+                                                                           : 0;
+
   this->assets.modelData.animatedModelIndex.push_back(
       static_cast<int>(isAnimated));
+
+  bool positionModel =
+      modelLoadingFlags == Utilities_Renderer::ModelLoadingFlags::PositionModel
+          ? 1
+          : 0;
+
+  if (positionModel) {
+    Utilities_Renderer::TransformsData transformsData{};
+    transformsData.model = this->assets.models[modelIdx];
+    transformsData.rotate = transformMatrices.rotate;
+    transformsData.translate = transformMatrices.translate;
+    transformsData.scale = transformMatrices.scale;
+
+    Utilities_Renderer::TransformModelVertices(this->pEngineCore,
+                                               &transformsData);
+  }
 }
 
 void MainRenderer::LoadAssets() {
@@ -150,20 +179,23 @@ void MainRenderer::LoadAssets() {
 
   this->LoadModel("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/"
                   "assets/models/Fox2/Fox2.gltf",
-                  gtp::FileLoadingFlags::None, true, false,
+                  gtp::FileLoadingFlags::None,
+                  Utilities_Renderer::ModelLoadingFlags::Animated,
                   &animatedTransformMatrices);
 
   // -- load scene
   this->LoadModel(
       "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
       "test_scene/testScene.gltf",
-      gtp::FileLoadingFlags::None, false, false, nullptr);
+      gtp::FileLoadingFlags::None, Utilities_Renderer::ModelLoadingFlags::None,
+      nullptr);
 
   // -- load water surface
   this->LoadModel(
       "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
       "test_scene/pool_water_surface/pool_water_surface.gltf",
-      gtp::FileLoadingFlags::None, false, true, nullptr);
+      gtp::FileLoadingFlags::None,
+      Utilities_Renderer::ModelLoadingFlags::SemiTransparent, nullptr);
 
   // -- load colored glass tex - dont need this anymore -- will use for an
   // example of how to load .ktx still...
@@ -176,10 +208,19 @@ void MainRenderer::LoadAssets() {
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
   // -- load flight helmet model
+  Utilities_UI::TransformMatrices helmetModelTransformMatrices{};
+
+  helmetModelTransformMatrices.translate =
+      glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
+
+  helmetModelTransformMatrices.scale =
+      glm::scale(glm::mat4(1.0f), glm::vec3(10.0f));
+
   this->LoadModel(
       "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
       "FlightHelmet/glTF/FlightHelmet.gltf",
-      glTFLoadingFlags, false, false, nullptr);
+      glTFLoadingFlags, Utilities_Renderer::ModelLoadingFlags::PositionModel,
+      &helmetModelTransformMatrices);
 }
 
 void MainRenderer::CreateBottomLevelAccelerationStructures() {
@@ -1304,7 +1345,8 @@ void MainRenderer::PreTransformModels() {
       glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
   transformsData.scale = glm::scale(glm::mat4(1.0f), glm::vec3(10.0f));
 
-  Utilities_Renderer::TransformModel(this->pEngineCore, &transformsData);
+  Utilities_Renderer::TransformModelVertices(this->pEngineCore,
+                                             &transformsData);
 }
 
 void MainRenderer::CreateGeometryNodesBuffer() {

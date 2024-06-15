@@ -5,6 +5,14 @@
 
 class Utilities_Renderer {
 public:
+
+  enum ModelLoadingFlags {
+    None = 0x00000000,
+    Animated = 0x00000001,
+    SemiTransparent = 0x00000002,
+    PositionModel = 0x00000003
+  };
+
   struct TransformsData {
     glm::mat4 rotate = glm::mat4(1.0f);
     glm::mat4 translate = glm::mat4(1.0f);
@@ -36,8 +44,8 @@ public:
     return tempVertexBuffer;
   }
 
-  static void TransformModel(EngineCore *engineCore,
-                             TransformsData *transformsData) {
+  static void TransformModelVertices(EngineCore *engineCore,
+                                     TransformsData *transformsData) {
 
     std::vector<gtp::Model::Vertex> tempSceneVerticesBuffer;
 

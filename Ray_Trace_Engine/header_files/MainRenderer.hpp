@@ -51,13 +51,13 @@ public:
     // gtp::Model *animatedModel;
 
     // static/scene model
-    //gtp::Model *helmetModel;
+    // gtp::Model *helmetModel;
 
     ////static/scene model
-    //gtp::Model *testScene;
+    // gtp::Model *testScene;
 
     ////building glass model
-   // gtp::Model *waterSurface;
+    // gtp::Model *waterSurface;
 
     // colored glass texture
     gtp::TextureLoader coloredGlassTexture;
@@ -137,7 +137,8 @@ public:
 
   // -- load model
   void LoadModel(std::string filename, uint32_t fileLoadingFlags = 0,
-                 bool isAnimated = false, bool isSemiTransparent = false,
+                 Utilities_Renderer::ModelLoadingFlags modelLoadingFlags =
+                     Utilities_Renderer::ModelLoadingFlags::None,
                  Utilities_UI::TransformMatrices *pTransformMatrices = nullptr);
 
   // -- load assets
