@@ -159,26 +159,14 @@ void MainRenderer::LoadAssets() {
       "test_scene/testScene.gltf",
       gtp::FileLoadingFlags::None, false, false, nullptr);
 
-  // this->assets.testScene = new gtp::Model();
-  //
-  // this->assets.testScene->loadFromFile(
-  //     "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
-  //     "test_scene/testScene.gltf",
-  //     pEngineCore, pEngineCore->queue.graphics);
-
-  // this->assets.models.push_back(this->assets.testScene);
-
-  this->assets.waterSurface = new gtp::Model();
-  this->assets.waterSurface->loadFromFile(
+  // -- load water surface
+  this->LoadModel(
       "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
       "test_scene/pool_water_surface/pool_water_surface.gltf",
-      pEngineCore, pEngineCore->queue.graphics, glTFLoadingFlags);
-  this->assets.waterSurface->semiTransparentFlag = 1;
-  this->assets.models.push_back(this->assets.waterSurface);
+      gtp::FileLoadingFlags::None, false, true, nullptr);
 
-  // std::cout << "this->assets.waterSurface->textures.size(): " <<
-  // this->assets.waterSurface.textures.size() << std::endl;
-
+  // -- load colored glass tex - dont need this anymore -- will use for an
+  // example of how to load .ktx still...
   this->assets.coloredGlassTexture = gtp::TextureLoader(this->pEngineCore);
   this->assets.coloredGlassTexture.loadFromFile(
       "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/"
@@ -187,33 +175,11 @@ void MainRenderer::LoadAssets() {
       VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-  this->assets.helmetModel = new gtp::Model();
-  this->assets.helmetModel->loadFromFile(
+  // -- load flight helmet model
+  this->LoadModel(
       "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
       "FlightHelmet/glTF/FlightHelmet.gltf",
-      pEngineCore, pEngineCore->queue.graphics, glTFLoadingFlags);
-  // this->assets.helmetModel->semiTransparentFlag = 1;
-  this->assets.models.push_back(this->assets.helmetModel);
-  //
-  // std::cout << "this->assets.gondola->textures.size(): " <<
-  // this->assets.gondola->textures.size() << std::endl;
-
-  // Utilities_UI::ModelData tempModelData{};
-
-  // tempModelData.transformMatrices.rotate = glm::rotate(
-  //     glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-  //
-  // tempModelData.transformMatrices.translate =
-  //     glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 0.0f, 0.0f));
-  //
-  // tempModelData.transformMatrices.scale =
-  //     glm::scale(glm::mat4(1.0f), glm::vec3(0.05f));
-  //
-  // tempModelData.modelName = this->assets.animatedModel->modelName;
-  //
-  // this->gltfCompute.SetModelData(&this->assets.modelData, 0);
-  ////
-  // this->UpdateUIData(&this->assets.modelData);
+      glTFLoadingFlags, false, false, nullptr);
 }
 
 void MainRenderer::CreateBottomLevelAccelerationStructures() {
@@ -1333,7 +1299,7 @@ void MainRenderer::UpdateTLAS() {
 void MainRenderer::PreTransformModels() {
 
   Utilities_Renderer::TransformsData transformsData{};
-  transformsData.model = this->assets.helmetModel;
+  transformsData.model = this->assets.models[3];
   transformsData.translate =
       glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
   transformsData.scale = glm::scale(glm::mat4(1.0f), glm::vec3(10.0f));
@@ -1634,7 +1600,7 @@ void MainRenderer::Destroy_MainRenderer() {
   // -- models
   this->assets.models[0]->destroy(this->pEngineCore->devices.logical);
   this->assets.models[1]->destroy(this->pEngineCore->devices.logical);
-  this->assets.waterSurface->destroy(this->pEngineCore->devices.logical);
+  this->assets.models[2]->destroy(this->pEngineCore->devices.logical);
   this->assets.coloredGlassTexture.DestroyTextureLoader();
-  this->assets.helmetModel->destroy(this->pEngineCore->devices.logical);
+  this->assets.models[3]->destroy(this->pEngineCore->devices.logical);
 }
