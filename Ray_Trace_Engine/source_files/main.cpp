@@ -3,7 +3,7 @@
 int main() {
 
   // engine contains core components for device/window/swapchain creation
-  auto engine = std::make_unique<gtp::Engine>();
+  auto engine = new gtp::Engine();
 
   // init
   engine->InitEngine();

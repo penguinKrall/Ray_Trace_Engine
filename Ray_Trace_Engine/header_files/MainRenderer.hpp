@@ -48,13 +48,13 @@ public:
     Utilities_UI::ModelData modelData;
 
     // animation model
-    //gtp::Model *animatedModel;
+    // gtp::Model *animatedModel;
 
     // static/scene model
     gtp::Model *helmetModel;
 
     ////static/scene model
-    //gtp::Model *testScene;
+    gtp::Model *testScene;
 
     ////building glass model
     gtp::Model *waterSurface;

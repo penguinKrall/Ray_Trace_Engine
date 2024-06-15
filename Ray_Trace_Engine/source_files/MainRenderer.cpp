@@ -165,7 +165,7 @@ void MainRenderer::LoadAssets() {
   //     "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
   //     "test_scene/testScene.gltf",
   //     pEngineCore, pEngineCore->queue.graphics);
-  //
+
   // this->assets.models.push_back(this->assets.testScene);
 
   this->assets.waterSurface = new gtp::Model();

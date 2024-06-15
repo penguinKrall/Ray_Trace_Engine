@@ -325,8 +325,6 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source_files\Utilities_Renderer.cpp" />
-    <ClCompile Include="source_files\Utilities_UI.cpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Buffer.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Camera.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Commands.hpp" />
@@ -347,11 +345,11 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Utilities_CreateObject.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Utilities_EngCore.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Utilities_EnumStringHelper.hpp" />
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Utilities_Renderer.hpp" />
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Utilities_UI.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\glTFModel.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\main.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\stb_image.h" />
-    <ClInclude Include="header_files\Utilities_Renderer.hpp" />
-    <ClInclude Include="header_files\Utilities_UI.hpp" />
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_anyhit.rahit">
     </None>
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_bufferreferences.glsl">
@@ -394,6 +392,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Utilities_CreateObject.cpp" />
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Utilities_EngCore.cpp" />
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Utilities_EnumStringHelper.cpp" />
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Utilities_Renderer.cpp" />
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Utilities_UI.cpp" />
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\glTFModel.cpp" />
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\main.cpp" />
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\dependencies\imgui\imgui.cpp" />

@@ -61,6 +61,12 @@
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Utilities_EnumStringHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Utilities_Renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Utilities_UI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\glTFModel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -88,10 +94,6 @@
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\dependencies\imgui\imgui_widgets.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="source_files\Utilities_Renderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="source_files\Utilities_UI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Buffer.hpp">
@@ -154,6 +156,12 @@
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Utilities_EnumStringHelper.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Utilities_Renderer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Utilities_UI.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\glTFModel.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -163,10 +171,6 @@
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="header_files\Utilities_Renderer.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="header_files\Utilities_UI.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\CMakeLists.txt" />
@@ -175,15 +179,18 @@
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_anyhit.rahit">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_bufferreferences.glsl" />
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_closesthit.rchit">
       <Filter>Shaders</Filter>
     </None>
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_compute.comp">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_geometrytypes.glsl" />
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_miss.rmiss">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_random.glsl" />
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_raygen.rgen">
       <Filter>Shaders</Filter>
     </None>
@@ -194,15 +201,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\ui_vertex.vert">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_random.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_bufferreferences.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_geometrytypes.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
