@@ -198,6 +198,10 @@ public:
   // -- update UI data
   void UpdateUIData(Utilities_UI::ModelData *pModelData);
 
+
+  // -- update model transforms
+  void UpdateModelTransforms(Utilities_UI::ModelData* pModelData);
+
   // -- destroy class objects
   void Destroy_MainRenderer();
 };

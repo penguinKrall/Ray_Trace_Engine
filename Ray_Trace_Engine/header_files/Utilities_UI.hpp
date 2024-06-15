@@ -28,6 +28,9 @@ public:
   };
 
   struct ModelData {
+    bool rotateUpdated = false;
+    bool translateUpdated = false;
+    bool scaleUpdated = false;
     bool isUpdated = false;
     int modelIndex = 0;
     std::vector<std::string> modelName;

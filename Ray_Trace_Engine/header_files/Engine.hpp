@@ -62,6 +62,7 @@ private:
 
   // -- ui update flag
   //@brief set to true to initialize ui data
+  bool initialUpdate = true;
   bool isUIUpdated = true;
 
 public:
@@ -90,7 +91,6 @@ public:
 
   // -- handle ui
   void HandleUI();
-
 };
 
 } // namespace gtp

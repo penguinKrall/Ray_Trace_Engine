@@ -48,8 +48,20 @@ void Engine::Run() {
     // update ui
     this->UpdateUI();
 
+    // if (this->initialUpdate) {
+    //   this->renderers.mainRenderer.UpdateUIData(&this->UI.modelData);
+    //   this->initialUpdate = false;
+    //   this->UI.modelData.isUpdated = false;
+    // }
+
     // draw
     Draw();
+
+    if (this->UI.modelData.isUpdated) {
+      this->renderers.mainRenderer.UpdateModelTransforms(&this->UI.modelData);
+      this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
+      this->UI.modelData.isUpdated = false;
+    }
 
     // set to false - wont update buffers again unless view changes
     pEngineCore->camera->viewUpdated = false;
@@ -87,7 +99,7 @@ void Engine::UpdateUI() {
 
 void Engine::HandleUI() {
   // update UI input
-  this->UI.Input(&this->renderers.mainRenderer.assets.modelData);
+  this->UI.Input(&this->UI.modelData);
 
   // update UI vertex/index buffers
   this->UI.UpdateBuffers(currentFrame);

@@ -136,16 +136,17 @@ void MainRenderer::LoadModel(
   this->assets.modelData.transformValues.push_back(transformValues);
 
   const bool isAnimated =
-      modelLoadingFlags == Utilities_Renderer::ModelLoadingFlags::Animated ? 1
-                                                                           : 0;
+      modelLoadingFlags == Utilities_Renderer::ModelLoadingFlags::Animated
+          ? true
+          : false;
 
   this->assets.modelData.animatedModelIndex.push_back(
       static_cast<int>(isAnimated));
 
   bool positionModel =
       modelLoadingFlags == Utilities_Renderer::ModelLoadingFlags::PositionModel
-          ? 1
-          : 0;
+          ? true
+          : false;
 
   if (positionModel) {
     Utilities_Renderer::TransformsData transformsData{};
@@ -221,6 +222,12 @@ void MainRenderer::LoadAssets() {
       "FlightHelmet/glTF/FlightHelmet.gltf",
       glTFLoadingFlags, Utilities_Renderer::ModelLoadingFlags::PositionModel,
       &helmetModelTransformMatrices);
+
+  for (int i = 0; i < this->assets.modelData.animatedModelIndex.size(); i++) {
+    std::cout << "\nanimated model index[" << i
+              << "]: " << this->assets.modelData.animatedModelIndex[i]
+              << std::endl;
+  }
 }
 
 void MainRenderer::CreateBottomLevelAccelerationStructures() {
@@ -1537,16 +1544,69 @@ void MainRenderer::HandleResize() {
 
 void MainRenderer::UpdateUIData(Utilities_UI::ModelData *pModelData) {
 
-  // Utilities_UI::ModelData tempUIData{};
-  //
-  // std::cout << "\nUpdateUIData() Model List:" << std::endl;
-  //
-  // for (int i = 0; i < this->assets.models.size(); i++) {
-  //   tempUIData.modelName.push_back(this->assets.models[i]->modelName);
-  //   std::cout << "\t" << tempUIData.modelName[i] << std::endl;
+  // this->assets.modelData = *pModelData;
+
+  // this->assets.modelData.isUpdated = false;
+}
+
+void MainRenderer::UpdateModelTransforms(Utilities_UI::ModelData *pModelData) {
+  this->assets.modelData = *pModelData;
+  int modelIdx = this->assets.modelData.modelIndex;
+  std::cout << "\n model index" << modelIdx << std::endl;
+
+  // for (int i = 0; i < this->assets.modelData.animatedModelIndex.size(); i++)
+  // {
+  //   std::cout << "\n UPDATE MODEL TRANSFORMS animated model index[" << i
+  //             << "]: " << this->assets.modelData.animatedModelIndex[i]
+  //             << std::endl;
   // }
 
-  this->assets.modelData = *pModelData;
+  if (this->assets.modelData.animatedModelIndex[modelIdx] == 0) {
+
+    Utilities_Renderer::TransformsData transformsData{};
+    transformsData.model = this->assets.models[modelIdx];
+
+    transformsData.rotate = glm::rotate(
+        glm::mat4(1.0f), glm::radians(-90.0f),
+        glm::vec3(this->assets.modelData.transformValues[modelIdx].rotate));
+    this->assets.modelData.rotateUpdated = false;
+
+    transformsData.translate = glm::translate(
+        glm::mat4(1.0f),
+        glm::vec3(this->assets.modelData.transformValues[modelIdx].translate));
+    this->assets.modelData.translateUpdated = false;
+
+    transformsData.scale = glm::scale(
+        glm::mat4(1.0f),
+        glm::vec3(this->assets.modelData.transformValues[modelIdx].scale));
+    this->assets.modelData.scaleUpdated = false;
+
+    Utilities_Renderer::TransformModelVertices(this->pEngineCore,
+                                               &transformsData);
+  }
+
+  else {
+    Utilities_UI::TransformMatrices animatedModelTransformsData{};
+
+    animatedModelTransformsData.rotate = glm::rotate(
+        glm::mat4(1.0f), glm::radians(-90.0f),
+        glm::vec3(this->assets.modelData.transformValues[modelIdx].rotate));
+    this->assets.modelData.rotateUpdated = false;
+
+    animatedModelTransformsData.translate = glm::translate(
+        glm::mat4(1.0f),
+        glm::vec3(this->assets.modelData.transformValues[modelIdx].translate));
+    this->assets.modelData.translateUpdated = false;
+
+    animatedModelTransformsData.scale = glm::scale(
+        glm::mat4(1.0f),
+        glm::vec3(this->assets.modelData.transformValues[modelIdx].scale));
+    this->assets.modelData.scaleUpdated = false;
+
+    this->gltfCompute.UpdateTransformsBuffer(&animatedModelTransformsData);
+  }
+
+  this->assets.modelData.isUpdated = false;
 }
 
 void MainRenderer::Destroy_MainRenderer() {

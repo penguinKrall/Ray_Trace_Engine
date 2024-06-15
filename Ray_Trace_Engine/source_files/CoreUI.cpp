@@ -952,17 +952,22 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
 
     if (ImGui::CollapsingHeader("Model Transform Values")) {
 
-      ImGui::SliderFloat4("Rotate",
+      this->modelData.rotateUpdated = ImGui::SliderFloat4("Rotate",
                           (float *)&this->modelData.transformValues[this->modelData.modelIndex].rotate,
                           -180.0f, 180.0f);
 
-      ImGui::SliderFloat4("Translate",
+      this->modelData.translateUpdated = ImGui::SliderFloat4("Translate",
                           (float *)&this->modelData.transformValues[this->modelData.modelIndex].translate,
                           -20.0f, 20.0f);
 
-      ImGui::SliderFloat4("Scale",
+      this->modelData.scaleUpdated = ImGui::SliderFloat4("Scale",
                           (float *)&this->modelData.transformValues[this->modelData.modelIndex].scale,
                           0.001f, 10.0f);
+
+      if (this->modelData.rotateUpdated || this->modelData.translateUpdated || this->modelData.scaleUpdated) {
+        this->modelData.isUpdated = true;
+      }
+
     }
   }
 
