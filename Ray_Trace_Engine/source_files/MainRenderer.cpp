@@ -1223,13 +1223,17 @@ void MainRenderer::UpdateBLAS() {
   // via a one-time command buffer submission
   VkCommandBuffer commandBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(
       VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+  for (int i = 0; i < this->assets.models.size(); i++) {
+    if (this->assets.modelData.animatedModelIndex[i] == 1) {
 
-  // build BLAS
-  pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
-      commandBuffer, 1,
-      &this->bottomLevelAccelerationStructures[0]
-           .accelerationStructureBuildGeometryInfo,
-      this->bottomLevelAccelerationStructures[0].pBuildRangeInfos.data());
+      // build BLAS
+      pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
+          commandBuffer, 1,
+          &this->bottomLevelAccelerationStructures[i]
+               .accelerationStructureBuildGeometryInfo,
+          this->bottomLevelAccelerationStructures[i].pBuildRangeInfos.data());
+    }
+  }
 
   // end and submit and destroy command buffer
   pEngineCore->FlushCommandBuffer(commandBuffer, pEngineCore->queue.graphics,
