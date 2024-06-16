@@ -37,6 +37,7 @@ public:
     std::vector<TransformMatrices> transformMatrices{};
     std::vector<TransformValues> transformValues{};
     std::vector<int> animatedModelIndex;
+    std::vector<bool> updateBLAS;
   };
 
 };

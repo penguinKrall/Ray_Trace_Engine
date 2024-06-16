@@ -1223,6 +1223,7 @@ void MainRenderer::UpdateBLAS() {
   // via a one-time command buffer submission
   VkCommandBuffer commandBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(
       VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+  // handle animated blas
   for (int i = 0; i < this->assets.models.size(); i++) {
     if (this->assets.modelData.animatedModelIndex[i] == 1) {
 
@@ -1232,6 +1233,20 @@ void MainRenderer::UpdateBLAS() {
           &this->bottomLevelAccelerationStructures[i]
                .accelerationStructureBuildGeometryInfo,
           this->bottomLevelAccelerationStructures[i].pBuildRangeInfos.data());
+    }
+  }
+
+  // handle non animated blas
+  for (int i = 0; i < this->assets.modelData.updateBLAS.size(); i++) {
+    if (this->assets.modelData.updateBLAS[i] == 1 &&
+        this->assets.modelData.animatedModelIndex[i] != 1) {
+      // build BLAS
+      pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
+          commandBuffer, 1,
+          &this->bottomLevelAccelerationStructures[i]
+               .accelerationStructureBuildGeometryInfo,
+          this->bottomLevelAccelerationStructures[i].pBuildRangeInfos.data());
+      this->assets.modelData.updateBLAS[i] = false;
     }
   }
 
@@ -1567,26 +1582,80 @@ void MainRenderer::UpdateModelTransforms(Utilities_UI::ModelData *pModelData) {
 
   if (this->assets.modelData.animatedModelIndex[modelIdx] == 0) {
 
-    Utilities_Renderer::TransformsData transformsData{};
-    transformsData.model = this->assets.models[modelIdx];
+    // Utilities_Renderer::TransformsData transformsData{};
+    // transformsData.model = this->assets.models[modelIdx];
 
-    transformsData.rotate = glm::rotate(
-        glm::mat4(1.0f), glm::radians(-90.0f),
-        glm::vec3(this->assets.modelData.transformValues[modelIdx].rotate));
-    this->assets.modelData.rotateUpdated = false;
+    std::vector<gtp::Model::Vertex> tempSceneVerticesBuffer =
+        this->assets.models[modelIdx]->verticesBuffer;
 
-    transformsData.translate = glm::translate(
-        glm::mat4(1.0f),
-        glm::vec3(this->assets.modelData.transformValues[modelIdx].translate));
-    this->assets.modelData.translateUpdated = false;
+    // VkDeviceSize tempSceneBufferSize =
+    //     static_cast<uint32_t>(tempSceneVerticesBuffer.size()) *
+    //     sizeof(gtp::Model::Vertex);
 
-    transformsData.scale = glm::scale(
-        glm::mat4(1.0f),
-        glm::vec3(this->assets.modelData.transformValues[modelIdx].scale));
-    this->assets.modelData.scaleUpdated = false;
+    // std::cout << "tempSceneVerticesBuffer.size(): "
+    //           << tempSceneVerticesBuffer.size() << std::endl;
 
-    Utilities_Renderer::TransformModelVertices(this->pEngineCore,
-                                               &transformsData);
+    // if (this->assets.modelData.rotateUpdated) {
+    //   this->assets.modelData.transformMatrices[modelIdx].rotate =
+    //   glm::rotate(
+    //       glm::mat4(1.0f), glm::radians(-90.0f),
+    //       glm::vec3(this->assets.modelData.transformValues[modelIdx].rotate));
+    // } else {
+    //   this->assets.modelData.transformMatrices[modelIdx].rotate =
+    //       glm::mat4(1.0f);
+    // }
+    //
+    // this->assets.modelData.rotateUpdated = false;
+    //
+    // if (this->assets.modelData.translateUpdated) {
+    //   this->assets.modelData.transformMatrices[modelIdx].translate =
+    //       glm::translate(
+    //           glm::mat4(1.0f),
+    //           glm::vec3(
+    //               this->assets.modelData.transformValues[modelIdx].translate));
+    // } else {
+    //   this->assets.modelData.transformMatrices[modelIdx].translate =
+    //       glm::mat4(1.0f);
+    // }
+    // this->assets.modelData.translateUpdated = false;
+    //
+    // if (this->assets.modelData.scaleUpdated) {
+    //   this->assets.modelData.transformMatrices[modelIdx].scale = glm::scale(
+    //       glm::mat4(1.0f),
+    //       glm::vec3(this->assets.modelData.transformValues[modelIdx].scale));
+    // } else {
+    //   this->assets.modelData.transformMatrices[modelIdx].scale =
+    //       glm::mat4(1.0f);
+    // }
+    // this->assets.modelData.scaleUpdated = false;
+
+    /* Utilities_Renderer::TransformModelVertices(this->pEngineCore,
+                                                &transformsData);*/
+
+    for (int i = 0; i < tempSceneVerticesBuffer.size(); i++) {
+      // tempSceneVerticesBuffer[i].pos =
+      //     transformsData.rotate * tempSceneVerticesBuffer[i].pos;
+      // tempSceneVerticesBuffer[i].pos +=
+      //    this->assets.modelData.transformValues[modelIdx].translate;
+      tempSceneVerticesBuffer[i].pos +=
+          this->assets.modelData.transformValues[modelIdx].translate;
+
+      //     transformsData.scale * tempSceneVerticesBuffer[i].pos;
+    }
+
+    void *verticesData;
+
+    vkMapMemory(pEngineCore->devices.logical,
+                this->assets.models[modelIdx]->vertices.memory, 0,
+                this->assets.models[modelIdx]->vertexBufferSize, 0,
+                &verticesData);
+
+    memcpy(verticesData, tempSceneVerticesBuffer.data(),
+           this->assets.models[modelIdx]->vertexBufferSize);
+
+    vkUnmapMemory(pEngineCore->devices.logical,
+                  this->assets.models[modelIdx]->vertices.memory);
+
   }
 
   else {

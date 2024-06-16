@@ -46,7 +46,7 @@ void Engine::Run() {
     userInput();
 
     // update ui
-    this->UpdateUI();
+     this->UpdateUI();
 
     // if (this->initialUpdate) {
     //   this->renderers.mainRenderer.UpdateUIData(&this->UI.modelData);
@@ -313,13 +313,22 @@ void Engine::Draw() {
   /*----------------------------------*/
 
   // update model class animation
-  this->renderers.mainRenderer.assets.models[0]->updateAnimation(0, deltaTime);
+  for (int i = 0; i < this->renderers.mainRenderer.assets.models.size(); i++) {
+    if (this->renderers.mainRenderer.assets.modelData.animatedModelIndex[i] ==
+        1) {
+      this->renderers.mainRenderer.assets.models[i]->updateAnimation(0,
+                                                                     deltaTime);
+    }
+  }
 
   // update compute class joint buffer
   this->renderers.mainRenderer.gltfCompute.UpdateJointBuffer();
 
   this->renderers.mainRenderer.UpdateUniformBuffer(timer);
   this->renderers.mainRenderer.UpdateBLAS();
+  for (int i = 0; i < this->UI.modelData.updateBLAS.size(); i++) {
+    this->UI.modelData.updateBLAS[i] = false;
+  }
   this->renderers.mainRenderer.UpdateTLAS();
 
   /*----------------------------------*/

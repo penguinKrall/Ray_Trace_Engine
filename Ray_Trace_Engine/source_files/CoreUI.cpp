@@ -952,22 +952,35 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
 
     if (ImGui::CollapsingHeader("Model Transform Values")) {
 
-      this->modelData.rotateUpdated = ImGui::SliderFloat4("Rotate",
-                          (float *)&this->modelData.transformValues[this->modelData.modelIndex].rotate,
-                          -180.0f, 180.0f);
+      this->modelData.rotateUpdated = ImGui::SliderFloat4(
+          "Rotate",
+          (float *)&this->modelData.transformValues[this->modelData.modelIndex]
+              .rotate,
+          -180.0f, 180.0f);
 
-      this->modelData.translateUpdated = ImGui::SliderFloat4("Translate",
-                          (float *)&this->modelData.transformValues[this->modelData.modelIndex].translate,
-                          -20.0f, 20.0f);
+      this->modelData.translateUpdated = ImGui::SliderFloat4(
+          "Translate",
+          (float *)&this->modelData.transformValues[this->modelData.modelIndex]
+              .translate,
+          -20.0f, 20.0f);
 
-      this->modelData.scaleUpdated = ImGui::SliderFloat4("Scale",
-                          (float *)&this->modelData.transformValues[this->modelData.modelIndex].scale,
-                          0.001f, 10.0f);
+      this->modelData.scaleUpdated = ImGui::SliderFloat4(
+          "Scale",
+          (float *)&this->modelData.transformValues[this->modelData.modelIndex]
+              .scale,
+          0.001f, 10.0f);
 
-      if (this->modelData.rotateUpdated || this->modelData.translateUpdated || this->modelData.scaleUpdated) {
+      if (this->modelData.rotateUpdated || this->modelData.translateUpdated ||
+          this->modelData.scaleUpdated) {
         this->modelData.isUpdated = true;
+        this->modelData.updateBLAS.resize(pModelData->modelName.size());
+        this->modelData.updateBLAS[pModelData->modelIndex] = true;
+        for (int i = 0; i < this->modelData.updateBLAS.size(); i++) {
+          std::cout << "model[" << i
+                    << "] update blas: " << this->modelData.updateBLAS[i]
+                    << std::endl;
+        }
       }
-
     }
   }
 
