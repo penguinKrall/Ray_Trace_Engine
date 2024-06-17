@@ -96,6 +96,9 @@ void MainRenderer::LoadModel(
   tempModel->loadFromFile(filename, pEngineCore, pEngineCore->queue.graphics,
                           fileLoadingFlags);
 
+  tempModel->verticesBuffer = Utilities_Renderer::GetVerticesFromBuffer(
+      pEngineCore->devices.logical, tempModel);
+
   const bool isSemiTransparent =
       modelLoadingFlags ==
               Utilities_Renderer::ModelLoadingFlags::SemiTransparent
@@ -1595,52 +1598,45 @@ void MainRenderer::UpdateModelTransforms(Utilities_UI::ModelData *pModelData) {
     // std::cout << "tempSceneVerticesBuffer.size(): "
     //           << tempSceneVerticesBuffer.size() << std::endl;
 
-    // if (this->assets.modelData.rotateUpdated) {
-    //   this->assets.modelData.transformMatrices[modelIdx].rotate =
-    //   glm::rotate(
-    //       glm::mat4(1.0f), glm::radians(-90.0f),
-    //       glm::vec3(this->assets.modelData.transformValues[modelIdx].rotate));
-    // } else {
-    //   this->assets.modelData.transformMatrices[modelIdx].rotate =
-    //       glm::mat4(1.0f);
-    // }
-    //
-    // this->assets.modelData.rotateUpdated = false;
-    //
-    // if (this->assets.modelData.translateUpdated) {
-    //   this->assets.modelData.transformMatrices[modelIdx].translate =
-    //       glm::translate(
-    //           glm::mat4(1.0f),
-    //           glm::vec3(
-    //               this->assets.modelData.transformValues[modelIdx].translate));
-    // } else {
-    //   this->assets.modelData.transformMatrices[modelIdx].translate =
-    //       glm::mat4(1.0f);
-    // }
-    // this->assets.modelData.translateUpdated = false;
-    //
-    // if (this->assets.modelData.scaleUpdated) {
-    //   this->assets.modelData.transformMatrices[modelIdx].scale = glm::scale(
-    //       glm::mat4(1.0f),
-    //       glm::vec3(this->assets.modelData.transformValues[modelIdx].scale));
-    // } else {
-    //   this->assets.modelData.transformMatrices[modelIdx].scale =
-    //       glm::mat4(1.0f);
-    // }
-    // this->assets.modelData.scaleUpdated = false;
+    if (this->assets.modelData.rotateUpdated) {
+      this->assets.modelData.transformMatrices[modelIdx].rotate = glm::rotate(
+          glm::mat4(1.0f), glm::radians(-90.0f),
+          glm::vec3(this->assets.modelData.transformValues[modelIdx].rotate));
+    }
+
+    this->assets.modelData.rotateUpdated = false;
+
+    if (this->assets.modelData.translateUpdated) {
+      this->assets.modelData.transformMatrices[modelIdx].translate =
+          glm::translate(
+              glm::mat4(1.0f),
+              glm::vec3(
+                  this->assets.modelData.transformValues[modelIdx].translate));
+    }
+
+    this->assets.modelData.translateUpdated = false;
+
+    if (this->assets.modelData.scaleUpdated) {
+      this->assets.modelData.transformMatrices[modelIdx].scale = glm::scale(
+          glm::mat4(1.0f),
+          glm::vec3(this->assets.modelData.transformValues[modelIdx].scale));
+    }
+
+    this->assets.modelData.scaleUpdated = false;
 
     /* Utilities_Renderer::TransformModelVertices(this->pEngineCore,
                                                 &transformsData);*/
 
     for (int i = 0; i < tempSceneVerticesBuffer.size(); i++) {
-      // tempSceneVerticesBuffer[i].pos =
-      //     transformsData.rotate * tempSceneVerticesBuffer[i].pos;
-      // tempSceneVerticesBuffer[i].pos +=
-      //    this->assets.modelData.transformValues[modelIdx].translate;
-      tempSceneVerticesBuffer[i].pos +=
-          this->assets.modelData.transformValues[modelIdx].translate;
-
-      //     transformsData.scale * tempSceneVerticesBuffer[i].pos;
+      tempSceneVerticesBuffer[i].pos =
+          this->assets.modelData.transformMatrices[modelIdx].rotate *
+          tempSceneVerticesBuffer[i].pos;
+      tempSceneVerticesBuffer[i].pos = tempSceneVerticesBuffer[i].pos =
+          this->assets.modelData.transformMatrices[modelIdx].translate *
+          tempSceneVerticesBuffer[i].pos;
+      tempSceneVerticesBuffer[i].pos =
+          this->assets.modelData.transformMatrices[modelIdx].scale *
+          tempSceneVerticesBuffer[i].pos;
     }
 
     void *verticesData;

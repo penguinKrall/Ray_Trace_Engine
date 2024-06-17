@@ -47,10 +47,10 @@ public:
   static void TransformModelVertices(EngineCore *engineCore,
                                      TransformsData *transformsData) {
 
-   // std::vector<gtp::Model::Vertex> tempSceneVerticesBuffer;
+    // std::vector<gtp::Model::Vertex> tempSceneVerticesBuffer;
 
-    transformsData->model->verticesBuffer = GetVerticesFromBuffer(engineCore->devices.logical,
-                                                    transformsData->model);
+    //transformsData->model->verticesBuffer = GetVerticesFromBuffer(engineCore->devices.logical,
+    //                                                transformsData->model);
 
     //VkDeviceSize tempSceneBufferSize =
     //    static_cast<uint32_t>(tempSceneVerticesBuffer.size()) *
