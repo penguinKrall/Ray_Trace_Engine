@@ -1261,6 +1261,9 @@ void TextureLoader::LoadCubemap() {
       "cubemap_Sampler");
 
   stagingBuffer.destroy(this->pEngineCore->devices.logical);
+
+  updateDescriptor();
+
 }
 
 } // namespace gtp

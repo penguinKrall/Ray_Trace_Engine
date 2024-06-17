@@ -539,17 +539,25 @@ void MainRenderer::CreateRayTracingPipeline() {
               VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR,
           nullptr);
 
-  // texture image layout binding
+  // glass texture layout binding
   VkDescriptorSetLayoutBinding glassTextureImagesLayoutBinding =
       gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
           5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
           VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR,
           nullptr);
 
-  // texture image layout binding
+  // cubemap texture layout binding
+  VkDescriptorSetLayoutBinding cubemapTextureImagesLayoutBinding =
+      gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
+          6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
+          VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR |
+              VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR,
+          nullptr);
+
+  // all texture image layout binding
   VkDescriptorSetLayoutBinding allTextureImagesLayoutBinding =
       gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
-          6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageCount,
+          7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageCount,
           VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR,
           nullptr);
 
@@ -561,6 +569,7 @@ void MainRenderer::CreateRayTracingPipeline() {
       g_node_bufferLayoutBinding,
       g_node_indicesLayoutBinding,
       glassTextureImagesLayoutBinding,
+      cubemapTextureImagesLayoutBinding,
       allTextureImagesLayoutBinding,
 
   });
@@ -569,15 +578,10 @@ void MainRenderer::CreateRayTracingPipeline() {
   VkDescriptorSetLayoutBindingFlagsCreateInfoEXT setLayoutBindingFlags{};
   setLayoutBindingFlags.sType =
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
-  setLayoutBindingFlags.bindingCount = 7;
+  setLayoutBindingFlags.bindingCount = 8;
   std::vector<VkDescriptorBindingFlagsEXT> descriptorBindingFlags = {
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
+      0, 0, 0, 0,
+      0, 0, 0, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
 
   setLayoutBindingFlags.pBindingFlags = descriptorBindingFlags.data();
 
@@ -954,7 +958,7 @@ void MainRenderer::CreateDescriptorSet() {
       this->assets.coloredGlassTexture.view,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 
-  // storage/result image write
+  // glass texture image write
   VkWriteDescriptorSet glassTextureWrite{};
   glassTextureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   glassTextureWrite.dstSet = pipelineData.descriptorSet;
@@ -962,6 +966,20 @@ void MainRenderer::CreateDescriptorSet() {
   glassTextureWrite.dstBinding = 5;
   glassTextureWrite.pImageInfo = &glassTextureDescriptor;
   glassTextureWrite.descriptorCount = 1;
+
+  VkDescriptorImageInfo cubemapTextureDescriptor{
+      this->assets.cubemap.sampler, this->assets.cubemap.view,
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+
+  // glass texture image write
+  VkWriteDescriptorSet cubemapTextureWrite{};
+  cubemapTextureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  cubemapTextureWrite.dstSet = pipelineData.descriptorSet;
+  cubemapTextureWrite.descriptorType =
+      VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  cubemapTextureWrite.dstBinding = 6;
+  cubemapTextureWrite.pImageInfo = &cubemapTextureDescriptor;
+  cubemapTextureWrite.descriptorCount = 1;
 
   std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
       // Binding 0: Top level acceleration structure
@@ -975,7 +993,9 @@ void MainRenderer::CreateDescriptorSet() {
       // Binding 4: g_nodes_indices write
       g_nodes_indicesWrite,
       // Binding 5: glass texture image write
-      glassTextureWrite};
+      glassTextureWrite,
+      // Binding 6: cubemap texture image write
+      cubemapTextureWrite};
 
   // Image descriptors for the image array
   std::vector<VkDescriptorImageInfo> textureDescriptors{};
@@ -992,7 +1012,7 @@ void MainRenderer::CreateDescriptorSet() {
 
   VkWriteDescriptorSet writeDescriptorImgArray{};
   writeDescriptorImgArray.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeDescriptorImgArray.dstBinding = 6;
+  writeDescriptorImgArray.dstBinding = 7;
   writeDescriptorImgArray.descriptorType =
       VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   writeDescriptorImgArray.descriptorCount =
@@ -1451,7 +1471,7 @@ void MainRenderer::UpdateDescriptorSet() {
       this->assets.coloredGlassTexture.view,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 
-  // storage/result image write
+  // glass texture image write
   VkWriteDescriptorSet glassTextureWrite{};
   glassTextureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   glassTextureWrite.dstSet = pipelineData.descriptorSet;
@@ -1459,6 +1479,20 @@ void MainRenderer::UpdateDescriptorSet() {
   glassTextureWrite.dstBinding = 5;
   glassTextureWrite.pImageInfo = &glassTextureDescriptor;
   glassTextureWrite.descriptorCount = 1;
+
+  VkDescriptorImageInfo cubemapTextureDescriptor{
+      this->assets.cubemap.sampler, this->assets.cubemap.view,
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+
+  // glass texture image write
+  VkWriteDescriptorSet cubemapTextureWrite{};
+  cubemapTextureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  cubemapTextureWrite.dstSet = pipelineData.descriptorSet;
+  cubemapTextureWrite.descriptorType =
+      VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  cubemapTextureWrite.dstBinding = 6;
+  cubemapTextureWrite.pImageInfo = &cubemapTextureDescriptor;
+  cubemapTextureWrite.descriptorCount = 1;
 
   std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
       // Binding 0: Top level acceleration structure
@@ -1472,7 +1506,9 @@ void MainRenderer::UpdateDescriptorSet() {
       // Binding 5: g_nodes_indices write
       g_nodes_indicesWrite,
       // Binding 5: glass texture write
-      glassTextureWrite};
+      glassTextureWrite,
+      // Binding 6: cubemap texture write
+      cubemapTextureWrite};
 
   // Image descriptors for the image array
   std::vector<VkDescriptorImageInfo> textureDescriptors{};
@@ -1489,7 +1525,7 @@ void MainRenderer::UpdateDescriptorSet() {
 
   VkWriteDescriptorSet writeDescriptorImgArray{};
   writeDescriptorImgArray.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeDescriptorImgArray.dstBinding = 6;
+  writeDescriptorImgArray.dstBinding = 7;
   writeDescriptorImgArray.descriptorType =
       VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   writeDescriptorImgArray.descriptorCount =

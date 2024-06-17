@@ -50,7 +50,7 @@ struct GeometryIndex {
 layout(binding = 3, set = 0) buffer G_Nodes_Buffer { GeometryNode nodes[]; } g_nodes_buffer;
 layout(binding = 4, set = 0) buffer G_Nodes_Index { GeometryIndex indices[]; } g_nodes_indices;
 layout(binding = 5, set = 0) uniform sampler2D glassTexture;
-layout(binding = 6, set = 0) uniform sampler2D textures[];
+layout(binding = 7, set = 0) uniform sampler2D textures[];
 
 #include "main_renderer_bufferreferences.glsl"
 #include "main_renderer_geometrytypes.glsl"
