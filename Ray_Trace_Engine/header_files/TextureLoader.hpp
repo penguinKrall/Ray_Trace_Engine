@@ -59,6 +59,14 @@ public:
 
   void fromglTfImage(tinygltf::Image &gltfimage, std::string path,
                      EngineCore *coreBase, VkQueue copyQueue);
+
+// -- load texture file
+// -- for loading non ktx textures
+stbi_uc* LoadTextureFile(const std::string& fileName, int* width, int* height, VkDeviceSize* imageSize);
+
+// -- load cube map
+void LoadCubemap();
+
 };
 
 } // namespace gtp

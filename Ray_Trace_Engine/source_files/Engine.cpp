@@ -40,19 +40,11 @@ void Engine::Run() {
     this->deltaTime = now - this->lastTime;
     this->lastTime = now;
 
-    // std::cout << " delta time: " << deltaTime << std::endl;
-
     // handle input
     userInput();
 
     // update ui
      this->UpdateUI();
-
-    // if (this->initialUpdate) {
-    //   this->renderers.mainRenderer.UpdateUIData(&this->UI.modelData);
-    //   this->initialUpdate = false;
-    //   this->UI.modelData.isUpdated = false;
-    // }
 
     // draw
     Draw();

@@ -61,6 +61,10 @@ public:
 
     // colored glass texture
     gtp::TextureLoader coloredGlassTexture;
+
+    //cube map
+    gtp::TextureLoader cubemap;
+
   };
 
   // -- pipeline data struct

@@ -12,7 +12,7 @@ TextureLoader::TextureLoader(EngineCore *coreBase) {
   InitTextureLoader(coreBase);
   // loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/textures/gratefloor_rgba.ktx",
   //	VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT,
-  //VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  // VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void TextureLoader::InitTextureLoader(EngineCore *coreBase) {
@@ -239,8 +239,9 @@ void TextureLoader::loadFromFile(std::string filename, VkFormat format,
     // allocate image memory
     // add handle and name to map
     // if (vkAllocateMemory(pEngineCore->devices.logical,
-    // &imageMemoryAllocateInfo, nullptr, &imageMemory) != VK_SUCCESS) { 	throw
-    //std::invalid_argument("failed to ");
+    // &imageMemoryAllocateInfo, nullptr, &imageMemory) != VK_SUCCESS) {
+    // throw
+    // std::invalid_argument("failed to ");
     // }
 
     pEngineCore->add(
@@ -991,4 +992,275 @@ void TextureLoader::fromglTfImage(tinygltf::Image &gltfimage, std::string path,
     descriptor.imageLayout = imageLayout;
   }
 }
+
+stbi_uc *TextureLoader::LoadTextureFile(const std::string &fileName, int *width,
+                                        int *height, VkDeviceSize *imageSize) {
+  {
+    // number of channels image uses
+    int channels;
+
+    // std::cout << "loadTextureFile vnkTexture.cpp: " << fileName.c_str() <<
+    // std::endl;
+
+    std::string fileLoc = std::filesystem::current_path().string() + fileName;
+
+    stbi_uc *image =
+        stbi_load(fileLoc.c_str(), width, height, &channels, STBI_rgb_alpha);
+
+    if (!image) {
+      throw std::invalid_argument("Failed to load Texture!(" + fileName + ")");
+    }
+
+    *imageSize = static_cast<VkDeviceSize>(*width) * *height * 4;
+
+    return image;
+  }
+}
+
+void TextureLoader::LoadCubemap() {
+
+  int width;
+  int height;
+  VkDeviceSize imageSize;
+
+  // std::filesystem::path projDirectory = std::filesystem::current_path();
+
+  std::vector<stbi_uc *> imageData = {
+      {this->LoadTextureFile(
+
+          "/assets/textures/cubemaps/red_eclipse/left.png", &width, &height,
+          &imageSize)},
+      {this->LoadTextureFile(
+
+          "/assets/textures/cubemaps/red_eclipse/right.png", &width, &height,
+          &imageSize)},
+      {this->LoadTextureFile(
+
+          "/assets/textures/cubemaps/red_eclipse/top.png", &width, &height,
+          &imageSize)},
+      {this->LoadTextureFile(
+
+          "/assets/textures/cubemaps/red_eclipse/bottom.png", &width, &height,
+          &imageSize)},
+      {this->LoadTextureFile(
+
+          "/assets/textures/cubemaps/red_eclipse/front.png", &width, &height,
+          &imageSize)},
+      {this->LoadTextureFile(
+
+          "/assets/textures/cubemaps/red_eclipse/back.png", &width, &height,
+          &imageSize)}};
+
+  // Calculate the image size and the layer size.
+  const VkDeviceSize cubemapImageSize = width * height * 4 * 6;
+  const VkDeviceSize cubemapLayerSize = imageSize;
+
+  gtp::Buffer stagingBuffer;
+
+  // create staging buffer
+  pEngineCore->add(
+      [this, &stagingBuffer, &cubemapImageSize]() {
+        return stagingBuffer.CreateBuffer(
+            pEngineCore->devices.physical, pEngineCore->devices.logical,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT, cubemapImageSize,
+            "Cubemap_StagingBuffer");
+      },
+      "Cubemap_StagingBuffer");
+
+  // staging buffer memory property flags
+  stagingBuffer.bufferData.memoryPropertyFlags =
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+
+  // create staging buffer memory
+  pEngineCore->add(
+      [this, &stagingBuffer]() {
+        return stagingBuffer.AllocateBufferMemory(
+            pEngineCore->devices.physical, pEngineCore->devices.logical,
+            "Cubemap_StagingBufferMemory");
+      },
+      "Cubemap_StagingBufferMemory");
+
+  // map memory
+  stagingBuffer.map(pEngineCore->devices.logical, cubemapImageSize, 0);
+
+  // copy font data to buffer
+  for (size_t i = 0; i < imageData.size(); i++) {
+    stagingBuffer.copyTo(imageData[i], cubemapLayerSize);
+    stagingBuffer.bufferData.mapped =
+        static_cast<char *>(stagingBuffer.bufferData.mapped) + cubemapLayerSize;
+  }
+
+  // unmap memory
+  stagingBuffer.unmap(pEngineCore->devices.logical);
+
+  for (int i = 0; i < imageData.size(); i++) {
+    stbi_image_free(imageData[i]);
+  }
+
+  // bind buffer memory to buffer
+  stagingBuffer.bind(pEngineCore->devices.logical, 0);
+
+  // -- image create info
+  VkImageCreateInfo imageCreateInfo{};
+  imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+  imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+  imageCreateInfo.extent.width = width;
+  imageCreateInfo.extent.height = height;
+  imageCreateInfo.extent.depth = 1;
+  imageCreateInfo.mipLevels = 1;
+  imageCreateInfo.arrayLayers = 6;
+  imageCreateInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+  imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+  imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageCreateInfo.usage =
+      VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+  imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+  imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  imageCreateInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+
+  // create image
+  // add handle and name to map
+  pEngineCore->add(
+      [this, &imageCreateInfo]() {
+        return pEngineCore->objCreate.VKCreateImage(&imageCreateInfo, nullptr,
+                                                    &image);
+      },
+      "cubemap_image");
+
+  // image memory allocate info
+  VkMemoryAllocateInfo imageMemoryAllocateInfo{};
+  imageMemoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+
+  // image memory requirements
+  VkMemoryRequirements imageMemoryRequirements;
+
+  // get image memory requirements
+  vkGetImageMemoryRequirements(pEngineCore->devices.logical, image,
+                               &imageMemoryRequirements);
+
+  // update memory allocate info
+  imageMemoryAllocateInfo.allocationSize = imageMemoryRequirements.size;
+  imageMemoryAllocateInfo.memoryTypeIndex =
+      pEngineCore->getMemoryType(imageMemoryRequirements.memoryTypeBits,
+                                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+  // allocate image memory
+  pEngineCore->add(
+      [this, &imageMemoryAllocateInfo]() {
+        return pEngineCore->objCreate.VKAllocateMemory(&imageMemoryAllocateInfo,
+                                                       nullptr, &imageMemory);
+      },
+      "cubemap_ImageMemory");
+
+  if (vkBindImageMemory(pEngineCore->devices.logical, image, imageMemory, 0) !=
+      VK_SUCCESS) {
+    throw std::invalid_argument("failed to bind cubemap image memory");
+  }
+
+  VkImageViewCreateInfo viewCreateInfo = {};
+  viewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+  viewCreateInfo.image = image;
+  viewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+  viewCreateInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+  viewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+  viewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+  viewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+  viewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+  viewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  viewCreateInfo.subresourceRange.baseMipLevel = 0;
+  viewCreateInfo.subresourceRange.levelCount = 1;
+  viewCreateInfo.subresourceRange.baseArrayLayer = 0;
+  viewCreateInfo.subresourceRange.layerCount = 6;
+
+  // create image view
+  pEngineCore->add(
+      [this, &viewCreateInfo]() {
+        return pEngineCore->objCreate.VKCreateImageView(&viewCreateInfo,
+                                                        nullptr, &view);
+      },
+      "cubemap_imageview");
+
+  // command buffer for transferring buffer data to image
+  VkCommandBuffer copyCmd = pEngineCore->objCreate.VKCreateCommandBuffer(
+      VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+  VkImageSubresourceRange subresourceRange = {};
+  subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  subresourceRange.baseMipLevel = 0;
+  subresourceRange.levelCount = 1;
+  subresourceRange.layerCount = 6;
+
+  // Image barrier for optimal image (target)
+  // Optimal image will be used as destination for the copy
+  gtp::Utilities_EngCore::setImageLayout(
+      copyCmd, image, VK_IMAGE_LAYOUT_UNDEFINED,
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
+
+  VkBufferImageCopy imageRegion = {};
+  imageRegion.bufferOffset = 0;
+  imageRegion.bufferRowLength = 0;
+  imageRegion.bufferImageHeight = 0;
+  imageRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  imageRegion.imageSubresource.mipLevel = 0;
+  imageRegion.imageSubresource.baseArrayLayer = 0;
+  imageRegion.imageSubresource.layerCount = 6;
+  imageRegion.imageOffset = {
+      0,
+      0,
+      0,
+  };
+
+  imageRegion.imageExtent = {static_cast<uint32_t>(width),
+                             static_cast<uint32_t>(height), 1};
+
+  // copy buffer to image
+  vkCmdCopyBufferToImage(copyCmd, stagingBuffer.bufferData.buffer, image,
+                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageRegion);
+
+  gtp::Utilities_EngCore::setImageLayout(
+      copyCmd, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
+
+  pEngineCore->FlushCommandBuffer(copyCmd, pEngineCore->queue.graphics,
+                                  pEngineCore->commandPools.graphics, true);
+
+  // create default sampler
+  VkSamplerCreateInfo samplerCreateInfo = {};
+  samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+  samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
+  samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
+  samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+  samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerCreateInfo.mipLodBias = 0.0f;
+  samplerCreateInfo.compareOp = VK_COMPARE_OP_NEVER;
+  samplerCreateInfo.minLod = 0.0f;
+
+  // max level-of-detail should match mip level count
+  samplerCreateInfo.maxLod = 0.0f;
+
+  // only enable anisotropic filtering if enabled on the device
+  samplerCreateInfo.maxAnisotropy =
+      pEngineCore->deviceData.features.samplerAnisotropy
+          ? pEngineCore->deviceProperties.physicalDevice.limits
+                .maxSamplerAnisotropy
+          : 1.0f;
+  samplerCreateInfo.anisotropyEnable =
+      pEngineCore->deviceData.features.samplerAnisotropy;
+  samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+
+  // create sampler
+  // adds sampler handle id and name to map
+  pEngineCore->add(
+      [this, &samplerCreateInfo]() {
+        return pEngineCore->objCreate.VKCreateSampler(&samplerCreateInfo,
+                                                      nullptr, &sampler);
+      },
+      "cubemap_Sampler");
+
+  stagingBuffer.destroy(this->pEngineCore->devices.logical);
+}
+
 } // namespace gtp

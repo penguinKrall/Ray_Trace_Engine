@@ -211,6 +211,9 @@ void MainRenderer::LoadAssets() {
       VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
+  this->assets.cubemap = gtp::TextureLoader(this->pEngineCore);
+  this->assets.cubemap.LoadCubemap();
+
   // -- load flight helmet model
   Utilities_UI::TransformMatrices helmetModelTransformMatrices{};
 
@@ -495,10 +498,6 @@ void MainRenderer::CreateRayTracingPipeline() {
   for (int i = 0; i < assets.models.size(); i++) {
     imageCount += static_cast<uint32_t>(assets.models[i]->textures.size());
   }
-  // imageCount =
-  // static_cast<uint32_t>(this->assets.animatedModel->textures.size()) +
-  //	static_cast<uint32_t>(this->assets.helmetModel->textures.size()) +
-  //	static_cast<uint32_t>(this->assets.reflectionSceneModel->textures.size());
 
   std::cout << "MainRenderer raytracing pipeline_  imagecount: " << imageCount
             << std::endl;
@@ -523,28 +522,6 @@ void MainRenderer::CreateRayTracingPipeline() {
           VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR |
               VK_SHADER_STAGE_MISS_BIT_KHR,
           nullptr);
-
-  ////texture image layout binding
-  // VkDescriptorSetLayoutBinding textureImageLayoutBinding =
-  // gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
-  // 3,
-  // VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
-  // VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR,
-  // nullptr);
-
-  ////geometry node layout binding
-  // VkDescriptorSetLayoutBinding geometryNodeLayoutBinding =
-  // gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
-  // 4,
-  // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR |
-  // VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
-  //
-  ////second geometry node layout binding
-  // VkDescriptorSetLayoutBinding secondGeometryNodeLayoutBinding =
-  // gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
-  // 5,
-  // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR |
-  // VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
 
   // g_node_buffer layout binding
   VkDescriptorSetLayoutBinding g_node_bufferLayoutBinding =
@@ -849,11 +826,6 @@ void MainRenderer::CreateDescriptorSet() {
     imageCount += static_cast<uint32_t>(assets.models[i]->textures.size());
   }
 
-  // std::cout <<
-  // "!!!!!!!!!!!CREATEDESCRIPTORSETS!!!!!!!!!!!\nstatic_cast<uint32_t>(this->assets.animatedModel->textures.size():
-  // "
-  //	<< static_cast<uint32_t>(this->assets.animatedModel->textures.size()) <<
-  // std::endl; descriptor pool sizes
   std::vector<VkDescriptorPoolSize> poolSizes = {
       {VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 10},
       {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 10},
@@ -1275,25 +1247,6 @@ void MainRenderer::UpdateTLAS() {
       tlasData.instanceDataDeviceAddress;
 
   // Get size info
-  /*
-  The pSrcAccelerationStructure, dstAccelerationStructure, and mode members of
-  pBuildInfo are ignored. Any VkDeviceOrHostAddressKHR members of pBuildInfo are
-  ignored by this command, except that the hostAddress member of
-  VkAccelerationStructureGeometryTrianglesDataKHR::transformData will be
-  examined to check if it is NULL.*
-  */
-  // VkAccelerationStructureBuildGeometryInfoKHR
-  // accelerationStructureBuildGeometryInfo{};
-  // accelerationStructureBuildGeometryInfo.sType =
-  // VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-  // accelerationStructureBuildGeometryInfo.type =
-  // VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-  // accelerationStructureBuildGeometryInfo.flags =
-  // VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
-  // accelerationStructureBuildGeometryInfo.geometryCount = 1;
-  // accelerationStructureBuildGeometryInfo.pGeometries =
-  // &accelerationStructureGeometry;
-
   VkAccelerationStructureBuildGeometryInfoKHR
       accelerationStructureBuildGeometryInfo{};
   accelerationStructureBuildGeometryInfo.sType =
@@ -1576,32 +1529,33 @@ void MainRenderer::UpdateModelTransforms(Utilities_UI::ModelData *pModelData) {
   int modelIdx = this->assets.modelData.modelIndex;
   std::cout << "\n model index" << modelIdx << std::endl;
 
-  // for (int i = 0; i < this->assets.modelData.animatedModelIndex.size(); i++)
-  // {
-  //   std::cout << "\n UPDATE MODEL TRANSFORMS animated model index[" << i
-  //             << "]: " << this->assets.modelData.animatedModelIndex[i]
-  //             << std::endl;
-  // }
-
   if (this->assets.modelData.animatedModelIndex[modelIdx] == 0) {
-
-    // Utilities_Renderer::TransformsData transformsData{};
-    // transformsData.model = this->assets.models[modelIdx];
 
     std::vector<gtp::Model::Vertex> tempSceneVerticesBuffer =
         this->assets.models[modelIdx]->verticesBuffer;
 
-    // VkDeviceSize tempSceneBufferSize =
-    //     static_cast<uint32_t>(tempSceneVerticesBuffer.size()) *
-    //     sizeof(gtp::Model::Vertex);
-
-    // std::cout << "tempSceneVerticesBuffer.size(): "
-    //           << tempSceneVerticesBuffer.size() << std::endl;
-
     if (this->assets.modelData.rotateUpdated) {
-      this->assets.modelData.transformMatrices[modelIdx].rotate = glm::rotate(
-          glm::mat4(1.0f), glm::radians(-90.0f),
-          glm::vec3(this->assets.modelData.transformValues[modelIdx].rotate));
+      glm::mat4 rotationMatrix = glm::mat4(1.0f);
+
+      float angleX = glm::radians(
+          this->assets.modelData.transformValues[modelIdx].rotate.x);
+      float angleY = glm::radians(
+          this->assets.modelData.transformValues[modelIdx].rotate.y);
+      float angleZ = glm::radians(
+          this->assets.modelData.transformValues[modelIdx].rotate.z);
+
+      // Rotate around the X axis
+      rotationMatrix =
+          glm::rotate(rotationMatrix, angleX, glm::vec3(1.0f, 0.0f, 0.0f));
+      // Rotate around the Y axis
+      rotationMatrix =
+          glm::rotate(rotationMatrix, angleY, glm::vec3(0.0f, 1.0f, 0.0f));
+      // Rotate around the Z axis
+      rotationMatrix =
+          glm::rotate(rotationMatrix, angleZ, glm::vec3(0.0f, 0.0f, 1.0f));
+
+      this->assets.modelData.transformMatrices[modelIdx].rotate =
+          rotationMatrix;
     }
 
     this->assets.modelData.rotateUpdated = false;
@@ -1623,9 +1577,6 @@ void MainRenderer::UpdateModelTransforms(Utilities_UI::ModelData *pModelData) {
     }
 
     this->assets.modelData.scaleUpdated = false;
-
-    /* Utilities_Renderer::TransformModelVertices(this->pEngineCore,
-                                                &transformsData);*/
 
     for (int i = 0; i < tempSceneVerticesBuffer.size(); i++) {
       tempSceneVerticesBuffer[i].pos =
@@ -1657,9 +1608,26 @@ void MainRenderer::UpdateModelTransforms(Utilities_UI::ModelData *pModelData) {
   else {
     Utilities_UI::TransformMatrices animatedModelTransformsData{};
 
-    animatedModelTransformsData.rotate = glm::rotate(
-        glm::mat4(1.0f), glm::radians(-90.0f),
-        glm::vec3(this->assets.modelData.transformValues[modelIdx].rotate));
+    glm::mat4 rotationMatrix = glm::mat4(1.0f);
+
+    float angleX =
+        glm::radians(this->assets.modelData.transformValues[modelIdx].rotate.x);
+    float angleY =
+        glm::radians(this->assets.modelData.transformValues[modelIdx].rotate.y);
+    float angleZ =
+        glm::radians(this->assets.modelData.transformValues[modelIdx].rotate.z);
+
+    // Rotate around the X axis
+    rotationMatrix =
+        glm::rotate(rotationMatrix, angleX, glm::vec3(1.0f, 0.0f, 0.0f));
+    // Rotate around the Y axis
+    rotationMatrix =
+        glm::rotate(rotationMatrix, angleY, glm::vec3(0.0f, 1.0f, 0.0f));
+    // Rotate around the Z axis
+    rotationMatrix =
+        glm::rotate(rotationMatrix, angleZ, glm::vec3(0.0f, 0.0f, 1.0f));
+
+    animatedModelTransformsData.rotate = rotationMatrix;
     this->assets.modelData.rotateUpdated = false;
 
     animatedModelTransformsData.translate = glm::translate(
@@ -1772,6 +1740,7 @@ void MainRenderer::Destroy_MainRenderer() {
   this->assets.models[0]->destroy(this->pEngineCore->devices.logical);
   this->assets.models[1]->destroy(this->pEngineCore->devices.logical);
   this->assets.models[2]->destroy(this->pEngineCore->devices.logical);
+  this->assets.cubemap.DestroyTextureLoader();
   this->assets.coloredGlassTexture.DestroyTextureLoader();
   this->assets.models[3]->destroy(this->pEngineCore->devices.logical);
 }
