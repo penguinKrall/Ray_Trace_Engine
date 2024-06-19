@@ -1025,31 +1025,57 @@ void TextureLoader::LoadCubemap() {
 
   // std::filesystem::path projDirectory = std::filesystem::current_path();
 
+  // std::vector<stbi_uc *> imageData = {
+  //     {this->LoadTextureFile(
+
+  //        "/assets/textures/cubemaps/space_corners/left.png", &width, &height,
+  //        &imageSize)},
+  //    {this->LoadTextureFile(
+
+  //        "/assets/textures/cubemaps/space_corners/right.png", &width,
+  //        &height, &imageSize)},
+  //    {this->LoadTextureFile(
+
+  //        "/assets/textures/cubemaps/space_corners/top.png", &width, &height,
+  //        &imageSize)},
+  //    {this->LoadTextureFile(
+
+  //        "/assets/textures/cubemaps/space_corners/bottom.png", &width,
+  //        &height, &imageSize)},
+  //    {this->LoadTextureFile(
+
+  //        "/assets/textures/cubemaps/space_corners/front.png", &width,
+  //        &height, &imageSize)},
+  //    {this->LoadTextureFile(
+
+  //        "/assets/textures/cubemaps/space_corners/back.png", &width, &height,
+  //        &imageSize)}};
+
   std::vector<stbi_uc *> imageData = {
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/red_eclipse/left.png", &width, &height,
-          &imageSize)},
+          "/assets/textures/cubemaps/desert_cartoon_sunset/px.png", &width,
+          &height, &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/red_eclipse/right.png", &width, &height,
-          &imageSize)},
+          "/assets/textures/cubemaps/desert_cartoon_sunset/nx.png", &width,
+          &height, &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/red_eclipse/top.png", &width, &height,
-          &imageSize)},
+          "/assets/textures/cubemaps/desert_cartoon_sunset/py.png", &width,
+          &height, &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/red_eclipse/bottom.png", &width, &height,
-          &imageSize)},
+          "/assets/textures/cubemaps/desert_cartoon_sunset/ny.png", &width,
+          &height, &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/red_eclipse/front.png", &width, &height,
-          &imageSize)},
+          "/assets/textures/cubemaps/desert_cartoon_sunset/pz.png", &width,
+          &height, &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/red_eclipse/back.png", &width, &height,
-          &imageSize)}};
+          "/assets/textures/cubemaps/desert_cartoon_sunset/nz.png", &width,
+          &height, &imageSize)}};
 
   // Calculate the image size and the layer size.
   const VkDeviceSize cubemapImageSize = width * height * 4 * 6;
@@ -1263,7 +1289,6 @@ void TextureLoader::LoadCubemap() {
   stagingBuffer.destroy(this->pEngineCore->devices.logical);
 
   updateDescriptor();
-
 }
 
 } // namespace gtp

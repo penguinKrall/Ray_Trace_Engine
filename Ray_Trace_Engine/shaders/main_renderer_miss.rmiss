@@ -48,7 +48,7 @@ void main() {
     // Set the background color to the sampled cubemap color
     rayPayload.color = cubemapColor;
     rayPayload.bgTest = cubemapColor;
-    rayPayload.distance = -1.0f;
+    rayPayload.distance = -100.0f;
     rayPayload.normal = vec3(1.0f);
     rayPayload.reflector = 1.0f;
 }
