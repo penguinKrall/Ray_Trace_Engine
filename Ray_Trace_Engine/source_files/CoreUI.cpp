@@ -950,6 +950,39 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
       ImGui::EndCombo();
     }
 
+    if (ImGui::BeginCombo(
+            "Animation",
+            pModelData
+                ->animationNames[pModelData->modelIndex]
+                                [pModelData
+                                     ->activeAnimation[pModelData->modelIndex]]
+                .c_str())) {
+
+      for (int i = 0;
+           i < pModelData->animationNames[pModelData->modelIndex].size(); ++i) {
+        bool isSelected =
+            (pModelData->activeAnimation[pModelData->modelIndex] == i);
+        if (ImGui::Selectable(
+                pModelData->animationNames[pModelData->modelIndex][i].c_str(),
+                isSelected)) {
+          pModelData->activeAnimation[pModelData->modelIndex] = i;
+
+          std::cout
+              << "Selected Animation: "
+              << pModelData->animationNames[pModelData->modelIndex][i].c_str()
+              << std::endl;
+          this->modelData.isUpdated = true;
+
+        }
+
+        if (isSelected) {
+          ImGui::SetItemDefaultFocus();
+        }
+      }
+
+      ImGui::EndCombo();
+    }
+
     if (ImGui::CollapsingHeader("Model Transform Values")) {
 
       this->modelData.rotateUpdated = ImGui::SliderFloat4(

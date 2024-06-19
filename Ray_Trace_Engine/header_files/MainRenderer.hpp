@@ -47,18 +47,6 @@ public:
     std::vector<gtp::Model *> models;
     Utilities_UI::ModelData modelData;
 
-    // animation model
-    // gtp::Model *animatedModel;
-
-    // static/scene model
-    // gtp::Model *helmetModel;
-
-    ////static/scene model
-    // gtp::Model *testScene;
-
-    ////building glass model
-    // gtp::Model *waterSurface;
-
     // colored glass texture
     gtp::TextureLoader coloredGlassTexture;
 
@@ -200,7 +188,7 @@ public:
   void HandleResize();
 
   // -- update UI data
-  void UpdateUIData(Utilities_UI::ModelData *pModelData);
+  //void UpdateUIData(Utilities_UI::ModelData *pModelData);
 
 
   // -- update model transforms

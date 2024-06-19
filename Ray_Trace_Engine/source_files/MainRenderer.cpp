@@ -107,6 +107,24 @@ void MainRenderer::LoadModel(
 
   tempModel->semiTransparentFlag = static_cast<int>(isSemiTransparent);
 
+  // animations
+  std::vector<std::string> tempNames;
+
+  if (tempModel->animations.empty()) {
+    this->assets.modelData.activeAnimation.push_back(0);
+    tempNames.push_back("none");
+    this->assets.modelData.animationNames.push_back(tempNames);
+  }
+
+  else {
+    this->assets.modelData.activeAnimation.push_back(0);
+    for (int i = 0; i < tempModel->animations.size(); i++) {
+      tempNames.push_back(tempModel->animations[i].name);
+      std::cout << tempModel->animations[i].name << std::endl;
+    }
+    this->assets.modelData.animationNames.push_back(tempNames);
+  }
+
   // add model to model list
   this->assets.models.push_back(tempModel);
 
@@ -1553,12 +1571,12 @@ void MainRenderer::HandleResize() {
   this->UpdateDescriptorSet();
 }
 
-void MainRenderer::UpdateUIData(Utilities_UI::ModelData *pModelData) {
-
-  // this->assets.modelData = *pModelData;
-
-  // this->assets.modelData.isUpdated = false;
-}
+// void MainRenderer::UpdateUIData(Utilities_UI::ModelData *pModelData) {
+//
+//   // this->assets.modelData = *pModelData;
+//
+//   // this->assets.modelData.isUpdated = false;
+// }
 
 void MainRenderer::UpdateModelTransforms(Utilities_UI::ModelData *pModelData) {
   this->assets.modelData = *pModelData;

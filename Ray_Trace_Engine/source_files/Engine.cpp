@@ -44,7 +44,14 @@ void Engine::Run() {
     userInput();
 
     // update ui
-     this->UpdateUI();
+    this->UpdateUI();
+
+    // if (this->UI.modelData.isUpdated) {
+    //   this->renderers.mainRenderer.UpdateModelTransforms(&this->UI.modelData);
+    //   //
+    //   this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
+    //   // this->UI.modelData.isUpdated = false;
+    // }
 
     // draw
     Draw();
@@ -82,8 +89,8 @@ void Engine::Terminate() {
 
 void Engine::UpdateUI() {
   if (this->isUIUpdated) {
-    this->renderers.mainRenderer.UpdateUIData(
-        &this->renderers.mainRenderer.assets.modelData);
+    // this->renderers.mainRenderer.UpdateUIData(
+    //     &this->renderers.mainRenderer.assets.modelData);
     this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
     this->isUIUpdated = false;
   }
@@ -304,12 +311,18 @@ void Engine::Draw() {
   //     update uniform buffers        //
   /*----------------------------------*/
 
-  // update model class animation
-  for (int i = 0; i < this->renderers.mainRenderer.assets.models.size(); i++) {
+  // Update model class animation
+  for (size_t i = 0; i < this->renderers.mainRenderer.assets.models.size();
+       ++i) {
     if (this->renderers.mainRenderer.assets.modelData.animatedModelIndex[i] ==
         1) {
-      this->renderers.mainRenderer.assets.models[i]->updateAnimation(0,
-                                                                     deltaTime);
+      size_t modelIndex =
+          this->renderers.mainRenderer.assets.modelData.modelIndex;
+      int activeAnimation = this->renderers.mainRenderer.assets.modelData
+                                .activeAnimation[modelIndex];
+      // std::cout << "active animation: " << activeAnimation << std::endl;
+      this->renderers.mainRenderer.assets.models[i]->updateAnimation(
+          activeAnimation, deltaTime);
     }
   }
 
