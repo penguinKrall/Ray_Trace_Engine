@@ -53,14 +53,6 @@ void Engine::Run() {
     if (this->UI.modelData.isUpdated) {
       // -- update renderer model data struct with ui
       this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
-      // -- update model transforms (internally conditional if transforms were
-      // updated)
-      if (this->renderers.mainRenderer.assets.modelData.rotateUpdated ||
-          this->renderers.mainRenderer.assets.modelData.translateUpdated ||
-          this->renderers.mainRenderer.assets.modelData.scaleUpdated) {
-
-        this->renderers.mainRenderer.UpdateModelTransforms(&this->UI.modelData);
-      }
       this->renderers.mainRenderer.assets.modelData.isUpdated = false;
       // -- update ui data to updated renderer model data with updated flags
       this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
@@ -94,7 +86,6 @@ void Engine::Terminate() {
 void Engine::UpdateUI() {
   if (this->isUIUpdated) {
     this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
-    // this->renderers.mainRenderer.UpdateModelTransforms(&this->UI.modelData);
     this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
     this->isUIUpdated = false;
   }

@@ -1025,20 +1025,39 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
       //   this->modelData.rotateUpdated = true;
       // }
 
-      this->modelData.translateUpdated = ImGui::SliderFloat4(
-          "Translate",
-          (float *)&this->modelData.transformValues[this->modelData.modelIndex]
-              .translate,
-          -20.0f, 20.0f);
+      if (ImGui::SliderFloat4("Translate",
+                              (float *)&this->modelData
+                                  .transformValues[this->modelData.modelIndex]
+                                  .translate,
+                              -20.0f, 20.0f)) {
+        this->modelData.transformMatrices[this->modelData.modelIndex]
+            .translate = glm::translate(
+            glm::mat4(1.0f),
+            glm::vec3(
+                this->modelData.transformValues[this->modelData.modelIndex]
+                    .translate));
+        this->modelData.translateUpdated = true;
+      }
 
-      this->modelData.scaleUpdated = ImGui::SliderFloat4(
-          "Scale",
-          (float *)&this->modelData.transformValues[this->modelData.modelIndex]
-              .scale,
-          0.001f, 10.0f);
+      if (ImGui::SliderFloat("Scale",
+                              (float *)&this->modelData
+                                  .transformValues[this->modelData.modelIndex]
+                                  .scale,
+                              0.001f, 10.0f)) {
+        this->modelData.transformMatrices[this->modelData.modelIndex].scale =
+            glm::scale(
+                glm::mat4(1.0f),
+                glm::vec3(
+                    this->modelData.transformValues[this->modelData.modelIndex]
+                        .scale));
+        this->modelData.scaleUpdated = true;
+      }
 
       if (this->modelData.rotateUpdated || this->modelData.translateUpdated ||
           this->modelData.scaleUpdated) {
+        this->modelData.rotateUpdated = false;
+        this->modelData.translateUpdated = false;
+        this->modelData.scaleUpdated = false;
         this->modelData.isUpdated = true;
         this->modelData.updateBLAS.resize(pModelData->modelName.size());
         this->modelData.updateBLAS[pModelData->modelIndex] = true;

@@ -24,7 +24,7 @@ public:
   struct TransformValues {
     glm::vec4 rotate = glm::vec4(0.0f);
     glm::vec4 translate = glm::vec4(0.0f);
-    glm::vec4 scale = glm::vec4(0.0f);
+    float scale = 0.0f;
   };
 
   struct ModelData {

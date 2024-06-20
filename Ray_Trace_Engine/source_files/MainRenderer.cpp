@@ -85,25 +85,33 @@ void MainRenderer::LoadModel(
     Utilities_Renderer::ModelLoadingFlags modelLoadingFlags,
     Utilities_UI::TransformMatrices *pTransformMatrices) {
 
-  // animated model
+  // model instance pointer to initialize and add to list
   auto *tempModel = new gtp::Model();
 
+  // model index
   auto modelIdx = static_cast<int>(this->assets.models.size());
 
   // load from file
   tempModel->loadFromFile(filename, pEngineCore, pEngineCore->queue.graphics,
                           fileLoadingFlags);
 
-  // tempModel->verticesBuffer = Utilities_Renderer::GetVerticesFromBuffer(
-  //     pEngineCore->devices.logical, tempModel);
-
+  // set semi transparent flag
   const bool isSemiTransparent =
       modelLoadingFlags ==
               Utilities_Renderer::ModelLoadingFlags::SemiTransparent
           ? 1
           : 0;
 
+  // flag belongs to model -- referenced in geometry node
   tempModel->semiTransparentFlag = static_cast<int>(isSemiTransparent);
+
+  // set isAnimated flag
+  // referenced by blas/tlas/compute vertex
+  const bool isAnimated = !tempModel->animations.empty() ? true : false;
+
+  // add isAnimated flag to list
+  this->assets.modelData.animatedModelIndex.push_back(
+      static_cast<int>(isAnimated));
 
   // animations
   std::vector<std::string> tempNames;
@@ -129,13 +137,14 @@ void MainRenderer::LoadModel(
   // init modelData struct
   this->assets.modelData.modelName.push_back(tempModel->modelName);
 
-  // pre transforms
   // matrices
   Utilities_UI::TransformMatrices transformMatrices{};
 
   // vectors of xyzw values
   Utilities_UI::TransformValues transformValues{};
 
+  // assign transform matrices if passed in on load
+  // pre transforms
   if (pTransformMatrices != nullptr) {
 
     transformMatrices.rotate = pTransformMatrices->rotate;
@@ -143,51 +152,37 @@ void MainRenderer::LoadModel(
     transformMatrices.translate = pTransformMatrices->translate;
 
     transformMatrices.scale = pTransformMatrices->scale;
-
-    transformValues.rotate = transformMatrices.rotate * glm::vec4(1.0f);
-    // transformValues.rotate = glm::vec4(0.0f);
-
-    transformValues.translate = transformMatrices.translate * glm::vec4(1.0f);
-
-    transformValues.scale = transformMatrices.scale * glm::vec4(1.0f);
-
   }
+  // rotate transform values
+  //  Extract the upper 3x3 part of the matrix
+  glm::mat3 rotationMatrix = glm::mat3(transformMatrices.rotate);
 
-  else {
-    transformValues.rotate = glm::vec4(1.0f);
+  // Normalize the columns to remove scaling
+  rotationMatrix[0] = glm::normalize(rotationMatrix[0]);
+  rotationMatrix[1] = glm::normalize(rotationMatrix[1]);
+  rotationMatrix[2] = glm::normalize(rotationMatrix[2]);
 
-    transformValues.translate = glm::vec4(0.0f);
+  // Convert the 3x3 rotation matrix to a quaternion
+  glm::quat rotationQuaternion = glm::quat_cast(rotationMatrix);
 
-    transformValues.scale = glm::vec4(1.0f);
-  }
+  // Convert the quaternion to a vec4 (xyzw)
+  glm::vec4 rotationVec4 =
+      glm::vec4(rotationQuaternion.x, rotationQuaternion.y,
+                rotationQuaternion.z, rotationQuaternion.w);
 
+  // Assign it to transformValues.rotate
+  transformValues.rotate = rotationVec4;
+
+  // translate transform values
+  transformValues.translate = glm::vec4(transformMatrices.translate[3]);
+
+  // scale transform values
+  transformValues.scale =
+      glm::vec4(transformMatrices.scale * glm::vec4(1.0f)).x;
+
+  // add transform values/matrices to lists
   this->assets.modelData.transformMatrices.push_back(transformMatrices);
   this->assets.modelData.transformValues.push_back(transformValues);
-
-  const bool isAnimated =
-      modelLoadingFlags == Utilities_Renderer::ModelLoadingFlags::Animated
-          ? true
-          : false;
-
-  this->assets.modelData.animatedModelIndex.push_back(
-      static_cast<int>(isAnimated));
-
-  // bool positionModel =
-  //     modelLoadingFlags ==
-  //     Utilities_Renderer::ModelLoadingFlags::PositionModel
-  //         ? true
-  //         : false;
-
-  // if (positionModel) {
-  //   Utilities_Renderer::TransformsData transformsData{};
-  //   transformsData.model = this->assets.models[modelIdx];
-  //   transformsData.rotate = transformMatrices.rotate;
-  //   transformsData.translate = transformMatrices.translate;
-  //   transformsData.scale = transformMatrices.scale;
-  //
-  //   Utilities_Renderer::TransformModelVertices(this->pEngineCore,
-  //                                              &transformsData);
-  // }
 }
 
 void MainRenderer::LoadAssets() {
@@ -245,7 +240,7 @@ void MainRenderer::LoadAssets() {
   Utilities_UI::TransformMatrices helmetModelTransformMatrices{};
 
   helmetModelTransformMatrices.translate =
-      glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
+      glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
   helmetModelTransformMatrices.scale =
       glm::scale(glm::mat4(1.0f), glm::vec3(10.0f));
@@ -1655,73 +1650,6 @@ void MainRenderer::HandleResize() {
 
 void MainRenderer::SetModelData(Utilities_UI::ModelData *pModelData) {
   this->assets.modelData = *pModelData;
-}
-
-// void MainRenderer::UpdateUIData(Utilities_UI::ModelData *pModelData) {
-//
-//   // this->assets.modelData = *pModelData;
-//
-//   // this->assets.modelData.isUpdated = false;
-// }
-
-void MainRenderer::UpdateModelTransforms(Utilities_UI::ModelData *pModelData) {
-
-  int modelIdx = this->assets.modelData.modelIndex;
-
-  if (this->assets.modelData.rotateUpdated ||
-      this->assets.modelData.translateUpdated ||
-      this->assets.modelData.scaleUpdated) {
-    std::cout << "\n model index" << modelIdx << std::endl;
-
-    // std::vector<gtp::Model::Vertex> tempSceneVerticesBuffer =
-    //     this->assets.models[modelIdx]->verticesBuffer;
-
-    // if (this->assets.modelData.rotateUpdated) {
-    //   glm::mat4 rotationMatrix = glm::mat4(1.0f);
-    //
-    //   float angleX = glm::radians(
-    //       this->assets.modelData.transformValues[modelIdx].rotate.x);
-    //   float angleY = glm::radians(
-    //       this->assets.modelData.transformValues[modelIdx].rotate.y);
-    //   float angleZ = glm::radians(
-    //       this->assets.modelData.transformValues[modelIdx].rotate.z);
-    //
-    //   // Rotate around the X axis
-    //   rotationMatrix =
-    //       glm::rotate(rotationMatrix, angleX, glm::vec3(1.0f, 0.0f, 0.0f));
-    //   // Rotate around the Y axis
-    //   rotationMatrix =
-    //       glm::rotate(rotationMatrix, angleY, glm::vec3(0.0f, 1.0f, 0.0f));
-    //   // Rotate around the Z axis
-    //   rotationMatrix =
-    //       glm::rotate(rotationMatrix, angleZ, glm::vec3(0.0f, 0.0f, 1.0f));
-    //
-    //   this->assets.modelData.transformMatrices[modelIdx].rotate =
-    //       rotationMatrix;
-    // }
-
-    this->assets.modelData.rotateUpdated = false;
-
-    if (this->assets.modelData.translateUpdated) {
-      this->assets.modelData.transformMatrices[modelIdx].translate =
-          glm::translate(
-              glm::mat4(1.0f),
-              glm::vec3(
-                  this->assets.modelData.transformValues[modelIdx].translate));
-    }
-
-    this->assets.modelData.translateUpdated = false;
-
-    if (this->assets.modelData.scaleUpdated) {
-      this->assets.modelData.transformMatrices[modelIdx].scale = glm::scale(
-          glm::mat4(1.0f),
-          glm::vec3(this->assets.modelData.transformValues[modelIdx].scale));
-    }
-
-    this->assets.modelData.scaleUpdated = false;
-  }
-
-  this->assets.modelData.isUpdated = false;
 }
 
 void MainRenderer::Destroy_MainRenderer() {
