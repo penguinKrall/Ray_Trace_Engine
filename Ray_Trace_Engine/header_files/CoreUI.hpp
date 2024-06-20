@@ -85,6 +85,8 @@ public:
   UIProperties properties{};
   UIBackends backends{};
 
+  quat qRot = quat(1.f, 0.f, 0.f, 0.f);
+
   //--utilities structs
   //model data
   Utilities_UI::ModelData modelData{};

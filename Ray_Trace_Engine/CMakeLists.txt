@@ -64,6 +64,10 @@ link_directories(dependencies/imgui)
 include_directories(dependencies/imgui/misc)
 link_directories(dependencies/imgui/misc)
 
+# ImGuiZMO
+include_directories(dependencies)
+link_directories(dependencies)
+
 # GLFW
 include_directories(dependencies/GLFW/include)
 link_directories(dependencies/GLFW/lib-vc2022)

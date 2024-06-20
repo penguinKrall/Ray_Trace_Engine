@@ -9,10 +9,11 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
+#include <imGuIZMOquat.h>
+
 #include <filesystem>
 
 class Utilities_UI {
-
 public:
   struct TransformMatrices {
     glm::mat4 rotate = glm::mat4(1.0f);

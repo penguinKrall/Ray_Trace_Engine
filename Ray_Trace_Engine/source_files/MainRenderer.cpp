@@ -154,7 +154,7 @@ void MainRenderer::LoadModel(
   }
 
   else {
-    transformValues.rotate = glm::vec4(0.0f);
+    transformValues.rotate = glm::vec4(1.0f);
 
     transformValues.translate = glm::vec4(0.0f);
 
@@ -1676,29 +1676,29 @@ void MainRenderer::UpdateModelTransforms(Utilities_UI::ModelData *pModelData) {
     // std::vector<gtp::Model::Vertex> tempSceneVerticesBuffer =
     //     this->assets.models[modelIdx]->verticesBuffer;
 
-    if (this->assets.modelData.rotateUpdated) {
-    glm::mat4 rotationMatrix = glm::mat4(1.0f);
-
-      float angleX = glm::radians(
-          this->assets.modelData.transformValues[modelIdx].rotate.x);
-      float angleY = glm::radians(
-          this->assets.modelData.transformValues[modelIdx].rotate.y);
-      float angleZ = glm::radians(
-          this->assets.modelData.transformValues[modelIdx].rotate.z);
-
-      // Rotate around the X axis
-      rotationMatrix =
-          glm::rotate(rotationMatrix, angleX, glm::vec3(1.0f, 0.0f, 0.0f));
-      // Rotate around the Y axis
-      rotationMatrix =
-          glm::rotate(rotationMatrix, angleY, glm::vec3(0.0f, 1.0f, 0.0f));
-      // Rotate around the Z axis
-      rotationMatrix =
-          glm::rotate(rotationMatrix, angleZ, glm::vec3(0.0f, 0.0f, 1.0f));
-
-      this->assets.modelData.transformMatrices[modelIdx].rotate =
-          rotationMatrix;
-    }
+    // if (this->assets.modelData.rotateUpdated) {
+    //   glm::mat4 rotationMatrix = glm::mat4(1.0f);
+    //
+    //   float angleX = glm::radians(
+    //       this->assets.modelData.transformValues[modelIdx].rotate.x);
+    //   float angleY = glm::radians(
+    //       this->assets.modelData.transformValues[modelIdx].rotate.y);
+    //   float angleZ = glm::radians(
+    //       this->assets.modelData.transformValues[modelIdx].rotate.z);
+    //
+    //   // Rotate around the X axis
+    //   rotationMatrix =
+    //       glm::rotate(rotationMatrix, angleX, glm::vec3(1.0f, 0.0f, 0.0f));
+    //   // Rotate around the Y axis
+    //   rotationMatrix =
+    //       glm::rotate(rotationMatrix, angleY, glm::vec3(0.0f, 1.0f, 0.0f));
+    //   // Rotate around the Z axis
+    //   rotationMatrix =
+    //       glm::rotate(rotationMatrix, angleZ, glm::vec3(0.0f, 0.0f, 1.0f));
+    //
+    //   this->assets.modelData.transformMatrices[modelIdx].rotate =
+    //       rotationMatrix;
+    // }
 
     this->assets.modelData.rotateUpdated = false;
 

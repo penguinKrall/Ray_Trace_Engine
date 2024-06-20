@@ -757,15 +757,13 @@ void CoreUI::UpdateBuffers(int currentFrame) {
 
   // vertex buffer size
   VkDeviceSize vertexBufferSize =
-      (static_cast<long long>(backends.drawData->TotalVtxCount +
-                              backends.drawData->TotalVtxCount * 2)) *
+      (static_cast<long long>(backends.drawData->TotalVtxCount * 10)) *
       (sizeof(ImDrawVert) * 2);
 
   // index buffer size
   VkDeviceSize indexBufferSize =
-      (static_cast<long long>(backends.drawData->TotalIdxCount +
-                              backends.drawData->TotalIdxCount * 2)) *
-      (sizeof(ImDrawIdx) * 2);
+      (static_cast<long long>(backends.drawData->TotalIdxCount * 10)) *
+      (sizeof(ImDrawIdx));
 
   // return if buffers aren't created - no need to destroy
   if ((vertexBufferSize == 0) || (indexBufferSize == 0)) {
@@ -972,7 +970,6 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
               << pModelData->animationNames[pModelData->modelIndex][i].c_str()
               << std::endl;
           this->modelData.isUpdated = true;
-
         }
 
         if (isSelected) {
@@ -985,11 +982,42 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
 
     if (ImGui::CollapsingHeader("Model Transform Values")) {
 
-      this->modelData.rotateUpdated = ImGui::SliderFloat4(
-          "Rotate",
-          (float *)&this->modelData.transformValues[this->modelData.modelIndex]
-              .rotate,
-          -180.0f, 180.0f);
+      // ImGui gizmo for quaternion rotation
+      if (ImGui::gizmo3D("Rotation", qRot, 100,
+                         imguiGizmo::mode3Axes | imguiGizmo::cubeAtOrigin)) {
+        // Update the model's rotation quaternion with the new values from the
+        // gizmo
+        this->modelData.transformValues[this->modelData.modelIndex].rotate.w =
+            qRot.w;
+        this->modelData.transformValues[this->modelData.modelIndex].rotate.x =
+            qRot.x;
+        this->modelData.transformValues[this->modelData.modelIndex].rotate.y =
+            qRot.y;
+        this->modelData.transformValues[this->modelData.modelIndex].rotate.z =
+            qRot.z;
+
+        // Normalize the quaternion
+        glm::quat normalizedQuat = glm::normalize(qRot);
+
+        // Convert the normalized quaternion to a rotation matrix
+        glm::mat4 rotationMatrix = glm::mat4(normalizedQuat);
+
+        // Update the model's transformation matrix with the new rotation matrix
+        this->modelData.transformMatrices[this->modelData.modelIndex].rotate =
+            rotationMatrix;
+
+        // Flag that the rotation has been updated
+        this->modelData.rotateUpdated = true;
+      }
+
+      // if (ImGui::SliderFloat4("Rotate",
+      //                         (float *)&this->modelData
+      //                             .transformValues[this->modelData.modelIndex]
+      //                             .rotate,
+      //                         -180.0f, 180.0f)) {
+      //
+      //   this->modelData.rotateUpdated = true;
+      // }
 
       this->modelData.translateUpdated = ImGui::SliderFloat4(
           "Translate",
