@@ -42,6 +42,7 @@ public:
 
   // -- assets data struct
   struct Assets {
+    uint32_t textureOffset = 0;
 
     // models
     std::vector<gtp::Model *> models;
@@ -94,7 +95,7 @@ public:
   StorageBufferData storageBufferData{};
 
   // -- bottom level acceleration structures
-  std::vector<Utilities_AS::BLASData> bottomLevelAccelerationStructures;
+  std::vector<Utilities_AS::BLASData*> bottomLevelAccelerationStructures;
 
   // -- TLAS data
   Utilities_AS::TLASData tlasData{};
@@ -138,8 +139,8 @@ public:
   // -- load gltf compute
   void LoadGltfCompute(gtp::Model* pModel);
 
-  // -- create bottom level acceleration structures
-  void CreateBottomLevelAccelerationStructures();
+  // -- create BLAS
+  void CreateBLAS(gtp::Model* pModel);
 
   // -- create top level acceleration structure
   void CreateTLAS();

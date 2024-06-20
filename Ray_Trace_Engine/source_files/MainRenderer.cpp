@@ -20,19 +20,6 @@ void MainRenderer::Init_MainRenderer(EngineCore *coreBase) {
 
   std::cout << "\nfinished loading assets." << std::endl;
 
-  // this->PreTransformModels();
-  //
-  vkDeviceWaitIdle(this->pEngineCore->devices.logical);
-  //
-  ////compute
-  // this->gltfCompute = ComputeVertex(pEngineCore, this->assets.models[0]);
-
-  ////create bottom level acceleration structure
-  this->CreateBottomLevelAccelerationStructures();
-
-  std::cout << "\nfinished creating bottom level acceleration structures."
-            << std::endl;
-
   ////create geometry nodes buffer
   this->CreateGeometryNodesBuffer();
 
@@ -184,7 +171,12 @@ void MainRenderer::LoadModel(
   this->assets.modelData.transformMatrices.push_back(transformMatrices);
   this->assets.modelData.transformValues.push_back(transformValues);
 
+  // load gltf -- internally conditional if model contains animations else ==
+  // nullptr
   LoadGltfCompute(tempModel);
+
+  // create bottom level acceleration structure for model
+  CreateBLAS(tempModel);
 }
 
 void MainRenderer::LoadAssets() {
@@ -271,28 +263,21 @@ void MainRenderer::LoadGltfCompute(gtp::Model *pModel) {
   this->gltfCompute.push_back(computeVtx);
 }
 
-void MainRenderer::CreateBottomLevelAccelerationStructures() {
+void MainRenderer::CreateBLAS(gtp::Model *pModel) {
+  Utilities_AS::BLASData *tempBLAS = new Utilities_AS::BLASData();
+  Utilities_AS::createBLAS(
 
-  // texture offset - imperative to index textures via geometries in ray trace
-  // shaders
-  uint32_t textureOffset = 0;
+      this->pEngineCore, &this->geometryNodeBuf, &this->geometryIndexBuf,
+      tempBLAS, &tempBLAS->accelerationStructure, pModel,
+      this->assets.textureOffset);
 
-  // resize bottom level acceleration structures as per loaded models
-  this->bottomLevelAccelerationStructures.resize(this->assets.models.size());
+  // increment offset by size of models texture array
+  this->assets.textureOffset += static_cast<uint32_t>(pModel->textures.size());
 
-  // create bottom level acceleration structures
-  for (int i = 0; i < this->bottomLevelAccelerationStructures.size(); i++) {
-    Utilities_AS::createBLAS(
-        this->pEngineCore, &this->geometryNodeBuf, &this->geometryIndexBuf,
-        &this->bottomLevelAccelerationStructures[i],
-        &this->bottomLevelAccelerationStructures[i].accelerationStructure,
-        this->assets.models[i], textureOffset);
+  std::cout << "this->assets.textureOffset: " << this->assets.textureOffset
+            << std::endl;
 
-    // increment offset by size of models texture array
-    textureOffset +=
-        static_cast<uint32_t>(this->assets.models[i]->textures.size());
-    std::cout << "textureOffset: " << textureOffset << std::endl;
-  }
+  this->bottomLevelAccelerationStructures.push_back(tempBLAS);
 }
 
 void MainRenderer::CreateTLAS() {
@@ -338,10 +323,10 @@ void MainRenderer::CreateTLAS() {
     blasInstances[i].instanceShaderBindingTableRecordOffset = 0;
     blasInstances[i].accelerationStructureReference =
         this->bottomLevelAccelerationStructures[i]
-            .accelerationStructure.deviceAddress;
+            ->accelerationStructure.deviceAddress;
     std::cout << "this->secondBLAS.deviceAddress"
               << this->bottomLevelAccelerationStructures[i]
-                     .accelerationStructure.deviceAddress
+                     ->accelerationStructure.deviceAddress
               << std::endl;
   }
 
@@ -1284,8 +1269,8 @@ void MainRenderer::UpdateBLAS() {
       pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
           commandBuffer, 1,
           &this->bottomLevelAccelerationStructures[i]
-               .accelerationStructureBuildGeometryInfo,
-          this->bottomLevelAccelerationStructures[i].pBuildRangeInfos.data());
+               ->accelerationStructureBuildGeometryInfo,
+          this->bottomLevelAccelerationStructures[i]->pBuildRangeInfos.data());
     }
   }
 
@@ -1297,8 +1282,8 @@ void MainRenderer::UpdateBLAS() {
       pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
           commandBuffer, 1,
           &this->bottomLevelAccelerationStructures[i]
-               .accelerationStructureBuildGeometryInfo,
-          this->bottomLevelAccelerationStructures[i].pBuildRangeInfos.data());
+               ->accelerationStructureBuildGeometryInfo,
+          this->bottomLevelAccelerationStructures[i]->pBuildRangeInfos.data());
       this->assets.modelData.updateBLAS[i] = false;
     }
   }
@@ -1350,7 +1335,7 @@ void MainRenderer::UpdateTLAS() {
     blasInstances[i].instanceShaderBindingTableRecordOffset = 0;
     blasInstances[i].accelerationStructureReference =
         this->bottomLevelAccelerationStructures[i]
-            .accelerationStructure.deviceAddress;
+            ->accelerationStructure.deviceAddress;
   }
 
   // -- update instances buffer
@@ -1713,23 +1698,23 @@ void MainRenderer::Destroy_MainRenderer() {
     pEngineCore->coreExtensions->vkDestroyAccelerationStructureKHR(
         pEngineCore->devices.logical,
         this->bottomLevelAccelerationStructures[i]
-            .accelerationStructure.accelerationStructureKHR,
+            ->accelerationStructure.accelerationStructureKHR,
         nullptr);
 
     // scratch buffer
     this->bottomLevelAccelerationStructures[i]
-        .accelerationStructure.scratchBuffer.destroy(
+        ->accelerationStructure.scratchBuffer.destroy(
             this->pEngineCore->devices.logical);
 
     // accel structure buffer and memory
-    vkDestroyBuffer(
-        pEngineCore->devices.logical,
-        this->bottomLevelAccelerationStructures[i].accelerationStructure.buffer,
-        nullptr);
-    vkFreeMemory(
-        pEngineCore->devices.logical,
-        this->bottomLevelAccelerationStructures[i].accelerationStructure.memory,
-        nullptr);
+    vkDestroyBuffer(pEngineCore->devices.logical,
+                    this->bottomLevelAccelerationStructures[i]
+                        ->accelerationStructure.buffer,
+                    nullptr);
+    vkFreeMemory(pEngineCore->devices.logical,
+                 this->bottomLevelAccelerationStructures[i]
+                     ->accelerationStructure.memory,
+                 nullptr);
   }
 
   // -- top level acceleration structure & related buffers -- //
@@ -1760,10 +1745,12 @@ void MainRenderer::Destroy_MainRenderer() {
   }
 
   // -- models
-  this->assets.models[0]->destroy(this->pEngineCore->devices.logical);
-  this->assets.models[1]->destroy(this->pEngineCore->devices.logical);
-  this->assets.models[2]->destroy(this->pEngineCore->devices.logical);
+  for (int i = 0; i < this->assets.models.size(); i++) {
+    if (this->assets.models[i] != nullptr) {
+      this->assets.models[i]->destroy(this->pEngineCore->devices.logical);
+    }
+  }
+
   this->assets.cubemap.DestroyTextureLoader();
   this->assets.coloredGlassTexture.DestroyTextureLoader();
-  this->assets.models[3]->destroy(this->pEngineCore->devices.logical);
 }
