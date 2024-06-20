@@ -46,20 +46,24 @@ void Engine::Run() {
     // update ui
     this->UpdateUI();
 
-    // if (this->UI.modelData.isUpdated) {
-    //   this->renderers.mainRenderer.UpdateModelTransforms(&this->UI.modelData);
-    //   //
-    //   this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
-    //   // this->UI.modelData.isUpdated = false;
-    // }
-
     // draw
     Draw();
 
+    // -- if model data in ui has been changed
     if (this->UI.modelData.isUpdated) {
-      this->renderers.mainRenderer.UpdateModelTransforms(&this->UI.modelData);
+      // -- update renderer model data struct with ui
+      this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
+      // -- update model transforms (internally conditional if transforms were
+      // updated)
+      if (this->renderers.mainRenderer.assets.modelData.rotateUpdated ||
+          this->renderers.mainRenderer.assets.modelData.translateUpdated ||
+          this->renderers.mainRenderer.assets.modelData.scaleUpdated) {
+
+        this->renderers.mainRenderer.UpdateModelTransforms(&this->UI.modelData);
+      }
+      this->renderers.mainRenderer.assets.modelData.isUpdated = false;
+      // -- update ui data to updated renderer model data with updated flags
       this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
-      this->UI.modelData.isUpdated = false;
     }
 
     // set to false - wont update buffers again unless view changes
@@ -89,9 +93,9 @@ void Engine::Terminate() {
 
 void Engine::UpdateUI() {
   if (this->isUIUpdated) {
-    // this->renderers.mainRenderer.UpdateUIData(
-    //     &this->renderers.mainRenderer.assets.modelData);
     this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
+    // this->renderers.mainRenderer.UpdateModelTransforms(&this->UI.modelData);
+    this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
     this->isUIUpdated = false;
   }
 }

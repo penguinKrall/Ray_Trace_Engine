@@ -27,8 +27,6 @@ void MainRenderer::Init_MainRenderer(EngineCore *coreBase) {
   ////compute
   this->gltfCompute = ComputeVertex(pEngineCore, this->assets.models[0]);
 
-  this->gltfCompute.SetModelData(&this->assets.modelData, 0);
-
   ////create bottom level acceleration structure
   this->CreateBottomLevelAccelerationStructures();
 
@@ -96,8 +94,8 @@ void MainRenderer::LoadModel(
   tempModel->loadFromFile(filename, pEngineCore, pEngineCore->queue.graphics,
                           fileLoadingFlags);
 
-  tempModel->verticesBuffer = Utilities_Renderer::GetVerticesFromBuffer(
-      pEngineCore->devices.logical, tempModel);
+  // tempModel->verticesBuffer = Utilities_Renderer::GetVerticesFromBuffer(
+  //     pEngineCore->devices.logical, tempModel);
 
   const bool isSemiTransparent =
       modelLoadingFlags ==
@@ -135,6 +133,9 @@ void MainRenderer::LoadModel(
   // matrices
   Utilities_UI::TransformMatrices transformMatrices{};
 
+  // vectors of xyzw values
+  Utilities_UI::TransformValues transformValues{};
+
   if (pTransformMatrices != nullptr) {
 
     transformMatrices.rotate = pTransformMatrices->rotate;
@@ -142,16 +143,23 @@ void MainRenderer::LoadModel(
     transformMatrices.translate = pTransformMatrices->translate;
 
     transformMatrices.scale = pTransformMatrices->scale;
+
+    transformValues.rotate = transformMatrices.rotate * glm::vec4(1.0f);
+    // transformValues.rotate = glm::vec4(0.0f);
+
+    transformValues.translate = transformMatrices.translate * glm::vec4(1.0f);
+
+    transformValues.scale = transformMatrices.scale * glm::vec4(1.0f);
+
   }
 
-  // vectors of xyzw values
-  Utilities_UI::TransformValues transformValues{};
+  else {
+    transformValues.rotate = glm::vec4(0.0f);
 
-  transformValues.rotate = transformMatrices.rotate * glm::vec4(1.0f);
+    transformValues.translate = glm::vec4(0.0f);
 
-  transformValues.translate = transformMatrices.translate * glm::vec4(1.0f);
-
-  transformValues.scale = transformMatrices.scale * glm::vec4(1.0f);
+    transformValues.scale = glm::vec4(1.0f);
+  }
 
   this->assets.modelData.transformMatrices.push_back(transformMatrices);
   this->assets.modelData.transformValues.push_back(transformValues);
@@ -164,21 +172,22 @@ void MainRenderer::LoadModel(
   this->assets.modelData.animatedModelIndex.push_back(
       static_cast<int>(isAnimated));
 
-  bool positionModel =
-      modelLoadingFlags == Utilities_Renderer::ModelLoadingFlags::PositionModel
-          ? true
-          : false;
+  // bool positionModel =
+  //     modelLoadingFlags ==
+  //     Utilities_Renderer::ModelLoadingFlags::PositionModel
+  //         ? true
+  //         : false;
 
-  if (positionModel) {
-    Utilities_Renderer::TransformsData transformsData{};
-    transformsData.model = this->assets.models[modelIdx];
-    transformsData.rotate = transformMatrices.rotate;
-    transformsData.translate = transformMatrices.translate;
-    transformsData.scale = transformMatrices.scale;
-
-    Utilities_Renderer::TransformModelVertices(this->pEngineCore,
-                                               &transformsData);
-  }
+  // if (positionModel) {
+  //   Utilities_Renderer::TransformsData transformsData{};
+  //   transformsData.model = this->assets.models[modelIdx];
+  //   transformsData.rotate = transformMatrices.rotate;
+  //   transformsData.translate = transformMatrices.translate;
+  //   transformsData.scale = transformMatrices.scale;
+  //
+  //   Utilities_Renderer::TransformModelVertices(this->pEngineCore,
+  //                                              &transformsData);
+  // }
 }
 
 void MainRenderer::LoadAssets() {
@@ -281,8 +290,8 @@ void MainRenderer::CreateBottomLevelAccelerationStructures() {
 void MainRenderer::CreateTLAS() {
 
   // -- instances transform matrix
-  VkTransformMatrixKHR transformMatrix = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-                                          0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
+  // VkTransformMatrixKHR transformMatrix = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+  //                                        0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
 
   // -- array of instances
   std::vector<VkAccelerationStructureInstanceKHR> blasInstances;
@@ -292,7 +301,30 @@ void MainRenderer::CreateTLAS() {
 
   // initialize instances array
   for (int i = 0; i < blasInstances.size(); i++) {
-    blasInstances[i].transform = transformMatrix;
+    // Assuming you have separate rotation, translation, and scale for each
+    // instance
+    glm::mat4 rotationMatrix = this->assets.modelData.transformMatrices[i]
+                                   .rotate; // Example rotation matrix
+    glm::mat4 translationMatrix = this->assets.modelData.transformMatrices[i]
+                                      .translate; // Example translation matrix
+    glm::mat4 scaleMatrix = this->assets.modelData.transformMatrices[i]
+                                .scale; // Example scale matrix
+
+    // Combine rotation, translation, and scale into a single 4x4 matrix
+    glm::mat4 transformMatrix =
+        translationMatrix * rotationMatrix * scaleMatrix;
+
+    // Convert glm::mat4 to VkTransformMatrixKHR
+    VkTransformMatrixKHR vkTransformMatrix;
+    for (int col = 0; col < 4; ++col) {
+      for (int row = 0; row < 3; ++row) {
+        vkTransformMatrix.matrix[row][col] =
+            transformMatrix[col][row]; // Vulkan expects column-major order
+      }
+    }
+
+    // Assign this VkTransformMatrixKHR to your instance
+    blasInstances[i].transform = vkTransformMatrix;
     blasInstances[i].instanceCustomIndex = i;
     blasInstances[i].mask = 0xFF;
     blasInstances[i].instanceShaderBindingTableRecordOffset = 0;
@@ -1273,6 +1305,56 @@ void MainRenderer::UpdateBLAS() {
 
 void MainRenderer::UpdateTLAS() {
 
+  // -- array of instances
+  std::vector<VkAccelerationStructureInstanceKHR> blasInstances;
+
+  // resize array
+  blasInstances.resize(this->bottomLevelAccelerationStructures.size());
+
+  // initialize instances array
+  for (int i = 0; i < blasInstances.size(); i++) {
+    // Assuming you have separate rotation, translation, and scale for each
+    // instance
+    glm::mat4 rotationMatrix = this->assets.modelData.transformMatrices[i]
+                                   .rotate; // Example rotation matrix
+    glm::mat4 translationMatrix = this->assets.modelData.transformMatrices[i]
+                                      .translate; // Example translation matrix
+    glm::mat4 scaleMatrix = this->assets.modelData.transformMatrices[i]
+                                .scale; // Example scale matrix
+
+    // Combine rotation, translation, and scale into a single 4x4 matrix
+    glm::mat4 transformMatrix =
+        translationMatrix * rotationMatrix * scaleMatrix;
+
+    // Convert glm::mat4 to VkTransformMatrixKHR
+    VkTransformMatrixKHR vkTransformMatrix;
+    for (int col = 0; col < 4; ++col) {
+      for (int row = 0; row < 3; ++row) {
+        vkTransformMatrix.matrix[row][col] =
+            transformMatrix[col][row]; // Vulkan expects column-major order
+      }
+    }
+
+    // Assign this VkTransformMatrixKHR to your instance
+    blasInstances[i].transform = vkTransformMatrix;
+    blasInstances[i].instanceCustomIndex = i;
+    blasInstances[i].mask = 0xFF;
+    blasInstances[i].instanceShaderBindingTableRecordOffset = 0;
+    blasInstances[i].accelerationStructureReference =
+        this->bottomLevelAccelerationStructures[i]
+            .accelerationStructure.deviceAddress;
+  }
+
+  // -- update instances buffer
+  buffers.tlas_instancesBuffer.copyTo(
+      blasInstances.data(), sizeof(VkAccelerationStructureInstanceKHR) *
+                                static_cast<uint32_t>(blasInstances.size()));
+
+  // -- instance buffer device address
+  tlasData.instanceDataDeviceAddress.deviceAddress =
+      Utilities_AS::getBufferDeviceAddress(
+          this->pEngineCore, buffers.tlas_instancesBuffer.bufferData.buffer);
+
   VkAccelerationStructureGeometryKHR accelerationStructureGeometry{};
   accelerationStructureGeometry.sType =
       VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
@@ -1357,17 +1439,17 @@ void MainRenderer::UpdateTLAS() {
           pEngineCore->devices.logical, &accelerationDeviceAddressInfo);
 }
 
-void MainRenderer::PreTransformModels() {
-
-  Utilities_Renderer::TransformsData transformsData{};
-  transformsData.model = this->assets.models[3];
-  transformsData.translate =
-      glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
-  transformsData.scale = glm::scale(glm::mat4(1.0f), glm::vec3(10.0f));
-
-  Utilities_Renderer::TransformModelVertices(this->pEngineCore,
-                                             &transformsData);
-}
+// void MainRenderer::PreTransformModels() {
+//
+//   Utilities_Renderer::TransformsData transformsData{};
+//   transformsData.model = this->assets.models[3];
+//   transformsData.translate =
+//       glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
+//   transformsData.scale = glm::scale(glm::mat4(1.0f), glm::vec3(10.0f));
+//
+//   //Utilities_Renderer::TransformModelVertices(this->pEngineCore,
+//   //                                           &transformsData);
+// }
 
 void MainRenderer::CreateGeometryNodesBuffer() {
 
@@ -1571,6 +1653,10 @@ void MainRenderer::HandleResize() {
   this->UpdateDescriptorSet();
 }
 
+void MainRenderer::SetModelData(Utilities_UI::ModelData *pModelData) {
+  this->assets.modelData = *pModelData;
+}
+
 // void MainRenderer::UpdateUIData(Utilities_UI::ModelData *pModelData) {
 //
 //   // this->assets.modelData = *pModelData;
@@ -1579,17 +1665,19 @@ void MainRenderer::HandleResize() {
 // }
 
 void MainRenderer::UpdateModelTransforms(Utilities_UI::ModelData *pModelData) {
-  this->assets.modelData = *pModelData;
+
   int modelIdx = this->assets.modelData.modelIndex;
-  std::cout << "\n model index" << modelIdx << std::endl;
 
-  if (this->assets.modelData.animatedModelIndex[modelIdx] == 0) {
+  if (this->assets.modelData.rotateUpdated ||
+      this->assets.modelData.translateUpdated ||
+      this->assets.modelData.scaleUpdated) {
+    std::cout << "\n model index" << modelIdx << std::endl;
 
-    std::vector<gtp::Model::Vertex> tempSceneVerticesBuffer =
-        this->assets.models[modelIdx]->verticesBuffer;
+    // std::vector<gtp::Model::Vertex> tempSceneVerticesBuffer =
+    //     this->assets.models[modelIdx]->verticesBuffer;
 
     if (this->assets.modelData.rotateUpdated) {
-      glm::mat4 rotationMatrix = glm::mat4(1.0f);
+    glm::mat4 rotationMatrix = glm::mat4(1.0f);
 
       float angleX = glm::radians(
           this->assets.modelData.transformValues[modelIdx].rotate.x);
@@ -1631,70 +1719,6 @@ void MainRenderer::UpdateModelTransforms(Utilities_UI::ModelData *pModelData) {
     }
 
     this->assets.modelData.scaleUpdated = false;
-
-    for (int i = 0; i < tempSceneVerticesBuffer.size(); i++) {
-      tempSceneVerticesBuffer[i].pos =
-          this->assets.modelData.transformMatrices[modelIdx].rotate *
-          tempSceneVerticesBuffer[i].pos;
-      tempSceneVerticesBuffer[i].pos = tempSceneVerticesBuffer[i].pos =
-          this->assets.modelData.transformMatrices[modelIdx].translate *
-          tempSceneVerticesBuffer[i].pos;
-      tempSceneVerticesBuffer[i].pos =
-          this->assets.modelData.transformMatrices[modelIdx].scale *
-          tempSceneVerticesBuffer[i].pos;
-    }
-
-    void *verticesData;
-
-    vkMapMemory(pEngineCore->devices.logical,
-                this->assets.models[modelIdx]->vertices.memory, 0,
-                this->assets.models[modelIdx]->vertexBufferSize, 0,
-                &verticesData);
-
-    memcpy(verticesData, tempSceneVerticesBuffer.data(),
-           this->assets.models[modelIdx]->vertexBufferSize);
-
-    vkUnmapMemory(pEngineCore->devices.logical,
-                  this->assets.models[modelIdx]->vertices.memory);
-
-  }
-
-  else {
-    Utilities_UI::TransformMatrices animatedModelTransformsData{};
-
-    glm::mat4 rotationMatrix = glm::mat4(1.0f);
-
-    float angleX =
-        glm::radians(this->assets.modelData.transformValues[modelIdx].rotate.x);
-    float angleY =
-        glm::radians(this->assets.modelData.transformValues[modelIdx].rotate.y);
-    float angleZ =
-        glm::radians(this->assets.modelData.transformValues[modelIdx].rotate.z);
-
-    // Rotate around the X axis
-    rotationMatrix =
-        glm::rotate(rotationMatrix, angleX, glm::vec3(1.0f, 0.0f, 0.0f));
-    // Rotate around the Y axis
-    rotationMatrix =
-        glm::rotate(rotationMatrix, angleY, glm::vec3(0.0f, 1.0f, 0.0f));
-    // Rotate around the Z axis
-    rotationMatrix =
-        glm::rotate(rotationMatrix, angleZ, glm::vec3(0.0f, 0.0f, 1.0f));
-
-    animatedModelTransformsData.rotate = rotationMatrix;
-    this->assets.modelData.rotateUpdated = false;
-
-    animatedModelTransformsData.translate = glm::translate(
-        glm::mat4(1.0f),
-        glm::vec3(this->assets.modelData.transformValues[modelIdx].translate));
-    this->assets.modelData.translateUpdated = false;
-
-    animatedModelTransformsData.scale = glm::scale(
-        glm::mat4(1.0f),
-        glm::vec3(this->assets.modelData.transformValues[modelIdx].scale));
-    this->assets.modelData.scaleUpdated = false;
-
-    this->gltfCompute.UpdateTransformsBuffer(&animatedModelTransformsData);
   }
 
   this->assets.modelData.isUpdated = false;

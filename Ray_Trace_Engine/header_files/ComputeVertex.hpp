@@ -61,26 +61,6 @@ public:
   // -- create transforms buffer
   void CreateTransformsBuffer();
 
-  // -- update transforms buffer
-  void UpdateTransformsBuffer(Utilities_UI::TransformMatrices* pTransformMatricesData);
-
-  // -- initialize model data
-  void SetModelData(Utilities_UI::ModelData* pModelData, int modelIndex) {
-    //this->modelData.transformMatrices.rotate = glm::rotate(
-    //  glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-    //this->modelData.transformMatrices.translate =
-    //  glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 0.0f, 0.0f));
-
-    //this->modelData.transformMatrices.scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.05f));
-    
-    //initialize model data values
-   // this->modelData.transformMatrices = pModelData->transformMatrices;
-
-    this->UpdateTransformsBuffer(&pModelData->transformMatrices[modelIndex]);
-
-  }
-
   // -- create buffers
   void CreateComputeBuffers();
 

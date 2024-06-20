@@ -117,9 +117,12 @@ void main() {
     
     //apply rotation and transformation matrices
     //position
-    vec4 newPosition = 
-    transformSSBO.transformMatrices.translate * transformSSBO.transformMatrices.rotate * transformSSBO.transformMatrices.scale * boneTransform * vec4(v.position.xyz, 1.0f);
+    vec4 newPosition =  boneTransform * vec4(v.position.xyz, 1.0f);
     v.position = vec4(newPosition.x, newPosition.y, newPosition.z, 1.0f);
+    //transformSSBO.transformMatrices.translate * transformSSBO.transformMatrices.rotate * transformSSBO.transformMatrices.scale * boneTransform * vec4(v.position.xyz, 1.0f);
+    //v.position = vec4(newPosition.x, newPosition.y, newPosition.z, 1.0f);
+
+
     
     //normal
     v.normal = normalize(boneTransform * v.normal);

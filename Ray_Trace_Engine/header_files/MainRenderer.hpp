@@ -176,7 +176,7 @@ public:
   void UpdateTLAS();
 
   // -- pre transform animation model vertices
-  void PreTransformModels();
+ // void PreTransformModels();
 
   // -- create geometry nodes buffer
   void CreateGeometryNodesBuffer();
@@ -187,9 +187,8 @@ public:
   // -- handle window resize
   void HandleResize();
 
-  // -- update UI data
-  //void UpdateUIData(Utilities_UI::ModelData *pModelData);
-
+  // -- set model data from ui
+  void SetModelData(Utilities_UI::ModelData* pModelData);
 
   // -- update model transforms
   void UpdateModelTransforms(Utilities_UI::ModelData* pModelData);

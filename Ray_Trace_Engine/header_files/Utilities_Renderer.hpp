@@ -43,32 +43,32 @@ public:
     return tempVertexBuffer;
   }
 
-  static void TransformModelVertices(EngineCore *engineCore,
-                                     TransformsData *transformsData) {
-
-    std::cout << "transformsData->model->verticesBuffer.size(): "
-              << transformsData->model->verticesBuffer.size() << std::endl;
-
-    for (int i = 0; i < transformsData->model->verticesBuffer.size(); i++) {
-      transformsData->model->verticesBuffer[i].pos =
-          transformsData->rotate * transformsData->model->verticesBuffer[i].pos;
-      transformsData->model->verticesBuffer[i].pos =
-          transformsData->translate *
-          transformsData->model->verticesBuffer[i].pos;
-      transformsData->model->verticesBuffer[i].pos =
-          transformsData->scale * transformsData->model->verticesBuffer[i].pos;
-    }
-
-    void *verticesData;
-
-    vkMapMemory(engineCore->devices.logical,
-                transformsData->model->vertices.memory, 0,
-                transformsData->model->vertexBufferSize, 0, &verticesData);
-
-    memcpy(verticesData, transformsData->model->verticesBuffer.data(),
-           transformsData->model->vertexBufferSize);
-
-    vkUnmapMemory(engineCore->devices.logical,
-                  transformsData->model->vertices.memory);
-  }
+  //static void TransformModelVertices(EngineCore *engineCore,
+  //                                   TransformsData *transformsData) {
+  //
+  //  std::cout << "transformsData->model->verticesBuffer.size(): "
+  //            << transformsData->model->verticesBuffer.size() << std::endl;
+  //
+  //  for (int i = 0; i < transformsData->model->verticesBuffer.size(); i++) {
+  //    transformsData->model->verticesBuffer[i].pos =
+  //        transformsData->rotate * transformsData->model->verticesBuffer[i].pos;
+  //    transformsData->model->verticesBuffer[i].pos =
+  //        transformsData->translate *
+  //        transformsData->model->verticesBuffer[i].pos;
+  //    transformsData->model->verticesBuffer[i].pos =
+  //        transformsData->scale * transformsData->model->verticesBuffer[i].pos;
+  //  }
+  //
+  //  void *verticesData;
+  //
+  //  vkMapMemory(engineCore->devices.logical,
+  //              transformsData->model->vertices.memory, 0,
+  //              transformsData->model->vertexBufferSize, 0, &verticesData);
+  //
+  //  memcpy(verticesData, transformsData->model->verticesBuffer.data(),
+  //         transformsData->model->vertexBufferSize);
+  //
+  //  vkUnmapMemory(engineCore->devices.logical,
+  //                transformsData->model->vertices.memory);
+  //}
 };

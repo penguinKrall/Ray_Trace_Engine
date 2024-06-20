@@ -16,7 +16,7 @@ ComputeVertex::ComputeVertex(EngineCore *coreBase, gtp::Model *modelPtr) {
 
   CreateCommandBuffers();
 
-  UpdateTransformsBuffer(&this->transformMatrices);
+ // UpdateTransformsBuffer(&this->transformMatrices);
 }
 
 void ComputeVertex::Init_ComputeVertex(EngineCore *coreBase,
@@ -42,14 +42,6 @@ void ComputeVertex::CreateTransformsBuffer() {
       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
       &this->transformsBuffer, transformsBufferSize, &transformMatrices);
-}
-
-void ComputeVertex::UpdateTransformsBuffer(
-    Utilities_UI::TransformMatrices *pTransformMatricesData) {
-
-  VkDeviceSize transformsBufferSize = sizeof(Utilities_UI::TransformMatrices);
-
-  this->transformsBuffer.copyTo(pTransformMatricesData, transformsBufferSize);
 }
 
 void ComputeVertex::CreateComputeBuffers() {

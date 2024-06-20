@@ -14,7 +14,6 @@
 class Utilities_UI {
 
 public:
-
   struct TransformMatrices {
     glm::mat4 rotate = glm::mat4(1.0f);
     glm::mat4 translate = glm::mat4(1.0f);
@@ -41,5 +40,4 @@ public:
     std::vector<std::vector<std::string>> animationNames;
     std::vector<bool> updateBLAS;
   };
-
 };
