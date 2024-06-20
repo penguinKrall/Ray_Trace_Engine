@@ -982,11 +982,17 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
 
     if (ImGui::CollapsingHeader("Model Transform Values")) {
 
-      // ImGui gizmo for quaternion rotation
+      qRot = {
+
+          this->modelData.transformValues[this->modelData.modelIndex].rotate.w,
+          this->modelData.transformValues[this->modelData.modelIndex].rotate.x,
+          this->modelData.transformValues[this->modelData.modelIndex].rotate.y,
+          this->modelData.transformValues[this->modelData.modelIndex].rotate.z};
+
+      //////// get/setRotation are helper funcs that you have ideally defined to
+      //////// manage your global/member objs
       if (ImGui::gizmo3D("Rotation", qRot, 100,
                          imguiGizmo::mode3Axes | imguiGizmo::cubeAtOrigin)) {
-        // Update the model's rotation quaternion with the new values from the
-        // gizmo
         this->modelData.transformValues[this->modelData.modelIndex].rotate.w =
             qRot.w;
         this->modelData.transformValues[this->modelData.modelIndex].rotate.x =
@@ -996,17 +1002,17 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
         this->modelData.transformValues[this->modelData.modelIndex].rotate.z =
             qRot.z;
 
-        // Normalize the quaternion
-        glm::quat normalizedQuat = glm::normalize(qRot);
-
-        // Convert the normalized quaternion to a rotation matrix
-        glm::mat4 rotationMatrix = glm::mat4(normalizedQuat);
-
-        // Update the model's transformation matrix with the new rotation matrix
         this->modelData.transformMatrices[this->modelData.modelIndex].rotate =
-            rotationMatrix;
+            glm::mat4(glm::normalize(glm::quat(
+                this->modelData.transformValues[this->modelData.modelIndex]
+                    .rotate.w,
+                this->modelData.transformValues[this->modelData.modelIndex]
+                    .rotate.x,
+                this->modelData.transformValues[this->modelData.modelIndex]
+                    .rotate.y,
+                this->modelData.transformValues[this->modelData.modelIndex]
+                    .rotate.z)));
 
-        // Flag that the rotation has been updated
         this->modelData.rotateUpdated = true;
       }
 
