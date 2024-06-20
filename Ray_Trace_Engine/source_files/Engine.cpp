@@ -96,7 +96,7 @@ void Engine::HandleUI() {
   this->UI.Input(&this->UI.modelData);
 
   // update UI vertex/index buffers
-  this->UI.UpdateBuffers(currentFrame);
+  this->UI.UpdateBuffers();
 
   // draw UI
   this->UI.DrawUI(commandBuffers.graphics[currentFrame], currentFrame);

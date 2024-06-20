@@ -9,6 +9,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
+#include <ImGuiFileDialog.h>
 #include <imGuIZMOquat.h>
 
 #include <filesystem>

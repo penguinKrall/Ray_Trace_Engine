@@ -30,8 +30,8 @@ public:
 
   // -- buffers struct
   struct UIBuffers {
-    std::vector<gtp::Buffer> vertex{};
-    std::vector<gtp::Buffer> index{};
+    gtp::Buffer vertex{};
+    gtp::Buffer index{};
     int32_t vertexCount = 0;
     int32_t indexCount = 0;
   };
@@ -142,7 +142,7 @@ public:
   // -- update
   //@brief update vertex and index buffer containing the imGui elements when
   // required
-  void UpdateBuffers(int currentFrame);
+  void UpdateBuffers();
 
   // -- input
   //@brief creates input window draw data

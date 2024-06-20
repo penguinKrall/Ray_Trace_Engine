@@ -4,8 +4,8 @@ CoreUI::CoreUI() {}
 
 CoreUI::CoreUI(EngineCore *coreBase) {
   shader = gtp::Shader(coreBase);
-  this->buffers.vertex.resize(frame_draws);
-  this->buffers.index.resize(frame_draws);
+  //this->buffers.vertex.resize(frame_draws);
+  //this->buffers.index.resize(frame_draws);
   InitContext();
   InitStyle();
   InitCoreUI(coreBase);
@@ -553,6 +553,9 @@ void CoreUI::RecreateFramebuffers() {
   }
   // create
   CreateUIFramebuffer();
+
+  UpdateBuffers();
+
 }
 
 void CoreUI::CreateResources() {
@@ -745,7 +748,7 @@ void CoreUI::CreateFontImageDescriptor() {
                          0, nullptr);
 }
 
-void CoreUI::UpdateBuffers(int currentFrame) {
+void CoreUI::UpdateBuffers() {
 
   // get draw data
   backends.drawData = ImGui::GetDrawData();
@@ -771,90 +774,90 @@ void CoreUI::UpdateBuffers(int currentFrame) {
   }
 
   // update vertex buffer
-  if ((buffers.vertex[currentFrame].bufferData.buffer == VK_NULL_HANDLE) ||
+  if ((buffers.vertex.bufferData.buffer == VK_NULL_HANDLE) ||
       (buffers.vertexCount != backends.drawData->TotalVtxCount)) {
 
     // unmap
-    if (buffers.vertex[currentFrame].bufferData.mapped != nullptr) {
+    if (buffers.vertex.bufferData.mapped != nullptr) {
       vkUnmapMemory(pEngineCore->devices.logical,
-                    buffers.vertex[currentFrame].bufferData.memory);
-      buffers.vertex[currentFrame].bufferData.mapped = nullptr;
+                    buffers.vertex.bufferData.memory);
+      buffers.vertex.bufferData.mapped = nullptr;
     }
 
     // destroy buffer and allocated memory
     vkDestroyBuffer(pEngineCore->devices.logical,
-                    buffers.vertex[currentFrame].bufferData.buffer, nullptr);
+                    buffers.vertex.bufferData.buffer, nullptr);
     vkFreeMemory(pEngineCore->devices.logical,
-                 buffers.vertex[currentFrame].bufferData.memory, nullptr);
+                 buffers.vertex.bufferData.memory, nullptr);
 
     // memory property flags
-    buffers.vertex[currentFrame].bufferData.memoryPropertyFlags =
+    buffers.vertex.bufferData.memoryPropertyFlags =
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
     // create buffer and allocate memory and bind together
-    buffers.vertex[currentFrame].CreateBuffer(
+    buffers.vertex.CreateBuffer(
         pEngineCore->devices.physical, pEngineCore->devices.logical,
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertexBufferSize, "UIVertexBuffer");
-    buffers.vertex[currentFrame].AllocateBufferMemory(
+    buffers.vertex.AllocateBufferMemory(
         pEngineCore->devices.physical, pEngineCore->devices.logical,
         "UIVertexBufferMemory");
-    buffers.vertex[currentFrame].bind(pEngineCore->devices.logical, 0);
+    buffers.vertex.bind(pEngineCore->devices.logical, 0);
 
     // get vertex count from draw data
     buffers.vertexCount = backends.drawData->TotalVtxCount;
 
     // map memory
     vkMapMemory(pEngineCore->devices.logical,
-                buffers.vertex[currentFrame].bufferData.memory, 0,
+                buffers.vertex.bufferData.memory, 0,
                 vertexBufferSize, 0,
-                &buffers.vertex[currentFrame].bufferData.mapped);
+                &buffers.vertex.bufferData.mapped);
   }
 
   // update index buffer
-  if ((buffers.index[currentFrame].bufferData.buffer == VK_NULL_HANDLE) ||
+  if ((buffers.index.bufferData.buffer == VK_NULL_HANDLE) ||
       (buffers.indexCount < backends.drawData->TotalIdxCount)) {
 
     // unmap
-    if (buffers.index[currentFrame].bufferData.mapped != nullptr) {
+    if (buffers.index.bufferData.mapped != nullptr) {
       vkUnmapMemory(pEngineCore->devices.logical,
-                    buffers.index[currentFrame].bufferData.memory);
-      buffers.index[currentFrame].bufferData.mapped = nullptr;
+                    buffers.index.bufferData.memory);
+      buffers.index.bufferData.mapped = nullptr;
     }
 
     // destroy buffer and allocated memory
     vkDestroyBuffer(pEngineCore->devices.logical,
-                    buffers.index[currentFrame].bufferData.buffer, nullptr);
+                    buffers.index.bufferData.buffer, nullptr);
     vkFreeMemory(pEngineCore->devices.logical,
-                 buffers.index[currentFrame].bufferData.memory, nullptr);
+                 buffers.index.bufferData.memory, nullptr);
 
     // index buffer memory property flags
-    buffers.index[currentFrame].bufferData.memoryPropertyFlags =
+    buffers.index.bufferData.memoryPropertyFlags =
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
     // create buffer and allocate memory and bind
-    buffers.index[currentFrame].CreateBuffer(
+    buffers.index.CreateBuffer(
         pEngineCore->devices.physical, pEngineCore->devices.logical,
         VK_BUFFER_USAGE_INDEX_BUFFER_BIT, indexBufferSize, "UIIndexBuffer");
-    buffers.index[currentFrame].AllocateBufferMemory(
+    buffers.index.AllocateBufferMemory(
         pEngineCore->devices.physical, pEngineCore->devices.logical,
         "UIIndexBufferMemory");
-    buffers.index[currentFrame].bind(pEngineCore->devices.logical, 0);
+    buffers.index.bind(pEngineCore->devices.logical, 0);
 
     // get index count from draw data
     buffers.indexCount = backends.drawData->TotalIdxCount;
 
     // map memory
     vkMapMemory(pEngineCore->devices.logical,
-                buffers.index[currentFrame].bufferData.memory, 0,
+                buffers.index.bufferData.memory, 0,
                 indexBufferSize, 0,
-                &buffers.index[currentFrame].bufferData.mapped);
+                &buffers.index.bufferData.mapped);
   }
 
   // upload data
   ImDrawVert *vtxDst =
-      (ImDrawVert *)buffers.vertex[currentFrame].bufferData.mapped;
+      (ImDrawVert *)buffers.vertex.bufferData.mapped;
   ImDrawIdx *idxDst =
-      (ImDrawIdx *)buffers.index[currentFrame].bufferData.mapped;
+      (ImDrawIdx *)buffers.index.bufferData.mapped;
 
   // copy data to buffer memory
   for (int n = 0; n < backends.drawData->CmdListsCount; n++) {
@@ -868,12 +871,12 @@ void CoreUI::UpdateBuffers(int currentFrame) {
   }
 
   // flush buffers to GPU
-  if (buffers.vertex[currentFrame].flush(pEngineCore->devices.logical,
+  if (buffers.vertex.flush(pEngineCore->devices.logical,
                                          VK_WHOLE_SIZE, 0) != VK_SUCCESS) {
     throw std::invalid_argument(" failed to flush UI vertex buffer!");
   }
 
-  if (buffers.index[currentFrame].flush(pEngineCore->devices.logical,
+  if (buffers.index.flush(pEngineCore->devices.logical,
                                         VK_WHOLE_SIZE, 0) != VK_SUCCESS) {
     throw std::invalid_argument(" failed to flush UI index buffer!");
   }
@@ -924,6 +927,27 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
 
   // floating window
   ImGui::Begin("controls");
+
+  if (ImGui::Button("Open File Dialog")) {
+    IGFD::FileDialogConfig config;
+    config.path = ".";
+    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File",
+                                            ".cpp,.h,.hpp, .gltf", config);
+  }
+
+  // display
+  if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey")) {
+    if (ImGuiFileDialog::Instance()->IsOk()) { // action if OK
+      // std::string filePathName =
+      // ImGuiFileDialog::Instance()->GetFilePathName(); std::string filePath =
+      // ImGuiFileDialog::Instance()->GetCurrentPath(); std::cout <<
+      // "filePathName: " << filePath << std::endl;
+      //   action
+    }
+
+    // close
+    ImGuiFileDialog::Instance()->Close();
+  }
 
   if (ImGui::CollapsingHeader("Model Controls")) {
 
@@ -1040,10 +1064,10 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
       }
 
       if (ImGui::SliderFloat("Scale",
-                              (float *)&this->modelData
-                                  .transformValues[this->modelData.modelIndex]
-                                  .scale,
-                              0.001f, 10.0f)) {
+                             (float *)&this->modelData
+                                 .transformValues[this->modelData.modelIndex]
+                                 .scale,
+                             0.001f, 10.0f)) {
         this->modelData.transformMatrices[this->modelData.modelIndex].scale =
             glm::scale(
                 glm::mat4(1.0f),
@@ -1110,6 +1134,8 @@ void CoreUI::DrawUI(const VkCommandBuffer commandBuffer, int currentFrame) {
                           pEngineCore->swapchainData.swapchainExtent2D.height}};
 
   // clear values (unused rn - renderpass does not clear attachments)
+  pEngineCore->colorClearValue.color = {0.0f, 0.0f, 0.0f, 0.0f};
+
   std::vector<VkClearValue> clearValue = {
       pEngineCore->colorClearValue,
       // pEngineCore->depthClearValue,
@@ -1117,8 +1143,8 @@ void CoreUI::DrawUI(const VkCommandBuffer commandBuffer, int currentFrame) {
   };
 
   // get draw data
-  backends.drawData = ImGui::GetDrawData();
-  backends.io = &ImGui::GetIO();
+  // backends.drawData = ImGui::GetDrawData();
+  // backends.io = &ImGui::GetIO();
 
   // vertex and index offset
   int32_t vertexOffset = 0;
@@ -1155,6 +1181,7 @@ void CoreUI::DrawUI(const VkCommandBuffer commandBuffer, int currentFrame) {
   // transform
   pushConstant.scale = glm::vec2(2.0f / backends.io->DisplaySize.x,
                                  2.0f / backends.io->DisplaySize.y);
+
   pushConstant.translate = glm::vec2(-1.0f);
 
   // bind push constants
@@ -1167,10 +1194,10 @@ void CoreUI::DrawUI(const VkCommandBuffer commandBuffer, int currentFrame) {
 
   // bind vertex and index buffers
   vkCmdBindVertexBuffers(commandBuffer, 0, 1,
-                         &buffers.vertex[currentFrame].bufferData.buffer,
+                         &buffers.vertex.bufferData.buffer,
                          offsets.data());
   vkCmdBindIndexBuffer(commandBuffer,
-                       buffers.index[currentFrame].bufferData.buffer, 0,
+                       buffers.index.bufferData.buffer, 0,
                        VK_INDEX_TYPE_UINT16);
 
   // draw
@@ -1220,10 +1247,10 @@ void CoreUI::DestroyUI() {
   }
 
   // buffers
-  for (int i = 0; i < frame_draws; i++) {
-    buffers.vertex[i].destroy(pEngineCore->devices.logical);
-    buffers.index[i].destroy(pEngineCore->devices.logical);
-  }
+  //for (int i = 0; i < frame_draws; i++) {
+    buffers.vertex.destroy(pEngineCore->devices.logical);
+    buffers.index.destroy(pEngineCore->devices.logical);
+ // }
 
   // shader
   shader.DestroyShader();
