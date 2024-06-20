@@ -50,9 +50,8 @@ public:
     // colored glass texture
     gtp::TextureLoader coloredGlassTexture;
 
-    //cube map
+    // cube map
     gtp::TextureLoader cubemap;
-
   };
 
   // -- pipeline data struct
@@ -116,7 +115,7 @@ public:
   gtp::Shader shader;
 
   // -- compute
-  ComputeVertex gltfCompute;
+  std::vector<ComputeVertex*> gltfCompute;
 
   // -- constructor
   MainRenderer();
@@ -135,6 +134,9 @@ public:
 
   // -- load assets
   void LoadAssets();
+
+  // -- load gltf compute
+  void LoadGltfCompute(gtp::Model* pModel);
 
   // -- create bottom level acceleration structures
   void CreateBottomLevelAccelerationStructures();
@@ -176,7 +178,7 @@ public:
   void UpdateTLAS();
 
   // -- pre transform animation model vertices
- // void PreTransformModels();
+  // void PreTransformModels();
 
   // -- create geometry nodes buffer
   void CreateGeometryNodesBuffer();
@@ -188,7 +190,7 @@ public:
   void HandleResize();
 
   // -- set model data from ui
-  void SetModelData(Utilities_UI::ModelData* pModelData);
+  void SetModelData(Utilities_UI::ModelData *pModelData);
 
   // -- destroy class objects
   void Destroy_MainRenderer();

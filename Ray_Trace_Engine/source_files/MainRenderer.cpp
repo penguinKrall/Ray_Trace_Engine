@@ -25,7 +25,7 @@ void MainRenderer::Init_MainRenderer(EngineCore *coreBase) {
   vkDeviceWaitIdle(this->pEngineCore->devices.logical);
   //
   ////compute
-  this->gltfCompute = ComputeVertex(pEngineCore, this->assets.models[0]);
+  // this->gltfCompute = ComputeVertex(pEngineCore, this->assets.models[0]);
 
   ////create bottom level acceleration structure
   this->CreateBottomLevelAccelerationStructures();
@@ -183,6 +183,8 @@ void MainRenderer::LoadModel(
   // add transform values/matrices to lists
   this->assets.modelData.transformMatrices.push_back(transformMatrices);
   this->assets.modelData.transformValues.push_back(transformValues);
+
+  LoadGltfCompute(tempModel);
 }
 
 void MainRenderer::LoadAssets() {
@@ -256,6 +258,17 @@ void MainRenderer::LoadAssets() {
               << "]: " << this->assets.modelData.animatedModelIndex[i]
               << std::endl;
   }
+}
+
+void MainRenderer::LoadGltfCompute(gtp::Model *pModel) {
+
+  ComputeVertex *computeVtx = nullptr;
+
+  if (!pModel->animations.empty()) {
+    computeVtx = new ComputeVertex(pEngineCore, pModel);
+  }
+
+  this->gltfCompute.push_back(computeVtx);
 }
 
 void MainRenderer::CreateBottomLevelAccelerationStructures() {
@@ -1740,7 +1753,11 @@ void MainRenderer::Destroy_MainRenderer() {
   this->buffers.transformBuffer.destroy(this->pEngineCore->devices.logical);
 
   // -- compute class
-  this->gltfCompute.Destroy_ComputeVertex();
+  for (int i = 0; i < this->gltfCompute.size(); i++) {
+    if (this->gltfCompute[i] != nullptr) {
+      this->gltfCompute[i]->Destroy_ComputeVertex();
+    }
+  }
 
   // -- models
   this->assets.models[0]->destroy(this->pEngineCore->devices.logical);
