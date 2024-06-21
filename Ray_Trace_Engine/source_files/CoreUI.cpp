@@ -928,6 +928,10 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
   // floating window
   ImGui::Begin("controls");
 
+  if (ImGui::Button("Delete Model")) {
+    this->modelData.deleteModel = true;
+  }
+
   if (ImGui::Button("Open File Dialog")) {
     IGFD::FileDialogConfig config;
     config.path = ".";

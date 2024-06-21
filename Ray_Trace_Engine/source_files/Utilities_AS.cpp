@@ -211,8 +211,6 @@ void Utilities_AS::createBLAS(
   for (auto &node : model->linearNodes) {
     if (node->mesh) {
 
-      // std::cout << "\n\n\nmulti_blas staticModel blas\n\n\n\n" << std::endl;
-
       for (auto &primitive : node->mesh->primitives) {
         if (primitive->indexCount > 0) {
 
@@ -220,10 +218,8 @@ void Utilities_AS::createBLAS(
           VkDeviceOrHostAddressConstKHR indexBufferDeviceAddress;
 
           vertexBufferDeviceAddress.deviceAddress =
-              Utilities_AS::getBufferDeviceAddress(
-                  pEngineCore,
-                  model->vertices
-                      .buffer); // +primitive.firstVertex * sizeof(gtp::Vertex);
+              Utilities_AS::getBufferDeviceAddress(pEngineCore,
+                                                   model->vertices.buffer);
 
           indexBufferDeviceAddress.deviceAddress =
               Utilities_AS::getBufferDeviceAddress(pEngineCore,
@@ -240,8 +236,6 @@ void Utilities_AS::createBLAS(
           geometry.geometry.triangles.vertexData = vertexBufferDeviceAddress;
           geometry.geometry.triangles.maxVertex =
               static_cast<uint32_t>(model->vertexCount);
-          // std::cout << "model->vertexCount: " << model->vertexCount <<
-          // std::endl;
           geometry.geometry.triangles.vertexStride = sizeof(gtp::Model::Vertex);
           geometry.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
           geometry.geometry.triangles.indexData = indexBufferDeviceAddress;
@@ -251,11 +245,8 @@ void Utilities_AS::createBLAS(
 
           VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo{};
           buildRangeInfo.firstVertex = 0;
-          buildRangeInfo.primitiveOffset =
-              0; // primitive.firstIndex * sizeof(uint32_t);
+          buildRangeInfo.primitiveOffset = 0;
           buildRangeInfo.primitiveCount = primitive->indexCount / 3;
-          // std::cout << "animated model buildRangeInfo.primitiveCount" <<
-          // buildRangeInfo.primitiveCount << std::endl;
           buildRangeInfo.transformOffset = 0;
           blasData->buildRangeInfos.push_back(buildRangeInfo);
 
@@ -293,19 +284,6 @@ void Utilities_AS::createBLAS(
                   : -1;
 
           geometryNode.semiTransparentFlag = model->semiTransparentFlag;
-
-          // geometryNode.textureIndexBaseColor =
-          // primitive->material.baseColorTexture ?
-          // static_cast<int>(primitive->material.texCoordSets.baseColor) +
-          // textureOffset : -1;
-
-          // std::cout << "geometryNode.textureIndexBaseColor: " <<
-          // geometryNode.textureIndexBaseColor << std::endl;
-
-          // geometryNode.textureIndexOcclusion =
-          // primitive->material.occlusionTexture ?
-          // static_cast<int>(primitive->material.texCoordSets.occlusion) +
-          // textureOffset : -1;
 
           geometryNodeBuf->push_back(geometryNode);
         }

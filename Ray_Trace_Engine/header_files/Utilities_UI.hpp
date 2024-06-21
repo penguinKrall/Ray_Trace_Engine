@@ -29,6 +29,7 @@ public:
   };
 
   struct ModelData {
+    bool deleteModel = false;
     bool rotateUpdated = false;
     bool translateUpdated = false;
     bool scaleUpdated = false;

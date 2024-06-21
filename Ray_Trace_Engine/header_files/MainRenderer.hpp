@@ -185,6 +185,9 @@ public:
   // -- create geometry nodes buffer
   void CreateGeometryNodesBuffer();
 
+  // -- update geometry nodes buffer
+  void UpdateGeometryNodesBuffer(gtp::Model* pModel);
+
   // -- update descriptor set
   void UpdateDescriptorSet();
 

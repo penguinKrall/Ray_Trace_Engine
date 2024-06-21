@@ -46,6 +46,15 @@ void Engine::Run() {
     // update ui
     this->UpdateUI();
 
+    if (this->UI.modelData.deleteModel) {
+      this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
+      this->renderers.mainRenderer.UpdateGeometryNodesBuffer(
+          this->renderers.mainRenderer.assets
+              .models[this->UI.modelData.modelIndex]);
+      this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
+      this->UI.modelData.isUpdated = true;
+    }
+
     // draw
     Draw();
 

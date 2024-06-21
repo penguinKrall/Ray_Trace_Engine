@@ -1317,38 +1317,39 @@ void MainRenderer::RebuildCommandBuffers(int frame) {
 void MainRenderer::UpdateBLAS() {
   // Build
   // via a one-time command buffer submission
-  VkCommandBuffer commandBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(
-      VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+  // VkCommandBuffer commandBuffer =
+  // pEngineCore->objCreate.VKCreateCommandBuffer(
+  //    VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
   // handle animated blas
-  for (int i = 0; i < this->assets.models.size(); i++) {
-    if (this->assets.modelData.animatedModelIndex[i] == 1) {
+  // for (int i = 0; i < this->assets.models.size(); i++) {
+  //  if (this->assets.modelData.animatedModelIndex[i] == 1) {
+  //
+  //    // build BLAS
+  //    pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
+  //        commandBuffer, 1,
+  //        &this->bottomLevelAccelerationStructures[i]
+  //             ->accelerationStructureBuildGeometryInfo,
+  //        this->bottomLevelAccelerationStructures[i]->pBuildRangeInfos.data());
+  //  }
+  //}
 
-      // build BLAS
-      pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
-          commandBuffer, 1,
-          &this->bottomLevelAccelerationStructures[i]
-               ->accelerationStructureBuildGeometryInfo,
-          this->bottomLevelAccelerationStructures[i]->pBuildRangeInfos.data());
-    }
-  }
-
-  // handle non animated blas
-  for (int i = 0; i < this->assets.modelData.updateBLAS.size(); i++) {
-    if (this->assets.modelData.updateBLAS[i] == 1 &&
-        this->assets.modelData.animatedModelIndex[i] != 1) {
-      // build BLAS
-      pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
-          commandBuffer, 1,
-          &this->bottomLevelAccelerationStructures[i]
-               ->accelerationStructureBuildGeometryInfo,
-          this->bottomLevelAccelerationStructures[i]->pBuildRangeInfos.data());
-      this->assets.modelData.updateBLAS[i] = false;
-    }
-  }
+  //// handle non animated blas
+  // for (int i = 0; i < this->assets.modelData.updateBLAS.size(); i++) {
+  //   if (this->assets.modelData.updateBLAS[i] == 1 &&
+  //       this->assets.modelData.animatedModelIndex[i] != 1) {
+  //     // build BLAS
+  //     pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
+  //         commandBuffer, 1,
+  //         &this->bottomLevelAccelerationStructures[i]
+  //              ->accelerationStructureBuildGeometryInfo,
+  //         this->bottomLevelAccelerationStructures[i]->pBuildRangeInfos.data());
+  //     this->assets.modelData.updateBLAS[i] = false;
+  //   }
+  // }
 
   // end and submit and destroy command buffer
-  pEngineCore->FlushCommandBuffer(commandBuffer, pEngineCore->queue.graphics,
-                                  pEngineCore->commandPools.graphics, true);
+  // pEngineCore->FlushCommandBuffer(commandBuffer, pEngineCore->queue.graphics,
+  //                                pEngineCore->commandPools.graphics, true);
 
   // std::cout << "this->BLAS.deviceAddress" << this->BLAS.deviceAddress <<
   // std::endl;
@@ -1358,11 +1359,12 @@ void MainRenderer::UpdateTLAS() {
 
   // -- array of instances
   std::vector<VkAccelerationStructureInstanceKHR> blasInstances;
-  VkDeviceSize blasInstancesBufSize = 0;
-  void *blasInstancesData = nullptr;
+  // VkDeviceSize blasInstancesBufSize = 0;
+  // void *blasInstancesData = nullptr;
 
   // resize array
   blasInstances.resize(this->bottomLevelAccelerationStructures.size());
+  tlasData.primitive_count = static_cast<uint32_t>(blasInstances.size());
 
   // initialize instances array
   if (blasInstances.size() != 0) {
@@ -1412,6 +1414,47 @@ void MainRenderer::UpdateTLAS() {
     tlasData.instanceDataDeviceAddress.deviceAddress =
         Utilities_AS::getBufferDeviceAddress(
             this->pEngineCore, buffers.tlas_instancesBuffer.bufferData.buffer);
+
+    // -- acceleration Structure Geometry{};
+    tlasData.accelerationStructureGeometry.sType =
+        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+    tlasData.accelerationStructureGeometry.geometryType =
+        VK_GEOMETRY_TYPE_INSTANCES_KHR;
+    tlasData.accelerationStructureGeometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+    tlasData.accelerationStructureGeometry.geometry.instances.sType =
+        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
+    tlasData.accelerationStructureGeometry.geometry.instances.arrayOfPointers =
+        VK_FALSE;
+    tlasData.accelerationStructureGeometry.geometry.instances.data =
+        tlasData.instanceDataDeviceAddress;
+
+    //  -- Get size info -- //
+    // Acceleration Structure Build Geometry Info
+    tlasData.accelerationStructureBuildGeometryInfo.sType =
+        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+    tlasData.accelerationStructureBuildGeometryInfo.type =
+        VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+    tlasData.accelerationStructureBuildGeometryInfo.flags =
+        VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
+    tlasData.accelerationStructureBuildGeometryInfo.geometryCount = 1;
+    tlasData.accelerationStructureBuildGeometryInfo.pGeometries =
+        &tlasData.accelerationStructureGeometry;
+
+    // -- tlas data member
+    // primitive count
+    tlasData.primitive_count = static_cast<uint32_t>(blasInstances.size());
+
+    // -- acceleration Structure Build Sizes Info
+    tlasData.accelerationStructureBuildSizesInfo.sType =
+        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
+
+    // -- get acceleration structure build sizes
+    pEngineCore->coreExtensions->vkGetAccelerationStructureBuildSizesKHR(
+        pEngineCore->devices.logical,
+        VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+        &tlasData.accelerationStructureBuildGeometryInfo,
+        &tlasData.primitive_count,
+        &tlasData.accelerationStructureBuildSizesInfo);
 
     VkAccelerationStructureGeometryKHR accelerationStructureGeometry{};
     accelerationStructureGeometry.sType =
@@ -1486,6 +1529,8 @@ void MainRenderer::UpdateTLAS() {
     // flush command buffer
     pEngineCore->FlushCommandBuffer(commandBuffer, pEngineCore->queue.graphics,
                                     pEngineCore->commandPools.graphics, true);
+
+    // std::cout << " test" << std::endl;
 
     // get acceleration structure device address
     VkAccelerationStructureDeviceAddressInfoKHR accelerationDeviceAddressInfo{};
@@ -1568,6 +1613,160 @@ void MainRenderer::CreateGeometryNodesBuffer() {
                                 gIndexData) != VK_SUCCESS) {
     throw std::invalid_argument("failed to create g_nodes_index buffer");
   }
+}
+
+void MainRenderer::UpdateGeometryNodesBuffer(gtp::Model *pModel) {
+
+  std::cout << " deleting model" << std::endl;
+
+  std::cout << pModel->modelName << std::endl;
+
+  vkDeviceWaitIdle(this->pEngineCore->devices.logical);
+
+  // delete model // geometry nodes // blas
+
+  // erase model g nodes
+  for (auto &node : pModel->linearNodes) {
+    if (node->mesh) {
+
+      for (int i = 0; i < node->mesh->primitives.size(); i++) {
+        if (node->mesh->primitives[i]->indexCount > 0) {
+          this->geometryNodeBuf.erase(
+              this->geometryNodeBuf.begin() +
+              this->geometryIndexBuf[this->assets.modelData.modelIndex]
+                  .nodeOffset);
+        }
+      }
+    }
+  }
+
+  // update g nodes buffer with updated vector of g nodes
+  this->buffers.g_nodes_buffer.copyTo(
+      this->geometryNodeBuf.data(),
+      static_cast<uint32_t>(geometryNodeBuf.size()) *
+          sizeof(Utilities_AS::GeometryNode));
+
+  // erase model g node indices
+  this->geometryIndexBuf.erase(this->geometryIndexBuf.begin() +
+                               this->assets.modelData.modelIndex);
+
+  // update g node indices buffer with updated vector of g node indices
+  this->buffers.g_nodes_indices.copyTo(
+      this->geometryIndexBuf.data(),
+      static_cast<uint32_t>(geometryIndexBuf.size()) * sizeof(int));
+
+  // erase models modelData assignments
+  // if (this->assets.modelData.modelIndex <
+  //    this->assets.modelData.activeAnimation.size()) {
+  //  this->assets.modelData.activeAnimation.erase(
+  //      this->assets.modelData.activeAnimation.begin() +
+  //      this->assets.modelData.modelIndex);
+  //}
+
+  if (this->assets.modelData.modelIndex <
+      this->assets.modelData.animatedModelIndex.size()) {
+    this->assets.modelData.animatedModelIndex.erase(
+        this->assets.modelData.animatedModelIndex.begin() +
+        this->assets.modelData.modelIndex);
+  }
+
+  if (this->assets.modelData.modelIndex <
+      this->assets.modelData.animationNames.size()) {
+    this->assets.modelData.animationNames.erase(
+        this->assets.modelData.animationNames.begin() +
+        this->assets.modelData.modelIndex);
+  }
+
+  if (this->assets.modelData.modelIndex <
+      this->assets.modelData.modelName.size()) {
+    this->assets.modelData.modelName.erase(
+        this->assets.modelData.modelName.begin() +
+        this->assets.modelData.modelIndex);
+  }
+
+  // if (this->assets.modelData.modelIndex <
+  //     this->assets.modelData.semiTransparentFlag.size()) {
+  //   this->assets.modelData.semiTransparentFlag.erase(
+  //       this->assets.modelData.semiTransparentFlag.begin() +
+  //       this->assets.modelData.modelIndex);
+  // }
+
+  if (this->assets.modelData.modelIndex <
+      this->assets.modelData.transformMatrices.size()) {
+    this->assets.modelData.transformMatrices.erase(
+        this->assets.modelData.transformMatrices.begin() +
+        this->assets.modelData.modelIndex);
+  }
+
+  if (this->assets.modelData.modelIndex <
+      this->assets.modelData.transformValues.size()) {
+    this->assets.modelData.transformValues.erase(
+        this->assets.modelData.transformValues.begin() +
+        this->assets.modelData.modelIndex);
+  }
+
+  // if (this->assets.modelData.modelIndex <
+  //     this->assets.modelData.updateBLAS.size()) {
+  //   this->assets.modelData.updateBLAS.erase(
+  //       this->assets.modelData.updateBLAS.begin() +
+  //       this->assets.modelData.modelIndex);
+  // }
+
+  if (!pModel->animations.empty()) {
+    this->gltfCompute[this->assets.modelData.modelIndex]
+        ->Destroy_ComputeVertex();
+    this->gltfCompute.erase(this->gltfCompute.begin() +
+                            this->assets.modelData.modelIndex);
+  }
+
+  // for (auto &rangeInfo : blasData->buildRangeInfos) {
+  //   blasData->pBuildRangeInfos.push_back(&rangeInfo);
+  // }
+
+  // accel. structure
+  pEngineCore->coreExtensions->vkDestroyAccelerationStructureKHR(
+      pEngineCore->devices.logical,
+      this->bottomLevelAccelerationStructures[this->assets.modelData.modelIndex]
+          ->accelerationStructure.accelerationStructureKHR,
+      nullptr);
+
+  // scratch buffer
+  this->bottomLevelAccelerationStructures[this->assets.modelData.modelIndex]
+      ->accelerationStructure.scratchBuffer.destroy(
+          this->pEngineCore->devices.logical);
+
+  // accel structure buffer and memory
+  vkDestroyBuffer(
+      pEngineCore->devices.logical,
+      this->bottomLevelAccelerationStructures[this->assets.modelData.modelIndex]
+          ->accelerationStructure.buffer,
+      nullptr);
+
+  vkFreeMemory(
+      pEngineCore->devices.logical,
+      this->bottomLevelAccelerationStructures[this->assets.modelData.modelIndex]
+          ->accelerationStructure.memory,
+      nullptr);
+
+  if (this->assets.modelData.modelIndex <
+      this->bottomLevelAccelerationStructures.size()) {
+    this->bottomLevelAccelerationStructures.erase(
+        this->bottomLevelAccelerationStructures.begin() +
+        this->assets.modelData.modelIndex);
+  }
+
+  this->assets.models[this->assets.modelData.modelIndex]->destroy(
+      this->pEngineCore->devices.logical);
+
+  if (this->assets.modelData.modelIndex < this->assets.models.size()) {
+    this->assets.models.erase(this->assets.models.begin() +
+                              this->assets.modelData.modelIndex);
+  }
+
+  this->assets.modelData.modelIndex = 0;
+
+  UpdateTLAS();
+  UpdateDescriptorSet();
 }
 
 void MainRenderer::UpdateDescriptorSet() {
