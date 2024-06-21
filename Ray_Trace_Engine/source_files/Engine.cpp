@@ -51,6 +51,7 @@ void Engine::Run() {
       this->renderers.mainRenderer.UpdateGeometryNodesBuffer(
           this->renderers.mainRenderer.assets
               .models[this->UI.modelData.modelIndex]);
+      this->renderers.mainRenderer.assets.modelData.deleteModel = false;
       this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
       this->UI.modelData.isUpdated = true;
     }
