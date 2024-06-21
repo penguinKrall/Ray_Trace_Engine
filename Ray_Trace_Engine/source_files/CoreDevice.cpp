@@ -201,12 +201,16 @@ VkResult CoreDevice::getPhysicalDevice(VkInstance instance) {
 
   deviceData.physicalDeviceDescriptorIndexingFeatures.sType =
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+
   deviceData.physicalDeviceDescriptorIndexingFeatures
       .shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+
   deviceData.physicalDeviceDescriptorIndexingFeatures.runtimeDescriptorArray =
       VK_TRUE;
+
   deviceData.physicalDeviceDescriptorIndexingFeatures
       .descriptorBindingVariableDescriptorCount = VK_TRUE;
+
   deviceData.physicalDeviceDescriptorIndexingFeatures.pNext =
       &deviceData.accelerationStructureFeatures;
 
@@ -357,16 +361,16 @@ VkResult CoreDevice::getPhysicalDevice(VkInstance instance) {
 //		//check presentation support
 //		VkBool32 presentationSupport = false;
 //		if (vkGetPhysicalDeviceSurfaceSupportKHR(devices.physical, idx,
-//surface, &presentationSupport) != VK_SUCCESS) { 			throw
-//std::invalid_argument("Device does not support presentation queue!");
+// surface, &presentationSupport) != VK_SUCCESS) { 			throw
+// std::invalid_argument("Device does not support presentation queue!");
 //		}
 //		//graphics
 //		if (queueFamily.queueCount > 0 && queueFamily.queueFlags &
-//VK_QUEUE_GRAPHICS_BIT) { 			indices.graphics = idx;
+// VK_QUEUE_GRAPHICS_BIT) { 			indices.graphics = idx;
 //		}
 //		//compute
 //		if (queueFamily.queueCount > 0 && queueFamily.queueFlags &
-//VK_QUEUE_COMPUTE_BIT) { 			indices.compute = idx;
+// VK_QUEUE_COMPUTE_BIT) { 			indices.compute = idx;
 //		}
 //		//presentation
 //		if (queueFamily.queueCount > 0 && presentationSupport) {
@@ -374,7 +378,7 @@ VkResult CoreDevice::getPhysicalDevice(VkInstance instance) {
 //		}
 //		//transfer
 //		if (queueFamily.queueCount > 0 && queueFamily.queueFlags &
-//VK_QUEUE_TRANSFER_BIT) { 			indices.transfer = idx;
+// VK_QUEUE_TRANSFER_BIT) { 			indices.transfer = idx;
 //		}
 //		//if all queues are assigned, break
 //		if (validateQueueFamilyIndices()) {
