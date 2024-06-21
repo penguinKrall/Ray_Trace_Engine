@@ -43,6 +43,7 @@ public:
   // -- assets data struct
   struct Assets {
     uint32_t textureOffset = 0;
+    std::vector<gtp::TextureLoader> defaultTextures;
 
     // models
     std::vector<gtp::Model *> models;

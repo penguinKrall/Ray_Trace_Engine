@@ -41,5 +41,6 @@ public:
     std::vector<int> activeAnimation;
     std::vector<std::vector<std::string>> animationNames;
     std::vector<bool> updateBLAS;
+    std::vector<int> semiTransparentFlag;
   };
 };

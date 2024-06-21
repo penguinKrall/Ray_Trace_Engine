@@ -181,44 +181,11 @@ void MainRenderer::LoadModel(
 
 void MainRenderer::LoadAssets() {
 
-   const uint32_t glTFLoadingFlags =
-       gtp::FileLoadingFlags::PreTransformVertices |
-       gtp::FileLoadingFlags::PreMultiplyVertexColors;
-  
-  // -- load animation
-   Utilities_UI::TransformMatrices animatedTransformMatrices{};
-  
-   animatedTransformMatrices.rotate = glm::rotate(
-       glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-  
-   animatedTransformMatrices.translate =
-       glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 0.0f, 0.0f));
-  
-   animatedTransformMatrices.scale =
-       glm::scale(glm::mat4(1.0f), glm::vec3(0.05f));
-  
-   this->LoadModel("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/"
-                   "assets/models/Fox2/Fox2.gltf",
-                   gtp::FileLoadingFlags::None,
-                   Utilities_Renderer::ModelLoadingFlags::Animated,
-                   &animatedTransformMatrices);
-  
-  // -- load scene
-   this->LoadModel(
-       "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
-       "test_scene/testScene.gltf",
-       gtp::FileLoadingFlags::None,
-       Utilities_Renderer::ModelLoadingFlags::None, nullptr);
-  
-  // -- load water surface
-   this->LoadModel(
-       "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
-       "test_scene/pool_water_surface/pool_water_surface.gltf",
-       gtp::FileLoadingFlags::None,
-       Utilities_Renderer::ModelLoadingFlags::SemiTransparent, nullptr);
+  // cubemap and default textures
+  this->assets.cubemap = gtp::TextureLoader(this->pEngineCore);
+  this->assets.cubemap.LoadCubemap();
 
-  // -- load colored glass tex - dont need this anymore -- will use for an
-  // example of how to load .ktx still...
+  // -- load default water surface texture
   this->assets.coloredGlassTexture = gtp::TextureLoader(this->pEngineCore);
   this->assets.coloredGlassTexture.loadFromFile(
       "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/"
@@ -227,8 +194,60 @@ void MainRenderer::LoadAssets() {
       VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-  this->assets.cubemap = gtp::TextureLoader(this->pEngineCore);
-  this->assets.cubemap.LoadCubemap();
+  this->assets.defaultTextures.push_back(this->assets.cubemap);
+
+  // update texture offset for shader
+  this->assets.textureOffset =
+      static_cast<uint32_t>(this->assets.defaultTextures.size());
+
+  const uint32_t glTFLoadingFlags =
+      gtp::FileLoadingFlags::PreTransformVertices |
+      gtp::FileLoadingFlags::PreMultiplyVertexColors;
+
+  // -- load animation
+  Utilities_UI::TransformMatrices animatedTransformMatrices{};
+
+  animatedTransformMatrices.rotate = glm::rotate(
+      glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+  animatedTransformMatrices.translate =
+      glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 0.0f, 0.0f));
+
+  animatedTransformMatrices.scale =
+      glm::scale(glm::mat4(1.0f), glm::vec3(0.05f));
+
+  this->LoadModel("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/"
+                  "assets/models/Fox2/Fox2.gltf",
+                  gtp::FileLoadingFlags::None,
+                  Utilities_Renderer::ModelLoadingFlags::Animated,
+                  &animatedTransformMatrices);
+
+  // -- load scene
+  this->LoadModel(
+      "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
+      "test_scene/testScene.gltf",
+      gtp::FileLoadingFlags::None, Utilities_Renderer::ModelLoadingFlags::None,
+      nullptr);
+
+  // -- load water surface
+  this->LoadModel(
+      "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
+      "test_scene/pool_water_surface/pool_water_surface.gltf",
+      gtp::FileLoadingFlags::None,
+      Utilities_Renderer::ModelLoadingFlags::SemiTransparent, nullptr);
+
+  //// -- load colored glass tex - dont need this anymore -- will use for an
+  //// example of how to load .ktx still...
+  // this->assets.coloredGlassTexture = gtp::TextureLoader(this->pEngineCore);
+  // this->assets.coloredGlassTexture.loadFromFile(
+  //     "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/"
+  //     "textures/"
+  //     "colored_glass_rgba.ktx",
+  //     VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT,
+  //     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+  // this->assets.cubemap = gtp::TextureLoader(this->pEngineCore);
+  // this->assets.cubemap.LoadCubemap();
 
   // -- load flight helmet model
   Utilities_UI::TransformMatrices helmetModelTransformMatrices{};
@@ -549,7 +568,13 @@ void MainRenderer::UpdateUniformBuffer(float deltaTime) {
 
 void MainRenderer::CreateRayTracingPipeline() {
 
+  // image count
   uint32_t imageCount{0};
+
+  for (int i = 0; i < this->assets.defaultTextures.size(); i++) {
+    imageCount += static_cast<uint32_t>(this->assets.defaultTextures.size());
+  }
+
   for (int i = 0; i < assets.models.size(); i++) {
     imageCount += static_cast<uint32_t>(assets.models[i]->textures.size());
   }
@@ -613,7 +638,8 @@ void MainRenderer::CreateRayTracingPipeline() {
   VkDescriptorSetLayoutBinding allTextureImagesLayoutBinding =
       gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
           7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageCount,
-          VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR,
+          VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR |
+              VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR,
           nullptr);
 
   // bindings array
@@ -881,6 +907,11 @@ void MainRenderer::CreateDescriptorSet() {
 
   // image count
   uint32_t imageCount{0};
+
+  for (int i = 0; i < this->assets.defaultTextures.size(); i++) {
+    imageCount += static_cast<uint32_t>(this->assets.defaultTextures.size());
+  }
+
   for (int i = 0; i < assets.models.size(); i++) {
     imageCount += static_cast<uint32_t>(assets.models[i]->textures.size());
   }
@@ -1026,7 +1057,7 @@ void MainRenderer::CreateDescriptorSet() {
       this->assets.cubemap.sampler, this->assets.cubemap.view,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 
-  // glass texture image write
+  // cubemap texture image write
   VkWriteDescriptorSet cubemapTextureWrite{};
   cubemapTextureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   cubemapTextureWrite.dstSet = pipelineData.descriptorSet;
@@ -1054,6 +1085,14 @@ void MainRenderer::CreateDescriptorSet() {
 
   // Image descriptors for the image array
   std::vector<VkDescriptorImageInfo> textureDescriptors{};
+
+  for (int i = 0; i < this->assets.defaultTextures.size(); i++) {
+    VkDescriptorImageInfo descriptor{};
+    descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    descriptor.sampler = this->assets.defaultTextures[i].sampler;
+    descriptor.imageView = this->assets.defaultTextures[i].view;
+    textureDescriptors.push_back(descriptor);
+  }
 
   if (!assets.models.empty()) {
     for (int i = 0; i < assets.models.size(); i++) {
@@ -1535,6 +1574,11 @@ void MainRenderer::UpdateDescriptorSet() {
 
   // image count
   uint32_t imageCount{0};
+
+  for (int i = 0; i < this->assets.defaultTextures.size(); i++) {
+    imageCount += static_cast<uint32_t>(this->assets.defaultTextures.size());
+  }
+
   for (int i = 0; i < assets.models.size(); i++) {
     imageCount += static_cast<uint32_t>(assets.models[i]->textures.size());
   }
@@ -1659,13 +1703,23 @@ void MainRenderer::UpdateDescriptorSet() {
   // Image descriptors for the image array
   std::vector<VkDescriptorImageInfo> textureDescriptors{};
 
-  for (int i = 0; i < assets.models.size(); i++) {
-    for (int j = 0; j < assets.models[i]->textures.size(); j++) {
-      VkDescriptorImageInfo descriptor{};
-      descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-      descriptor.sampler = assets.models[i]->textures[j].sampler;
-      descriptor.imageView = assets.models[i]->textures[j].view;
-      textureDescriptors.push_back(descriptor);
+  for (int i = 0; i < this->assets.defaultTextures.size(); i++) {
+    VkDescriptorImageInfo descriptor{};
+    descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    descriptor.sampler = this->assets.defaultTextures[i].sampler;
+    descriptor.imageView = this->assets.defaultTextures[i].view;
+    textureDescriptors.push_back(descriptor);
+  }
+
+  if (!assets.models.empty()) {
+    for (int i = 0; i < assets.models.size(); i++) {
+      for (int j = 0; j < assets.models[i]->textures.size(); j++) {
+        VkDescriptorImageInfo descriptor{};
+        descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        descriptor.sampler = assets.models[i]->textures[j].sampler;
+        descriptor.imageView = assets.models[i]->textures[j].view;
+        textureDescriptors.push_back(descriptor);
+      }
     }
   }
 

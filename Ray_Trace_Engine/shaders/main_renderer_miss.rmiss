@@ -21,6 +21,8 @@ layout(binding = 5, set = 0) uniform sampler2D glassTexture;
 
 layout(binding = 6, set = 0) uniform samplerCube cubemapTexture;
 
+layout(binding = 7, set = 0) uniform sampler2D textures[];
+
 void main() {
 
     //// View-independent background gradient to simulate a basic sky background
