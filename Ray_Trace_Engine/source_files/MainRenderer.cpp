@@ -284,6 +284,10 @@ void MainRenderer::LoadGltfCompute(gtp::Model *pModel) {
 
 void MainRenderer::CreateBLAS(gtp::Model *pModel) {
   Utilities_AS::BLASData *tempBLAS = new Utilities_AS::BLASData();
+
+  std::cout << "before this->assets.textureOffset: "
+            << this->assets.textureOffset << std::endl;
+
   Utilities_AS::createBLAS(
 
       this->pEngineCore, &this->geometryNodeBuf, &this->geometryIndexBuf,
@@ -293,8 +297,8 @@ void MainRenderer::CreateBLAS(gtp::Model *pModel) {
   // increment offset by size of models texture array
   this->assets.textureOffset += static_cast<uint32_t>(pModel->textures.size());
 
-  std::cout << "this->assets.textureOffset: " << this->assets.textureOffset
-            << std::endl;
+  std::cout << "after this->assets.textureOffset: "
+            << this->assets.textureOffset << std::endl;
 
   this->bottomLevelAccelerationStructures.push_back(tempBLAS);
 }
@@ -576,6 +580,9 @@ void MainRenderer::CreateRayTracingPipeline() {
   }
 
   for (int i = 0; i < assets.models.size(); i++) {
+    std::cout << "create pipeline model names: "
+              << this->assets.models[i]->modelName;
+
     imageCount += static_cast<uint32_t>(assets.models[i]->textures.size());
   }
 
@@ -802,6 +809,24 @@ void MainRenderer::CreateRayTracingPipeline() {
             &rayTracingPipelineCreateInfo, nullptr, &pipelineData.pipeline);
       },
       "glTFAnimation_RaytracingPipeline");
+}
+
+void MainRenderer::UpdateRayTracingPipeline() {
+  // -- pipeline and layout
+  vkDestroyPipeline(this->pEngineCore->devices.logical,
+                    this->pipelineData.pipeline, nullptr);
+  vkDestroyPipelineLayout(this->pEngineCore->devices.logical,
+                          this->pipelineData.pipelineLayout, nullptr);
+
+  // descriptor pool
+  vkDestroyDescriptorPool(this->pEngineCore->devices.logical,
+                          this->pipelineData.descriptorPool, nullptr);
+
+  // -- descriptor set layout
+  vkDestroyDescriptorSetLayout(this->pEngineCore->devices.logical,
+                               this->pipelineData.descriptorSetLayout, nullptr);
+
+  this->CreateRayTracingPipeline();
 }
 
 void MainRenderer::CreateShaderBindingTable() {
@@ -1628,255 +1653,25 @@ void MainRenderer::CreateGeometryNodesBuffer() {
 
 void MainRenderer::UpdateGeometryNodesBuffer(gtp::Model *pModel) {
 
-  std::cout << " deleting model" << std::endl;
+  std::cout << " updating geometry nodes buffer" << std::endl;
 
   std::cout << pModel->modelName << std::endl;
 
-  vkDeviceWaitIdle(this->pEngineCore->devices.logical);
+  this->buffers.g_nodes_buffer.destroy(this->pEngineCore->devices.logical);
+  this->buffers.g_nodes_indices.destroy(this->pEngineCore->devices.logical);
+  CreateGeometryNodesBuffer();
+  //// update g nodes buffer with updated vector of g nodes
+  // this->buffers.g_nodes_buffer.copyTo(
+  //     this->geometryNodeBuf.data(),
+  //     static_cast<uint32_t>(geometryNodeBuf.size()) *
+  //         sizeof(Utilities_AS::GeometryNode));
 
-  // delete model // geometry nodes // blas
+  //// update g node indices buffer with updated vector of g node indices
+  // this->buffers.g_nodes_indices.copyTo(
+  //     this->geometryIndexBuf.data(),
+  //     static_cast<uint32_t>(geometryIndexBuf.size()) * sizeof(int));
 
-  // erase model g nodes
-  // for (auto &node : pModel->linearNodes) {
-  //  if (node->mesh) {
-  //
-  //    for (int i = 0; i < node->mesh->primitives.size(); i++) {
-  //      if (node->mesh->primitives[i]->indexCount > 0) {
-  //        this->geometryNodeBuf.erase(
-  //            this->geometryNodeBuf.begin() +
-  //            this->geometryIndexBuf[this->assets.modelData.modelIndex]
-  //                .nodeOffset);
-  //      }
-  //    }
-  //  }
-  //}
-  //
-  //// erase model g node indices
-  // this->geometryIndexBuf.erase(this->geometryIndexBuf.begin() +
-  //                              this->assets.modelData.modelIndex);
-
-  this->assets.models[this->assets.modelData.modelIndex]->destroy(
-      this->pEngineCore->devices.logical);
-
-  if (this->assets.modelData.modelIndex < this->assets.models.size()) {
-    this->assets.models.erase(this->assets.models.begin() +
-                              this->assets.modelData.modelIndex);
-  }
-
-  this->assets.textureOffset =
-      static_cast<uint32_t>(this->assets.defaultTextures.size());
-
-  // update g buffer
-  std::vector<Utilities_AS::GeometryNode> tempGeometryNodeBuffer;
-  std::vector<Utilities_AS::GeometryIndex> tempGeometryIndexBuffer;
-
-  for (int i = 0; i < this->assets.models.size(); i++) {
-    Utilities_AS::GeometryIndex geometryIndex{};
-    geometryIndex.nodeOffset = static_cast<int>(tempGeometryNodeBuffer.size());
-    tempGeometryIndexBuffer.push_back(geometryIndex);
-    for (auto &node : this->assets.models[i]->linearNodes) {
-      if (node->mesh) {
-        for (auto &primitive : node->mesh->primitives) {
-          if (primitive->indexCount > 0) {
-            VkDeviceOrHostAddressConstKHR vertexBufferDeviceAddress;
-            VkDeviceOrHostAddressConstKHR indexBufferDeviceAddress;
-
-            vertexBufferDeviceAddress.deviceAddress =
-                Utilities_AS::getBufferDeviceAddress(
-                    pEngineCore, this->assets.models[i]->vertices.buffer);
-
-            indexBufferDeviceAddress.deviceAddress =
-                Utilities_AS::getBufferDeviceAddress(
-                    pEngineCore, this->assets.models[i]->indices.buffer) +
-                primitive->firstIndex * sizeof(uint32_t);
-
-            VkAccelerationStructureGeometryKHR geometry{};
-            geometry.sType =
-                VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
-            geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
-            geometry.geometry.triangles.sType =
-                VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
-            geometry.geometry.triangles.vertexFormat =
-                VK_FORMAT_R32G32B32_SFLOAT;
-            geometry.geometry.triangles.vertexData = vertexBufferDeviceAddress;
-            geometry.geometry.triangles.maxVertex =
-                static_cast<uint32_t>(this->assets.models[i]->vertexCount);
-            geometry.geometry.triangles.vertexStride =
-                sizeof(gtp::Model::Vertex);
-            geometry.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
-            geometry.geometry.triangles.indexData = indexBufferDeviceAddress;
-            // blasData->geometries.push_back(geometry);
-            // blasData->maxPrimitiveCounts.push_back(primitive->indexCount /
-            // 3); blasData->maxPrimitiveCount += primitive->indexCount / 3;
-
-            VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo{};
-            buildRangeInfo.firstVertex = 0;
-            buildRangeInfo.primitiveOffset = 0;
-            buildRangeInfo.primitiveCount = primitive->indexCount / 3;
-            buildRangeInfo.transformOffset = 0;
-            // blasData->buildRangeInfos.push_back(buildRangeInfo);
-
-            Utilities_AS::GeometryNode geometryNode{};
-            geometryNode.vertexBufferDeviceAddress =
-                vertexBufferDeviceAddress.deviceAddress;
-            geometryNode.indexBufferDeviceAddress =
-                indexBufferDeviceAddress.deviceAddress;
-
-            geometryNode.textureIndexBaseColor =
-                primitive->material.baseColorTexture
-                    ? static_cast<int>(
-                          primitive->material.baseColorTexture->index +
-                          this->assets.textureOffset)
-                    : -1;
-
-            geometryNode.textureIndexOcclusion =
-                primitive->material.occlusionTexture
-                    ? static_cast<int>(
-                          primitive->material.occlusionTexture->index +
-                          this->assets.textureOffset)
-                    : -1;
-
-            geometryNode.textureIndexMetallicRoughness =
-                primitive->material.metallicRoughnessTexture
-                    ? static_cast<int>(
-                          primitive->material.metallicRoughnessTexture->index +
-                          this->assets.textureOffset)
-                    : -1;
-
-            geometryNode.textureIndexNormal =
-                primitive->material.normalTexture
-                    ? static_cast<int>(
-                          primitive->material.normalTexture->index +
-                          this->assets.textureOffset)
-                    : -1;
-
-            geometryNode.semiTransparentFlag =
-                this->assets.models[i]->semiTransparentFlag;
-
-            tempGeometryNodeBuffer.push_back(geometryNode);
-          }
-        }
-      }
-    }
-
-    // update texture offset after each model
-    this->assets.textureOffset +=
-        static_cast<uint32_t>(this->assets.models[i]->textures.size());
-  }
-
-  this->geometryNodeBuf = tempGeometryNodeBuffer;
-  this->geometryIndexBuf = tempGeometryIndexBuffer;
-
-  // update g nodes buffer with updated vector of g nodes
-  this->buffers.g_nodes_buffer.copyTo(
-      this->geometryNodeBuf.data(),
-      static_cast<uint32_t>(geometryNodeBuf.size()) *
-          sizeof(Utilities_AS::GeometryNode));
-
-  // update g node indices buffer with updated vector of g node indices
-  this->buffers.g_nodes_indices.copyTo(
-      this->geometryIndexBuf.data(),
-      static_cast<uint32_t>(geometryIndexBuf.size()) * sizeof(int));
-
-  // erase models modelData assignments
-  if (this->assets.modelData.modelIndex <
-      this->assets.modelData.activeAnimation.size()) {
-    this->assets.modelData.activeAnimation.erase(
-        this->assets.modelData.activeAnimation.begin() +
-        this->assets.modelData.modelIndex);
-  }
-
-  if (this->assets.modelData.modelIndex <
-      this->assets.modelData.animatedModelIndex.size()) {
-    this->assets.modelData.animatedModelIndex.erase(
-        this->assets.modelData.animatedModelIndex.begin() +
-        this->assets.modelData.modelIndex);
-  }
-
-  if (this->assets.modelData.modelIndex <
-      this->assets.modelData.animationNames.size()) {
-    this->assets.modelData.animationNames.erase(
-        this->assets.modelData.animationNames.begin() +
-        this->assets.modelData.modelIndex);
-  }
-
-  if (this->assets.modelData.modelIndex <
-      this->assets.modelData.modelName.size()) {
-    this->assets.modelData.modelName.erase(
-        this->assets.modelData.modelName.begin() +
-        this->assets.modelData.modelIndex);
-  }
-
-  // if (this->assets.modelData.modelIndex <
-  //     this->assets.modelData.semiTransparentFlag.size()) {
-  //   this->assets.modelData.semiTransparentFlag.erase(
-  //       this->assets.modelData.semiTransparentFlag.begin() +
-  //       this->assets.modelData.modelIndex);
-  // }
-
-  if (this->assets.modelData.modelIndex <
-      this->assets.modelData.transformMatrices.size()) {
-    this->assets.modelData.transformMatrices.erase(
-        this->assets.modelData.transformMatrices.begin() +
-        this->assets.modelData.modelIndex);
-  }
-
-  if (this->assets.modelData.modelIndex <
-      this->assets.modelData.transformValues.size()) {
-    this->assets.modelData.transformValues.erase(
-        this->assets.modelData.transformValues.begin() +
-        this->assets.modelData.modelIndex);
-  }
-
-  if (this->assets.modelData.modelIndex <
-      this->assets.modelData.updateBLAS.size()) {
-    this->assets.modelData.updateBLAS.erase(
-        this->assets.modelData.updateBLAS.begin() +
-        this->assets.modelData.modelIndex);
-  }
-
-  if (!pModel->animations.empty()) {
-    this->gltfCompute[this->assets.modelData.modelIndex]
-        ->Destroy_ComputeVertex();
-    this->gltfCompute.erase(this->gltfCompute.begin() +
-                            this->assets.modelData.modelIndex);
-  }
-
-  // for (auto &rangeInfo : blasData->buildRangeInfos) {
-  //   blasData->pBuildRangeInfos.push_back(&rangeInfo);
-  // }
-
-  // accel. structure
-  pEngineCore->coreExtensions->vkDestroyAccelerationStructureKHR(
-      pEngineCore->devices.logical,
-      this->bottomLevelAccelerationStructures[this->assets.modelData.modelIndex]
-          ->accelerationStructure.accelerationStructureKHR,
-      nullptr);
-
-  // scratch buffer
-  this->bottomLevelAccelerationStructures[this->assets.modelData.modelIndex]
-      ->accelerationStructure.scratchBuffer.destroy(
-          this->pEngineCore->devices.logical);
-
-  // accel structure buffer and memory
-  vkDestroyBuffer(
-      pEngineCore->devices.logical,
-      this->bottomLevelAccelerationStructures[this->assets.modelData.modelIndex]
-          ->accelerationStructure.buffer,
-      nullptr);
-
-  vkFreeMemory(
-      pEngineCore->devices.logical,
-      this->bottomLevelAccelerationStructures[this->assets.modelData.modelIndex]
-          ->accelerationStructure.memory,
-      nullptr);
-
-  if (this->assets.modelData.modelIndex <
-      this->bottomLevelAccelerationStructures.size()) {
-    this->bottomLevelAccelerationStructures.erase(
-        this->bottomLevelAccelerationStructures.begin() +
-        this->assets.modelData.modelIndex);
-  }
+  // -- top level acceleration structure & related buffers -- //
 
   // accel. structure
   pEngineCore->coreExtensions->vkDestroyAccelerationStructureKHR(
@@ -1896,11 +1691,10 @@ void MainRenderer::UpdateGeometryNodesBuffer(gtp::Model *pModel) {
   // transforms buffer
   this->buffers.transformBuffer.destroy(this->pEngineCore->devices.logical);
 
-  this->assets.modelData.modelIndex = 0;
-
-  // UpdateTLAS();
   CreateTLAS();
-  UpdateDescriptorSet();
+  UpdateRayTracingPipeline();
+  CreateDescriptorSet();
+  // UpdateDescriptorSet();
 }
 
 void MainRenderer::DeleteModel(gtp::Model *pModel) {
@@ -2082,6 +1876,8 @@ void MainRenderer::UpdateDescriptorSet() {
   }
 
   for (int i = 0; i < assets.models.size(); i++) {
+    std::cout << "update descriptor set model names: "
+              << this->assets.models[i]->modelName;
     imageCount += static_cast<uint32_t>(assets.models[i]->textures.size());
   }
 

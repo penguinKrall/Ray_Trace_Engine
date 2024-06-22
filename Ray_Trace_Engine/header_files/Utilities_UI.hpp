@@ -29,12 +29,14 @@ public:
   };
 
   struct ModelData {
+    bool loadModel = false;
     bool deleteModel = false;
     bool rotateUpdated = false;
     bool translateUpdated = false;
     bool scaleUpdated = false;
     bool isUpdated = false;
     int modelIndex = 0;
+    std::string loadModelFilepath;
     std::vector<std::string> modelName;
     std::vector<TransformMatrices> transformMatrices{};
     std::vector<TransformValues> transformValues{};

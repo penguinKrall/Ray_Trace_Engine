@@ -49,6 +49,24 @@ void Engine::Run() {
     // draw
     Draw();
 
+    if (this->UI.modelData.loadModel) {
+      this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
+      this->renderers.mainRenderer.LoadModel(
+          this->renderers.mainRenderer.assets.modelData.loadModelFilepath);
+      this->renderers.mainRenderer.UpdateGeometryNodesBuffer(
+          this->renderers.mainRenderer.assets
+              .models[this->renderers.mainRenderer.assets.models.size() - 1]);
+      std::cout
+          << "loaded model name from engine: "
+          << this->renderers.mainRenderer.assets
+                 .models[this->renderers.mainRenderer.assets.models.size() - 1]
+                 ->modelName
+          << std::endl;
+      this->renderers.mainRenderer.assets.modelData.loadModel = false;
+      this->renderers.mainRenderer.assets.modelData.loadModelFilepath = " ";
+      this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
+    }
+
     if (this->UI.modelData.deleteModel) {
       this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
       // this->renderers.mainRenderer.UpdateGeometryNodesBuffer(

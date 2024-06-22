@@ -158,6 +158,9 @@ public:
   // -- create ray tracing pipeline
   void CreateRayTracingPipeline();
 
+  // -- update ray tracing pipeline
+  void UpdateRayTracingPipeline();
+
   // -- create shader binding tables
   void CreateShaderBindingTable();
 
