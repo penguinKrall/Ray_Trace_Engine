@@ -188,6 +188,9 @@ public:
   // -- update geometry nodes buffer
   void UpdateGeometryNodesBuffer(gtp::Model* pModel);
 
+  // -- delete model
+  void DeleteModel(gtp::Model* pModel);
+
   // -- update descriptor set
   void UpdateDescriptorSet();
 

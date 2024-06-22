@@ -46,18 +46,22 @@ void Engine::Run() {
     // update ui
     this->UpdateUI();
 
+    // draw
+    Draw();
+
     if (this->UI.modelData.deleteModel) {
       this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
-      this->renderers.mainRenderer.UpdateGeometryNodesBuffer(
+      // this->renderers.mainRenderer.UpdateGeometryNodesBuffer(
+      //     this->renderers.mainRenderer.assets
+      //         .models[this->UI.modelData.modelIndex]);
+      this->renderers.mainRenderer.DeleteModel(
           this->renderers.mainRenderer.assets
               .models[this->UI.modelData.modelIndex]);
+
       this->renderers.mainRenderer.assets.modelData.deleteModel = false;
       this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
       this->UI.modelData.isUpdated = true;
     }
-
-    // draw
-    Draw();
 
     // -- if model data in ui has been changed
     if (this->UI.modelData.isUpdated) {
@@ -231,9 +235,12 @@ void Engine::Draw() {
   // if (camera->activeWindow) {
 
   // wait for fences
-  validate_vk_result(vkWaitForFences(devices.logical, 1,
-                                     &sync.computeFences[currentFrame], VK_TRUE,
-                                     std::numeric_limits<uint64_t>::max()));
+  if (vkWaitForFences(devices.logical, 1, &sync.computeFences[currentFrame],
+                      VK_TRUE,
+                      std::numeric_limits<uint64_t>::max()) != VK_SUCCESS) {
+
+    throw std::invalid_argument("failed to wait for compute fences");
+  }
 
   // reset fences
   vkResetFences(devices.logical, 1, &sync.computeFences[currentFrame]);
@@ -245,38 +252,41 @@ void Engine::Draw() {
   std::vector<VkCommandBuffer> computeCommands;
 
   // -- multi blas compute
+  // std::cout << "compute record test 1" << std::endl;
+
   for (int i = 0; i < this->renderers.mainRenderer.gltfCompute.size(); i++) {
     if (this->renderers.mainRenderer.gltfCompute[i] != nullptr) {
-
+      // std::cout << "compute record test 2" << std::endl;
       validate_vk_result(
           vkResetCommandBuffer(this->renderers.mainRenderer.gltfCompute[i]
                                    ->commandBuffers[currentFrame],
                                /*VkCommandBufferResetFlagBits*/ 0));
-
-      // begin compute command buffer
+      // std::cout << "compute record test 3" << std::endl;
+      //  begin compute command buffer
       validate_vk_result(
           vkBeginCommandBuffer(this->renderers.mainRenderer.gltfCompute[i]
                                    ->commandBuffers[currentFrame],
                                &computeBeginInfo));
-
-      // record compute commands
+      // std::cout << "compute record test 4" << std::endl;
+      //  record compute commands
       this->renderers.mainRenderer.gltfCompute[i]->RecordComputeCommands(
           currentFrame);
-
-      // end compute command buffer
+      // std::cout << "compute record test 5" << std::endl;
+      //  end compute command buffer
       validate_vk_result(
           vkEndCommandBuffer(this->renderers.mainRenderer.gltfCompute[i]
                                  ->commandBuffers[currentFrame]));
       computeCommands.push_back(this->renderers.mainRenderer.gltfCompute[i]
                                     ->commandBuffers[currentFrame]);
+      // std::cout << "compute record test 6" << std::endl;
     }
   }
 
   // compute pipeline wait stages
   std::vector<VkPipelineStageFlags> computeWaitStages = {
       VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT};
-
-  // compute submit info
+  // std::cout << "compute record test 7" << std::endl;
+  //  compute submit info
   VkSubmitInfo computeSubmitInfo{};
   computeSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   computeSubmitInfo.pWaitDstStageMask = computeWaitStages.data();
@@ -292,6 +302,8 @@ void Engine::Draw() {
   validate_vk_result(vkQueueSubmit(pEngineCore->queue.compute, 1,
                                    &computeSubmitInfo,
                                    sync.computeFences[currentFrame]));
+
+  // vkDeviceWaitIdle(this->pEngineCore->devices.logical);
 
   //------------------------//
   //-----GRAPHICS QUEUE----//

@@ -346,7 +346,8 @@ void EngineCore::FlushCommandBuffer(VkCommandBuffer commandBuffer,
 
   // Wait for the fence to signal that command buffer has finished executing
   validate_vk_result(vkWaitForFences(pEngineCore->devices.logical, 1, &fence,
-                                     VK_TRUE, DEFAULT_FENCE_TIMEOUT));
+                                     VK_TRUE,
+                                     std::numeric_limits<uint64_t>::max()));
 
   // destroy fence
   vkDestroyFence(pEngineCore->devices.logical, fence, nullptr);
