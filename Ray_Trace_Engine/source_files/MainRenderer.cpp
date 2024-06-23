@@ -610,10 +610,16 @@ void MainRenderer::CreateRayTracingPipeline() {
           1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1,
           VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
 
+  // position storage image layout binding
+  VkDescriptorSetLayoutBinding positionStorageImageLayoutBinding =
+      gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
+          2, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1,
+          VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
+
   // uniform buffer layout binding
   VkDescriptorSetLayoutBinding uniformBufferLayoutBinding =
       gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
-          2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1,
+          3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1,
           VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR |
               VK_SHADER_STAGE_MISS_BIT_KHR,
           nullptr);
@@ -621,7 +627,7 @@ void MainRenderer::CreateRayTracingPipeline() {
   // g_node_buffer layout binding
   VkDescriptorSetLayoutBinding g_node_bufferLayoutBinding =
       gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
-          3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1,
+          4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1,
           VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR |
               VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR,
           nullptr);
@@ -629,7 +635,7 @@ void MainRenderer::CreateRayTracingPipeline() {
   // g_node_indices layout binding
   VkDescriptorSetLayoutBinding g_node_indicesLayoutBinding =
       gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
-          4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1,
+          5, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1,
           VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR |
               VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR,
           nullptr);
@@ -637,14 +643,14 @@ void MainRenderer::CreateRayTracingPipeline() {
   // glass texture layout binding
   VkDescriptorSetLayoutBinding glassTextureImagesLayoutBinding =
       gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
-          5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
+          6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
           VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR,
           nullptr);
 
   // cubemap texture layout binding
   VkDescriptorSetLayoutBinding cubemapTextureImagesLayoutBinding =
       gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
-          6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
+          7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
           VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR |
               VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR,
           nullptr);
@@ -652,7 +658,7 @@ void MainRenderer::CreateRayTracingPipeline() {
   // all texture image layout binding
   VkDescriptorSetLayoutBinding allTextureImagesLayoutBinding =
       gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
-          7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageCount,
+          8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageCount,
           VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR |
               VK_SHADER_STAGE_ANY_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR,
           nullptr);
@@ -661,6 +667,7 @@ void MainRenderer::CreateRayTracingPipeline() {
   std::vector<VkDescriptorSetLayoutBinding> bindings({
       accelerationStructureLayoutBinding,
       storageImageLayoutBinding,
+      positionStorageImageLayoutBinding,
       uniformBufferLayoutBinding,
       g_node_bufferLayoutBinding,
       g_node_indicesLayoutBinding,
@@ -674,10 +681,11 @@ void MainRenderer::CreateRayTracingPipeline() {
   VkDescriptorSetLayoutBindingFlagsCreateInfoEXT setLayoutBindingFlags{};
   setLayoutBindingFlags.sType =
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
-  setLayoutBindingFlags.bindingCount = 8;
+  setLayoutBindingFlags.bindingCount = 9;
   std::vector<VkDescriptorBindingFlagsEXT> descriptorBindingFlags = {
-      0, 0, 0, 0,
-      0, 0, 0, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
+      0, 0, 0,
+      0, 0, 0,
+      0, 0, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
 
   setLayoutBindingFlags.pBindingFlags = descriptorBindingFlags.data();
 
@@ -1029,6 +1037,18 @@ void MainRenderer::CreateDescriptorSet() {
   storageImageWrite.pImageInfo = &storageImageDescriptor;
   storageImageWrite.descriptorCount = 1;
 
+  VkDescriptorImageInfo positionStorageImageDescriptor{
+      VK_NULL_HANDLE, positionStorageImage.view, VK_IMAGE_LAYOUT_GENERAL};
+
+  // storage/result image write
+  VkWriteDescriptorSet positionStorageImageWrite{};
+  positionStorageImageWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  positionStorageImageWrite.dstSet = pipelineData.descriptorSet;
+  positionStorageImageWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+  positionStorageImageWrite.dstBinding = 2;
+  positionStorageImageWrite.pImageInfo = &positionStorageImageDescriptor;
+  positionStorageImageWrite.descriptorCount = 1;
+
   // ubo descriptor info
   VkDescriptorBufferInfo uboDescriptor{};
   uboDescriptor.buffer = buffers.ubo.bufferData.buffer;
@@ -1040,7 +1060,7 @@ void MainRenderer::CreateDescriptorSet() {
   uniformBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   uniformBufferWrite.dstSet = pipelineData.descriptorSet;
   uniformBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  uniformBufferWrite.dstBinding = 2;
+  uniformBufferWrite.dstBinding = 3;
   uniformBufferWrite.pBufferInfo = &uboDescriptor;
   uniformBufferWrite.descriptorCount = 1;
 
@@ -1054,7 +1074,7 @@ void MainRenderer::CreateDescriptorSet() {
   g_nodes_bufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   g_nodes_bufferWrite.dstSet = pipelineData.descriptorSet;
   g_nodes_bufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  g_nodes_bufferWrite.dstBinding = 3;
+  g_nodes_bufferWrite.dstBinding = 4;
   g_nodes_bufferWrite.pBufferInfo = &g_nodes_BufferDescriptor;
   g_nodes_bufferWrite.descriptorCount = 1;
 
@@ -1068,7 +1088,7 @@ void MainRenderer::CreateDescriptorSet() {
   g_nodes_indicesWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   g_nodes_indicesWrite.dstSet = pipelineData.descriptorSet;
   g_nodes_indicesWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  g_nodes_indicesWrite.dstBinding = 4;
+  g_nodes_indicesWrite.dstBinding = 5;
   g_nodes_indicesWrite.pBufferInfo = &g_nodes_indicesDescriptor;
   g_nodes_indicesWrite.descriptorCount = 1;
 
@@ -1082,7 +1102,7 @@ void MainRenderer::CreateDescriptorSet() {
   glassTextureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   glassTextureWrite.dstSet = pipelineData.descriptorSet;
   glassTextureWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  glassTextureWrite.dstBinding = 5;
+  glassTextureWrite.dstBinding = 6;
   glassTextureWrite.pImageInfo = &glassTextureDescriptor;
   glassTextureWrite.descriptorCount = 1;
 
@@ -1096,7 +1116,7 @@ void MainRenderer::CreateDescriptorSet() {
   cubemapTextureWrite.dstSet = pipelineData.descriptorSet;
   cubemapTextureWrite.descriptorType =
       VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  cubemapTextureWrite.dstBinding = 6;
+  cubemapTextureWrite.dstBinding = 7;
   cubemapTextureWrite.pImageInfo = &cubemapTextureDescriptor;
   cubemapTextureWrite.descriptorCount = 1;
 
@@ -1105,6 +1125,8 @@ void MainRenderer::CreateDescriptorSet() {
       accelerationStructureWrite,
       // Binding 1: Ray tracing result image
       storageImageWrite,
+      // Binding 1: Ray tracing result image
+      positionStorageImageWrite,
       // Binding 2: Uniform data
       uniformBufferWrite,
       // Binding 3: g_nodes_buffer write
@@ -1146,7 +1168,7 @@ void MainRenderer::CreateDescriptorSet() {
 
   VkWriteDescriptorSet writeDescriptorImgArray{};
   writeDescriptorImgArray.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeDescriptorImgArray.dstBinding = 7;
+  writeDescriptorImgArray.dstBinding = 8;
   writeDescriptorImgArray.descriptorType =
       VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   writeDescriptorImgArray.descriptorCount =
@@ -1919,6 +1941,18 @@ void MainRenderer::UpdateDescriptorSet() {
   storageImageWrite.pImageInfo = &storageImageDescriptor;
   storageImageWrite.descriptorCount = 1;
 
+  VkDescriptorImageInfo positionStorageImageDescriptor{
+      VK_NULL_HANDLE, positionStorageImage.view, VK_IMAGE_LAYOUT_GENERAL};
+
+  // storage/result image write
+  VkWriteDescriptorSet positionStorageImageWrite{};
+  positionStorageImageWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  positionStorageImageWrite.dstSet = pipelineData.descriptorSet;
+  positionStorageImageWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+  positionStorageImageWrite.dstBinding = 2;
+  positionStorageImageWrite.pImageInfo = &positionStorageImageDescriptor;
+  positionStorageImageWrite.descriptorCount = 1;
+
   // ubo descriptor info
   VkDescriptorBufferInfo uboDescriptor{};
   uboDescriptor.buffer = buffers.ubo.bufferData.buffer;
@@ -1930,7 +1964,7 @@ void MainRenderer::UpdateDescriptorSet() {
   uniformBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   uniformBufferWrite.dstSet = pipelineData.descriptorSet;
   uniformBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  uniformBufferWrite.dstBinding = 2;
+  uniformBufferWrite.dstBinding = 3;
   uniformBufferWrite.pBufferInfo = &uboDescriptor;
   uniformBufferWrite.descriptorCount = 1;
 
@@ -1944,7 +1978,7 @@ void MainRenderer::UpdateDescriptorSet() {
   g_nodes_bufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   g_nodes_bufferWrite.dstSet = pipelineData.descriptorSet;
   g_nodes_bufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  g_nodes_bufferWrite.dstBinding = 3;
+  g_nodes_bufferWrite.dstBinding = 4;
   g_nodes_bufferWrite.pBufferInfo = &g_nodes_BufferDescriptor;
   g_nodes_bufferWrite.descriptorCount = 1;
 
@@ -1958,7 +1992,7 @@ void MainRenderer::UpdateDescriptorSet() {
   g_nodes_indicesWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   g_nodes_indicesWrite.dstSet = pipelineData.descriptorSet;
   g_nodes_indicesWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  g_nodes_indicesWrite.dstBinding = 4;
+  g_nodes_indicesWrite.dstBinding = 5;
   g_nodes_indicesWrite.pBufferInfo = &g_nodes_indicesDescriptor;
   g_nodes_indicesWrite.descriptorCount = 1;
 
@@ -1972,7 +2006,7 @@ void MainRenderer::UpdateDescriptorSet() {
   glassTextureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   glassTextureWrite.dstSet = pipelineData.descriptorSet;
   glassTextureWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  glassTextureWrite.dstBinding = 5;
+  glassTextureWrite.dstBinding = 6;
   glassTextureWrite.pImageInfo = &glassTextureDescriptor;
   glassTextureWrite.descriptorCount = 1;
 
@@ -1980,13 +2014,13 @@ void MainRenderer::UpdateDescriptorSet() {
       this->assets.cubemap.sampler, this->assets.cubemap.view,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 
-  // glass texture image write
+  // cubemap texture image write
   VkWriteDescriptorSet cubemapTextureWrite{};
   cubemapTextureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   cubemapTextureWrite.dstSet = pipelineData.descriptorSet;
   cubemapTextureWrite.descriptorType =
       VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  cubemapTextureWrite.dstBinding = 6;
+  cubemapTextureWrite.dstBinding = 7;
   cubemapTextureWrite.pImageInfo = &cubemapTextureDescriptor;
   cubemapTextureWrite.descriptorCount = 1;
 
@@ -1995,15 +2029,17 @@ void MainRenderer::UpdateDescriptorSet() {
       accelerationStructureWrite,
       // Binding 1: Ray tracing result image
       storageImageWrite,
+      // Binding 1: Ray tracing result image
+      positionStorageImageWrite,
       // Binding 2: Uniform data
       uniformBufferWrite,
-      // Binding 4: g_nodes_buffer write
+      // Binding 3: g_nodes_buffer write
       g_nodes_bufferWrite,
-      // Binding 5: g_nodes_indices write
+      // Binding 4: g_nodes_indices write
       g_nodes_indicesWrite,
-      // Binding 5: glass texture write
+      // Binding 5: glass texture image write
       glassTextureWrite,
-      // Binding 6: cubemap texture write
+      // Binding 6: cubemap texture image write
       cubemapTextureWrite};
 
   // Image descriptors for the image array
@@ -2031,7 +2067,7 @@ void MainRenderer::UpdateDescriptorSet() {
 
   VkWriteDescriptorSet writeDescriptorImgArray{};
   writeDescriptorImgArray.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeDescriptorImgArray.dstBinding = 7;
+  writeDescriptorImgArray.dstBinding = 8;
   writeDescriptorImgArray.descriptorType =
       VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   writeDescriptorImgArray.descriptorCount =
@@ -2051,6 +2087,14 @@ void MainRenderer::HandleResize() {
   vkDestroyImageView(pEngineCore->devices.logical, storageImage.view, nullptr);
   vkDestroyImage(pEngineCore->devices.logical, storageImage.image, nullptr);
   vkFreeMemory(pEngineCore->devices.logical, storageImage.memory, nullptr);
+
+  // Delete allocated resources
+  vkDestroyImageView(pEngineCore->devices.logical, positionStorageImage.view,
+                     nullptr);
+  vkDestroyImage(pEngineCore->devices.logical, positionStorageImage.image,
+                 nullptr);
+  vkFreeMemory(pEngineCore->devices.logical, positionStorageImage.memory,
+               nullptr);
 
   // Recreate image
   this->CreateStorageImages();

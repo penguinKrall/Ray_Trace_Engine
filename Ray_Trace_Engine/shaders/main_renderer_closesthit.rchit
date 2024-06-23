@@ -26,7 +26,7 @@ layout(location = 2) rayPayloadEXT bool shadowed;
 
 layout(binding = 0, set = 0) uniform accelerationStructureEXT topLevelAS;
 
-layout(binding = 2, set = 0) uniform UBO {
+layout(binding = 3, set = 0) uniform UBO {
     mat4 viewInverse;
     mat4 projInverse;
     vec4 lightPos;
@@ -47,10 +47,10 @@ struct GeometryIndex {
     int offset;
 };
 
-layout(binding = 3, set = 0) buffer G_Nodes_Buffer { GeometryNode nodes[]; } g_nodes_buffer;
-layout(binding = 4, set = 0) buffer G_Nodes_Index { GeometryIndex indices[]; } g_nodes_indices;
-layout(binding = 5, set = 0) uniform sampler2D glassTexture;
-layout(binding = 7, set = 0) uniform sampler2D textures[];
+layout(binding = 4, set = 0) buffer G_Nodes_Buffer { GeometryNode nodes[]; } g_nodes_buffer;
+layout(binding = 5, set = 0) buffer G_Nodes_Index { GeometryIndex indices[]; } g_nodes_indices;
+layout(binding = 6, set = 0) uniform sampler2D glassTexture;
+layout(binding = 8, set = 0) uniform sampler2D textures[];
 
 #include "main_renderer_bufferreferences.glsl"
 #include "main_renderer_geometrytypes.glsl"

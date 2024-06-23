@@ -229,216 +229,219 @@ void Engine::Draw() {
   //     resize        //
   /*------------------*/
 
-  if (camera->framebufferResized) {
-    // wait idle
-    vkDeviceWaitIdle(devices.logical);
-    // recreate semaphores, fences
-    RecreateSyncObjects();
-    // recreate swapchain, swapchain images/views
-    RecreateCoreSwapchain();
-    // recreate god knows what
-    renderers.mainRenderer.HandleResize();
-    // recreate ui framebuffers
-    UI.RecreateFramebuffers();
-    // Flaggy McFlaggerson
-    camera->framebufferResized = false;
-    // ret
-    return;
-  }
+  if (camera->activeWindow) {
 
-  //---------------------//
-  //---COMPUTE QUEUE-----//
-  //---------------------//
-
-  // if (camera->activeWindow) {
-
-  // wait for fences
-  if (vkWaitForFences(devices.logical, 1, &sync.computeFences[currentFrame],
-                      VK_TRUE,
-                      std::numeric_limits<uint64_t>::max()) != VK_SUCCESS) {
-
-    throw std::invalid_argument("failed to wait for compute fences");
-  }
-
-  // reset fences
-  vkResetFences(devices.logical, 1, &sync.computeFences[currentFrame]);
-
-  VkCommandBufferBeginInfo computeBeginInfo{};
-  computeBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-  // compute command buffer vector
-  std::vector<VkCommandBuffer> computeCommands;
-
-  // -- multi blas compute
-  // std::cout << "compute record test 1" << std::endl;
-
-  for (int i = 0; i < this->renderers.mainRenderer.gltfCompute.size(); i++) {
-    if (this->renderers.mainRenderer.gltfCompute[i] != nullptr) {
-      // std::cout << "compute record test 2" << std::endl;
-      validate_vk_result(
-          vkResetCommandBuffer(this->renderers.mainRenderer.gltfCompute[i]
-                                   ->commandBuffers[currentFrame],
-                               /*VkCommandBufferResetFlagBits*/ 0));
-      //  begin compute command buffer
-      validate_vk_result(
-          vkBeginCommandBuffer(this->renderers.mainRenderer.gltfCompute[i]
-                                   ->commandBuffers[currentFrame],
-                               &computeBeginInfo));
-      //  record compute commands
-      this->renderers.mainRenderer.gltfCompute[i]->RecordComputeCommands(
-          currentFrame);
-      //  end compute command buffer
-      validate_vk_result(
-          vkEndCommandBuffer(this->renderers.mainRenderer.gltfCompute[i]
-                                 ->commandBuffers[currentFrame]));
-      computeCommands.push_back(this->renderers.mainRenderer.gltfCompute[i]
-                                    ->commandBuffers[currentFrame]);
+    if (camera->framebufferResized) {
+      // wait idle
+      vkDeviceWaitIdle(devices.logical);
+      // recreate semaphores, fences
+      RecreateSyncObjects();
+      // recreate swapchain, swapchain images/views
+      RecreateCoreSwapchain();
+      // recreate god knows what
+      renderers.mainRenderer.HandleResize();
+      // recreate ui framebuffers
+      UI.RecreateFramebuffers();
+      // Flaggy McFlaggerson
+      camera->framebufferResized = false;
+      // ret
+      return;
     }
-  }
 
-  // compute pipeline wait stages
-  std::vector<VkPipelineStageFlags> computeWaitStages = {
-      VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT};
-  //  compute submit info
-  VkSubmitInfo computeSubmitInfo{};
-  computeSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  computeSubmitInfo.pWaitDstStageMask = computeWaitStages.data();
-  computeSubmitInfo.signalSemaphoreCount = 1;
-  computeSubmitInfo.commandBufferCount =
-      static_cast<uint32_t>(computeCommands.size());
-  computeSubmitInfo.pCommandBuffers = computeCommands.data();
-  computeSubmitInfo.signalSemaphoreCount = 1;
-  computeSubmitInfo.pSignalSemaphores =
-      &this->sync.computeFinishedSemaphore[currentFrame];
+    //---------------------//
+    //---COMPUTE QUEUE-----//
+    //---------------------//
 
-  // submit compute queue
-  validate_vk_result(vkQueueSubmit(pEngineCore->queue.compute, 1,
-                                   &computeSubmitInfo,
-                                   sync.computeFences[currentFrame]));
+    // wait for fences
+    if (vkWaitForFences(devices.logical, 1, &sync.computeFences[currentFrame],
+                        VK_TRUE,
+                        std::numeric_limits<uint64_t>::max()) != VK_SUCCESS) {
 
-  // vkDeviceWaitIdle(this->pEngineCore->devices.logical);
-
-  //------------------------//
-  //-----GRAPHICS QUEUE----//
-  //----------------------//
-
-  // vkDeviceWaitIdle(this->pEngineCore->devices.logical);
-
-  // wait for draw fences
-  validate_vk_result(vkWaitForFences(devices.logical, 1,
-                                     &sync.drawFences[currentFrame], VK_TRUE,
-                                     std::numeric_limits<uint64_t>::max()));
-
-  validate_vk_result(
-      vkResetFences(devices.logical, 1, &sync.drawFences[currentFrame]));
-
-  // acquire next image
-  VkResult acquireImageResult = vkAcquireNextImageKHR(
-      devices.logical, swapchainData.swapchainKHR, UINT64_MAX,
-      sync.presentFinishedSemaphore[currentFrame], VK_NULL_HANDLE, &imageIndex);
-
-  // return if something changed // handle swapchain and framebuffer resize
-  if (acquireImageResult == VK_ERROR_OUT_OF_DATE_KHR ||
-      acquireImageResult == VK_SUBOPTIMAL_KHR) {
-    return;
-  }
-
-  /*------------------------------------*/
-  //     update uniform buffers        //
-  /*----------------------------------*/
-
-  // Update model class animation
-  for (size_t i = 0; i < this->renderers.mainRenderer.assets.models.size();
-       ++i) {
-    if (this->renderers.mainRenderer.assets.modelData.animatedModelIndex[i] ==
-        1) {
-      int activeAnimation =
-          this->renderers.mainRenderer.assets.modelData.activeAnimation[i][0];
-      // std::cout << "active animation: " << activeAnimation << std::endl;
-      this->renderers.mainRenderer.assets.models[i]->updateAnimation(
-          activeAnimation, deltaTime);
+      throw std::invalid_argument("failed to wait for compute fences");
     }
-  }
 
-  // update compute class joint buffer
-  for (int i = 0; i < this->renderers.mainRenderer.gltfCompute.size(); i++) {
-    if (this->renderers.mainRenderer.gltfCompute[i] != nullptr) {
-      this->renderers.mainRenderer.gltfCompute[i]->UpdateJointBuffer();
+    // reset fences
+    vkResetFences(devices.logical, 1, &sync.computeFences[currentFrame]);
+
+    VkCommandBufferBeginInfo computeBeginInfo{};
+    computeBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+    // compute command buffer vector
+    std::vector<VkCommandBuffer> computeCommands;
+
+    // -- multi blas compute
+    // std::cout << "compute record test 1" << std::endl;
+
+    for (int i = 0; i < this->renderers.mainRenderer.gltfCompute.size(); i++) {
+      if (this->renderers.mainRenderer.gltfCompute[i] != nullptr) {
+        // std::cout << "compute record test 2" << std::endl;
+        validate_vk_result(
+            vkResetCommandBuffer(this->renderers.mainRenderer.gltfCompute[i]
+                                     ->commandBuffers[currentFrame],
+                                 /*VkCommandBufferResetFlagBits*/ 0));
+        //  begin compute command buffer
+        validate_vk_result(
+            vkBeginCommandBuffer(this->renderers.mainRenderer.gltfCompute[i]
+                                     ->commandBuffers[currentFrame],
+                                 &computeBeginInfo));
+        //  record compute commands
+        this->renderers.mainRenderer.gltfCompute[i]->RecordComputeCommands(
+            currentFrame);
+        //  end compute command buffer
+        validate_vk_result(
+            vkEndCommandBuffer(this->renderers.mainRenderer.gltfCompute[i]
+                                   ->commandBuffers[currentFrame]));
+        computeCommands.push_back(this->renderers.mainRenderer.gltfCompute[i]
+                                      ->commandBuffers[currentFrame]);
+      }
     }
+
+    // compute pipeline wait stages
+    std::vector<VkPipelineStageFlags> computeWaitStages = {
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT};
+    //  compute submit info
+    VkSubmitInfo computeSubmitInfo{};
+    computeSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    computeSubmitInfo.pWaitDstStageMask = computeWaitStages.data();
+    computeSubmitInfo.signalSemaphoreCount = 1;
+    computeSubmitInfo.commandBufferCount =
+        static_cast<uint32_t>(computeCommands.size());
+    computeSubmitInfo.pCommandBuffers = computeCommands.data();
+    computeSubmitInfo.signalSemaphoreCount = 1;
+    computeSubmitInfo.pSignalSemaphores =
+        &this->sync.computeFinishedSemaphore[currentFrame];
+
+    // submit compute queue
+    validate_vk_result(vkQueueSubmit(pEngineCore->queue.compute, 1,
+                                     &computeSubmitInfo,
+                                     sync.computeFences[currentFrame]));
+
+    // vkDeviceWaitIdle(this->pEngineCore->devices.logical);
+
+    //------------------------//
+    //-----GRAPHICS QUEUE----//
+    //----------------------//
+
+    // vkDeviceWaitIdle(this->pEngineCore->devices.logical);
+
+    // wait for draw fences
+    validate_vk_result(vkWaitForFences(devices.logical, 1,
+                                       &sync.drawFences[currentFrame], VK_TRUE,
+                                       std::numeric_limits<uint64_t>::max()));
+
+    validate_vk_result(
+        vkResetFences(devices.logical, 1, &sync.drawFences[currentFrame]));
+
+    // acquire next image
+    VkResult acquireImageResult = vkAcquireNextImageKHR(
+        devices.logical, swapchainData.swapchainKHR, UINT64_MAX,
+        sync.presentFinishedSemaphore[currentFrame], VK_NULL_HANDLE,
+        &imageIndex);
+
+    // return if something changed // handle swapchain and framebuffer resize
+    if (acquireImageResult == VK_ERROR_OUT_OF_DATE_KHR ||
+        acquireImageResult == VK_SUBOPTIMAL_KHR) {
+      return;
+    }
+
+    /*------------------------------------*/
+    //     update uniform buffers        //
+    /*----------------------------------*/
+
+    // Update model class animation
+    for (size_t i = 0; i < this->renderers.mainRenderer.assets.models.size();
+         ++i) {
+      if (this->renderers.mainRenderer.assets.modelData.animatedModelIndex[i] ==
+          1) {
+        int activeAnimation =
+            this->renderers.mainRenderer.assets.modelData.activeAnimation[i][0];
+        // std::cout << "active animation: " << activeAnimation << std::endl;
+        this->renderers.mainRenderer.assets.models[i]->updateAnimation(
+            activeAnimation, deltaTime);
+      }
+    }
+
+    // update compute class joint buffer
+    for (int i = 0; i < this->renderers.mainRenderer.gltfCompute.size(); i++) {
+      if (this->renderers.mainRenderer.gltfCompute[i] != nullptr) {
+        this->renderers.mainRenderer.gltfCompute[i]->UpdateJointBuffer();
+      }
+    }
+
+    this->renderers.mainRenderer.UpdateUniformBuffer(timer);
+    this->renderers.mainRenderer.UpdateBLAS();
+    for (int i = 0; i < this->UI.modelData.updateBLAS.size(); i++) {
+      this->UI.modelData.updateBLAS[i] = false;
+    }
+    this->renderers.mainRenderer.UpdateTLAS();
+
+    /*----------------------------------*/
+    //     record command buffer       //
+    /*--------------------------------*/
+
+    BeginGraphicsCommandBuffer(currentFrame);
+
+    // multi blas
+    this->renderers.mainRenderer.RebuildCommandBuffers(currentFrame);
+
+    /*---------------------------------*/
+    //     render dearImGui           //
+    /*-------------------------------*/
+
+    this->HandleUI();
+
+    /*------------------------------------*/
+    //    end record command buffer      //
+    /*----------------------------------*/
+
+    this->EndGraphicsCommandBuffer(currentFrame);
+
+    /*-----------------------*/
+    //    queue submit      //
+    /*---------------------*/
+
+    // pipeline wait stages
+    std::vector<VkPipelineStageFlags> waitStages = {
+        VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+
+    std::vector<VkSemaphore> graphicsSemaphores = {
+        sync.computeFinishedSemaphore[currentFrame],
+        sync.presentFinishedSemaphore[currentFrame]};
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.pWaitDstStageMask = waitStages.data();
+    submitInfo.waitSemaphoreCount =
+        static_cast<uint32_t>(graphicsSemaphores.size());
+    submitInfo.pWaitSemaphores = graphicsSemaphores.data();
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = &sync.renderFinishedSemaphore[currentFrame];
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffers.graphics[currentFrame];
+
+    // Submit command buffers to the graphics queue
+    validate_vk_result(vkQueueSubmit(queue.graphics, 1, &submitInfo,
+                                     sync.drawFences[currentFrame]));
+
+    // Prepare present info for swapchain presentation
+    VkPresentInfoKHR presentInfo = {};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = &sync.renderFinishedSemaphore[currentFrame];
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = &sync.presentFinishedSemaphore[currentFrame];
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = &swapchainData.swapchainKHR;
+    presentInfo.pImageIndices = &imageIndex;
+
+    // Present the rendered image to the screen
+    validate_vk_result(vkQueuePresentKHR(queue.graphics, &presentInfo));
+
+    // Update current frame index
+    this->currentFrame = (this->currentFrame + 1) % frame_draws;
   }
-
-  this->renderers.mainRenderer.UpdateUniformBuffer(timer);
-  this->renderers.mainRenderer.UpdateBLAS();
-  for (int i = 0; i < this->UI.modelData.updateBLAS.size(); i++) {
-    this->UI.modelData.updateBLAS[i] = false;
-  }
-  this->renderers.mainRenderer.UpdateTLAS();
-
-  /*----------------------------------*/
-  //     record command buffer       //
-  /*--------------------------------*/
-
-  BeginGraphicsCommandBuffer(currentFrame);
-
-  // multi blas
-  this->renderers.mainRenderer.RebuildCommandBuffers(currentFrame);
-
-  /*---------------------------------*/
-  //     render dearImGui           //
-  /*-------------------------------*/
-
-  this->HandleUI();
-
-  /*------------------------------------*/
-  //    end record command buffer      //
-  /*----------------------------------*/
-
-  this->EndGraphicsCommandBuffer(currentFrame);
-
-  /*-----------------------*/
-  //    queue submit      //
-  /*---------------------*/
-
-  // pipeline wait stages
-  std::vector<VkPipelineStageFlags> waitStages = {
-      VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-
-  std::vector<VkSemaphore> graphicsSemaphores = {
-      sync.computeFinishedSemaphore[currentFrame],
-      sync.presentFinishedSemaphore[currentFrame]};
-
-  VkSubmitInfo submitInfo{};
-  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submitInfo.pWaitDstStageMask = waitStages.data();
-  submitInfo.waitSemaphoreCount =
-      static_cast<uint32_t>(graphicsSemaphores.size());
-  submitInfo.pWaitSemaphores = graphicsSemaphores.data();
-  submitInfo.signalSemaphoreCount = 1;
-  submitInfo.pSignalSemaphores = &sync.renderFinishedSemaphore[currentFrame];
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &commandBuffers.graphics[currentFrame];
-
-  // Submit command buffers to the graphics queue
-  validate_vk_result(vkQueueSubmit(queue.graphics, 1, &submitInfo,
-                                   sync.drawFences[currentFrame]));
-
-  // Prepare present info for swapchain presentation
-  VkPresentInfoKHR presentInfo = {};
-  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-  presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores = &sync.renderFinishedSemaphore[currentFrame];
-  submitInfo.signalSemaphoreCount = 1;
-  submitInfo.pSignalSemaphores = &sync.presentFinishedSemaphore[currentFrame];
-  presentInfo.swapchainCount = 1;
-  presentInfo.pSwapchains = &swapchainData.swapchainKHR;
-  presentInfo.pImageIndices = &imageIndex;
-
-  // Present the rendered image to the screen
-  validate_vk_result(vkQueuePresentKHR(queue.graphics, &presentInfo));
-
-  // Update current frame index
-  this->currentFrame = (this->currentFrame + 1) % frame_draws;
 }
 
 } // namespace gtp
