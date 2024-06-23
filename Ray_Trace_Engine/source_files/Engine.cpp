@@ -357,10 +357,10 @@ void Engine::Draw() {
        ++i) {
     if (this->renderers.mainRenderer.assets.modelData.animatedModelIndex[i] ==
         1) {
-      size_t modelIndex =
-          this->renderers.mainRenderer.assets.modelData.modelIndex;
-      int activeAnimation = this->renderers.mainRenderer.assets.modelData
-                                .activeAnimation[modelIndex];
+      // size_t modelIndex =
+      //     this->renderers.mainRenderer.assets.modelData.modelIndex;
+      int activeAnimation =
+          this->renderers.mainRenderer.assets.modelData.activeAnimation[i][0];
       // std::cout << "active animation: " << activeAnimation << std::endl;
       this->renderers.mainRenderer.assets.models[i]->updateAnimation(
           activeAnimation, deltaTime);

@@ -977,18 +977,18 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
               pModelData
                   ->animationNames
                       [pModelData->modelIndex]
-                      [pModelData->activeAnimation[pModelData->modelIndex]]
+                      [pModelData->activeAnimation[pModelData->modelIndex][0]]
                   .c_str())) {
 
         for (int i = 0;
              i < pModelData->animationNames[pModelData->modelIndex].size();
              ++i) {
           bool isSelected =
-              (pModelData->activeAnimation[pModelData->modelIndex] == i);
+              (pModelData->activeAnimation[pModelData->modelIndex][0] == i);
           if (ImGui::Selectable(
                   pModelData->animationNames[pModelData->modelIndex][i].c_str(),
                   isSelected)) {
-            pModelData->activeAnimation[pModelData->modelIndex] = i;
+            pModelData->activeAnimation[pModelData->modelIndex][0] = i;
 
             std::cout
                 << "Selected Animation: "

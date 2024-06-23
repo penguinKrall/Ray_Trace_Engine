@@ -102,15 +102,18 @@ void MainRenderer::LoadModel(
 
   // animations
   std::vector<std::string> tempNames;
+  std::vector<int> tempAnimationIndex;
 
   if (tempModel->animations.empty()) {
-    this->assets.modelData.activeAnimation.push_back(0);
+    tempAnimationIndex.push_back(0);
+    this->assets.modelData.activeAnimation.push_back(tempAnimationIndex);
     tempNames.push_back("none");
     this->assets.modelData.animationNames.push_back(tempNames);
   }
 
   else {
-    this->assets.modelData.activeAnimation.push_back(0);
+    tempAnimationIndex.push_back(0);
+    this->assets.modelData.activeAnimation.push_back(tempAnimationIndex);
     for (int i = 0; i < tempModel->animations.size(); i++) {
       tempNames.push_back(tempModel->animations[i].name);
       std::cout << tempModel->animations[i].name << std::endl;
@@ -432,8 +435,7 @@ void MainRenderer::CreateTLAS() {
   // -- create acceleration structure buffer
   Utilities_AS::createAccelerationStructureBuffer(
       this->pEngineCore, &this->TLAS.memory, &this->TLAS.buffer,
-      &tlasData.accelerationStructureBuildSizesInfo,
-      "glTFAnimation_TLASBuffer");
+      &tlasData.accelerationStructureBuildSizesInfo, "mainRenderer_TLASBuffer");
 
   // -- acceleration structure create info
   VkAccelerationStructureCreateInfoKHR accelerationStructureCreateInfo{};
@@ -458,7 +460,7 @@ void MainRenderer::CreateTLAS() {
   Utilities_AS::createScratchBuffer(
       this->pEngineCore, &buffers.tlas_scratch,
       tlasData.accelerationStructureBuildSizesInfo.buildScratchSize,
-      "glTFAnimation_ScratchBufferTLAS");
+      "mainRenderer_ScratchBufferTLAS");
 
   // acceleration Build Geometry Info{};
   tlasData.accelerationBuildGeometryInfo.sType =
@@ -524,7 +526,7 @@ void MainRenderer::CreateTLAS() {
 void MainRenderer::CreateStorageImage() {
 
   Utilities_AS::createStorageImage(this->pEngineCore, &this->storageImage,
-                                   "glTFAnimation_storageImage");
+                                   "mainRenderer_storageImage");
 }
 
 void MainRenderer::CreateUniformBuffer() {
@@ -688,7 +690,7 @@ void MainRenderer::CreateRayTracingPipeline() {
             &descriptorSetLayoutCreateInfo, nullptr,
             &pipelineData.descriptorSetLayout);
       },
-      "glTFAnimation_DescriptorSetLayout");
+      "mainRenderer_DescriptorSetLayout");
 
   VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
   pipelineLayoutCreateInfo.sType =
@@ -808,7 +810,7 @@ void MainRenderer::CreateRayTracingPipeline() {
         return pEngineCore->objCreate.VKCreateRaytracingPipeline(
             &rayTracingPipelineCreateInfo, nullptr, &pipelineData.pipeline);
       },
-      "glTFAnimation_RaytracingPipeline");
+      "mainRenderer_RaytracingPipeline");
 }
 
 void MainRenderer::UpdateRayTracingPipeline() {
@@ -964,7 +966,7 @@ void MainRenderer::CreateDescriptorSet() {
             &descriptorPoolCreateInfo, nullptr,
             &this->pipelineData.descriptorPool);
       },
-      "glTFAnimation_DescriptorPool");
+      "mainRenderer_DescriptorPool");
 
   VkDescriptorSetVariableDescriptorCountAllocateInfoEXT
       variableDescriptorCountAllocInfo{};
@@ -989,7 +991,7 @@ void MainRenderer::CreateDescriptorSet() {
             &descriptorSetAllocateInfo, nullptr,
             &this->pipelineData.descriptorSet);
       },
-      "glTFAnimation_DescriptorSet");
+      "mainRenderer_DescriptorSet");
 
   VkWriteDescriptorSetAccelerationStructureKHR
       descriptorAccelerationStructureInfo{};
