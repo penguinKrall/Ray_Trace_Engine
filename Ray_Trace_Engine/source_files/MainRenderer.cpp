@@ -32,7 +32,7 @@ void MainRenderer::Init_MainRenderer(EngineCore *coreBase) {
             << std::endl;
 
   ////create storage image
-  this->CreateStorageImage();
+  this->CreateStorageImages();
 
   std::cout << "\nfinished creating storage image" << std::endl;
 
@@ -523,10 +523,16 @@ void MainRenderer::CreateTLAS() {
           pEngineCore->devices.logical, &accelerationDeviceAddressInfo);
 }
 
-void MainRenderer::CreateStorageImage() {
+void MainRenderer::CreateStorageImages() {
 
+  // color storage image
   Utilities_AS::createStorageImage(this->pEngineCore, &this->storageImage,
                                    "mainRenderer_storageImage");
+
+  // position storage image
+  Utilities_AS::createStorageImage(this->pEngineCore,
+                                   &this->positionStorageImage,
+                                   "mainRenderer_positionStorageImage");
 }
 
 void MainRenderer::CreateUniformBuffer() {
@@ -704,7 +710,7 @@ void MainRenderer::CreateRayTracingPipeline() {
         return pEngineCore->objCreate.VKCreatePipelineLayout(
             &pipelineLayoutCreateInfo, nullptr, &pipelineData.pipelineLayout);
       },
-      "gltShadTex_RayTracingPipelineLayout");
+      "mainRenderer_RayTracingPipelineLayout");
 
   // project directory for loading shader modules
   std::filesystem::path projDirectory = std::filesystem::current_path();
@@ -2047,7 +2053,7 @@ void MainRenderer::HandleResize() {
   vkFreeMemory(pEngineCore->devices.logical, storageImage.memory, nullptr);
 
   // Recreate image
-  this->CreateStorageImage();
+  this->CreateStorageImages();
 
   // Update descriptor
   this->UpdateDescriptorSet();
@@ -2074,6 +2080,7 @@ void MainRenderer::Destroy_MainRenderer() {
   // -- pipeline and layout
   vkDestroyPipeline(this->pEngineCore->devices.logical,
                     this->pipelineData.pipeline, nullptr);
+
   vkDestroyPipelineLayout(this->pEngineCore->devices.logical,
                           this->pipelineData.pipelineLayout, nullptr);
 
@@ -2090,6 +2097,14 @@ void MainRenderer::Destroy_MainRenderer() {
   vkDestroyImage(pEngineCore->devices.logical, this->storageImage.image,
                  nullptr);
   vkFreeMemory(pEngineCore->devices.logical, this->storageImage.memory,
+               nullptr);
+
+  // -- position storage image
+  vkDestroyImageView(pEngineCore->devices.logical,
+                     this->positionStorageImage.view, nullptr);
+  vkDestroyImage(pEngineCore->devices.logical, this->positionStorageImage.image,
+                 nullptr);
+  vkFreeMemory(pEngineCore->devices.logical, this->positionStorageImage.memory,
                nullptr);
 
   // g node buffer

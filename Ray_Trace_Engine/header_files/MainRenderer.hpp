@@ -89,6 +89,9 @@ public:
   // -- storage image
   Utilities_AS::StorageImage storageImage{};
 
+  // -- storage image
+  Utilities_AS::StorageImage positionStorageImage{};
+
   // -- uniform data
   UniformData uniformData{};
 
@@ -147,7 +150,7 @@ public:
   void CreateTLAS();
 
   // -- create storage image
-  void CreateStorageImage();
+  void CreateStorageImages();
 
   // -- create uniform buffer
   void CreateUniformBuffer();

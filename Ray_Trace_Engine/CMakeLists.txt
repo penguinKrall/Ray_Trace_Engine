@@ -30,6 +30,7 @@ file(GLOB SHADERS
   ${SHADER_SOURCE_DIR}/*.rgen
   ${SHADER_SOURCE_DIR}/*.rchit
   ${SHADER_SOURCE_DIR}/*.rahit
+  ${SHADER_SOURCE_DIR}/*.rint
   ${SHADER_SOURCE_DIR}/*.rmiss)
 
 
@@ -108,7 +109,7 @@ source_files/imguiZMO/*.cpp
 )
 
 # ImGuiZMO Source Files
-file(GLOB IMGUI_ZMO_SOURCES 
+file(GLOB IMGUI_FILE_DIALOGUE_SOURCES
 source_files/imguiFileDialogue/*.cpp
 )
 
@@ -137,12 +138,14 @@ file(GLOB SOURCES
     shaders/*.rchit
     shaders/*.rahit
     shaders/*.rmiss
+    shaders/*.rint
     shaders/*.glsl
 )
 
 # Organize source files into folders
 source_group("Source Files\\ImGui" FILES ${IMGUI_SOURCES})
 source_group("Source Files\\ImGuiZMO" FILES ${IMGUI_ZMO_SOURCES})
+source_group("Source Files\\ImGuiFileDialogue" FILES ${IMGUI_FILE_DIALOGUE_SOURCES})
 source_group("Source Files\\GLTF" FILES ${GLTF_SOURCES})
 source_group("Shaders" FILES ${SHADERS})
 source_group("Header Files" FILES ${HEADER_FILES})

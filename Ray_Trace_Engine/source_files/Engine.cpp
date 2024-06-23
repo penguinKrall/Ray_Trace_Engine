@@ -279,31 +279,26 @@ void Engine::Draw() {
           vkResetCommandBuffer(this->renderers.mainRenderer.gltfCompute[i]
                                    ->commandBuffers[currentFrame],
                                /*VkCommandBufferResetFlagBits*/ 0));
-      // std::cout << "compute record test 3" << std::endl;
       //  begin compute command buffer
       validate_vk_result(
           vkBeginCommandBuffer(this->renderers.mainRenderer.gltfCompute[i]
                                    ->commandBuffers[currentFrame],
                                &computeBeginInfo));
-      // std::cout << "compute record test 4" << std::endl;
       //  record compute commands
       this->renderers.mainRenderer.gltfCompute[i]->RecordComputeCommands(
           currentFrame);
-      // std::cout << "compute record test 5" << std::endl;
       //  end compute command buffer
       validate_vk_result(
           vkEndCommandBuffer(this->renderers.mainRenderer.gltfCompute[i]
                                  ->commandBuffers[currentFrame]));
       computeCommands.push_back(this->renderers.mainRenderer.gltfCompute[i]
                                     ->commandBuffers[currentFrame]);
-      // std::cout << "compute record test 6" << std::endl;
     }
   }
 
   // compute pipeline wait stages
   std::vector<VkPipelineStageFlags> computeWaitStages = {
       VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT};
-  // std::cout << "compute record test 7" << std::endl;
   //  compute submit info
   VkSubmitInfo computeSubmitInfo{};
   computeSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -357,8 +352,6 @@ void Engine::Draw() {
        ++i) {
     if (this->renderers.mainRenderer.assets.modelData.animatedModelIndex[i] ==
         1) {
-      // size_t modelIndex =
-      //     this->renderers.mainRenderer.assets.modelData.modelIndex;
       int activeAnimation =
           this->renderers.mainRenderer.assets.modelData.activeAnimation[i][0];
       // std::cout << "active animation: " << activeAnimation << std::endl;

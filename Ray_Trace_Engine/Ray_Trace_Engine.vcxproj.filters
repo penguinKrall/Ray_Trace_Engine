@@ -71,10 +71,10 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\imguiFileDialogue\ImGuiFileDialog.cpp">
-      <Filter>Source Files\ImGuiZMO</Filter>
+      <Filter>Source Files\ImGuiFileDialogue</Filter>
     </ClCompile>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\imguiZMO\imGuIZMOquat.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\ImGuiZMO</Filter>
     </ClCompile>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\main.cpp">
       <Filter>Source Files</Filter>
@@ -190,6 +190,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_geometrytypes.glsl" />
+    <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_intersection.rint">
+      <Filter>Shaders</Filter>
+    </None>
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_miss.rmiss">
       <Filter>Shaders</Filter>
     </None>
@@ -219,6 +222,9 @@
     </Filter>
     <Filter Include="Source Files\ImGui">
       <UniqueIdentifier>{D3881A07-5256-3AFA-9187-160FF92B0F54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ImGuiFileDialogue">
+      <UniqueIdentifier>{0E2AC976-C668-3F87-A96A-39BCFF5FF570}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\ImGuiZMO">
       <UniqueIdentifier>{AD6FB44F-A506-3025-A4C0-73EDDDFE0912}</UniqueIdentifier>

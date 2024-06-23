@@ -40,15 +40,15 @@
 #include <filesystem>
 #include <fstream>
 
-#define validate_vk_result(f)																				\
-{																										\
-	VkResult res = (f);																					\
-	if (res != VK_SUCCESS)																				\
-	{																									\
-		std::cout << "error! VkResult == \"" << "\" in " << __FILE__ << " at line " << __LINE__ << "\n"; \
-		assert(res == VK_SUCCESS);																		\
-	}																									\
-}
+#define validate_vk_result(f)                                                  \
+  do {                                                                         \
+    VkResult res = (f);                                                        \
+    if (res != VK_SUCCESS) {                                                   \
+      std::cout << "error! VkResult == " << res << " in " << __FILE__          \
+                << " at line " << __LINE__ << "\n";                            \
+      assert(res == VK_SUCCESS);                                               \
+    }                                                                          \
+  } while (0)
 
 const int frame_draws = 3;
 

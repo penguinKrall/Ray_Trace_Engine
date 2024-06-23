@@ -10,6 +10,9 @@
     <CustomBuild Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\CMakeFiles\7e257bb3c1514eaf5d51ec02d10c4ad6\main_renderer_compute.comp.spv.rule">
       <Filter>CMake Rules</Filter>
     </CustomBuild>
+    <CustomBuild Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\CMakeFiles\7e257bb3c1514eaf5d51ec02d10c4ad6\main_renderer_intersection.rint.spv.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
     <CustomBuild Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\CMakeFiles\7e257bb3c1514eaf5d51ec02d10c4ad6\main_renderer_miss.rmiss.spv.rule">
       <Filter>CMake Rules</Filter>
     </CustomBuild>
