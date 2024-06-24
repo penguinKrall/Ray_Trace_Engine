@@ -13,6 +13,7 @@ struct RayPayload {
     float index;
 		vec3 bgTest;
 		int semiTransparentFlag;
+		float objectIDColor;
 };
 
 layout(location = 0) rayPayloadEXT RayPayload rayPayload;
@@ -20,6 +21,7 @@ layout(location = 0) rayPayloadEXT RayPayload rayPayload;
 layout(binding = 0, set = 0) uniform accelerationStructureEXT topLevelAS;
 
 layout(binding = 1, set = 0, rgba8) uniform image2D image;
+layout(binding = 1, set = 0, rgba8) uniform image2D objectIDImage;
 
 layout(binding = 3, set = 0) uniform CameraProperties  {
     mat4 viewInverse;
@@ -100,5 +102,6 @@ void main(){
 				vec3 hitVal = hitValues;
 
 				imageStore(image, ivec2(gl_LaunchIDEXT.xy), vec4(hitVal, 1.0f));
+				imageStore(objectIDImage, ivec2(gl_LaunchIDEXT.xy), vec4(hitVal, 1.0f));
 
 }

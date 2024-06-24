@@ -99,7 +99,7 @@ public:
   StorageBufferData storageBufferData{};
 
   // -- bottom level acceleration structures
-  std::vector<Utilities_AS::BLASData*> bottomLevelAccelerationStructures;
+  std::vector<Utilities_AS::BLASData *> bottomLevelAccelerationStructures;
 
   // -- TLAS data
   Utilities_AS::TLASData tlasData{};
@@ -120,7 +120,7 @@ public:
   gtp::Shader shader;
 
   // -- compute
-  std::vector<ComputeVertex*> gltfCompute;
+  std::vector<ComputeVertex *> gltfCompute;
 
   // -- constructor
   MainRenderer();
@@ -141,10 +141,10 @@ public:
   void LoadAssets();
 
   // -- load gltf compute
-  void LoadGltfCompute(gtp::Model* pModel);
+  void LoadGltfCompute(gtp::Model *pModel);
 
   // -- create BLAS
-  void CreateBLAS(gtp::Model* pModel);
+  void CreateBLAS(gtp::Model *pModel);
 
   // -- create top level acceleration structure
   void CreateTLAS();
@@ -192,10 +192,10 @@ public:
   void CreateGeometryNodesBuffer();
 
   // -- update geometry nodes buffer
-  void UpdateGeometryNodesBuffer(gtp::Model* pModel);
+  void UpdateGeometryNodesBuffer(gtp::Model *pModel);
 
   // -- delete model
-  void DeleteModel(gtp::Model* pModel);
+  void DeleteModel(gtp::Model *pModel);
 
   // -- update descriptor set
   void UpdateDescriptorSet();

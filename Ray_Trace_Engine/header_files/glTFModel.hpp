@@ -249,7 +249,6 @@ struct Model {
   };
 
   LoaderInfo loaderInfo{};
-  //std::vector<gtp::Model::Vertex> verticesBuffer;
   size_t vertexCount = 0;
   size_t indexCount = 0;
   size_t vertexBufferSize = 0;

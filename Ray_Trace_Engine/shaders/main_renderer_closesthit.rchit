@@ -41,6 +41,7 @@ struct GeometryNode {
     int textureIndexNormal;
     int textureIndexEmissive;
     int semiTransparentFlag;
+    float objectIDColor;
 };
 
 struct GeometryIndex {

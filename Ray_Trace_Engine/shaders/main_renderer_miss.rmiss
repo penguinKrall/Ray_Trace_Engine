@@ -7,12 +7,12 @@ struct RayPayload {
     float distance;
     vec3 normal;
     float reflector;
-    //vec4 rgbaColorData;
     vec4 accumulatedColor;
     float accumulatedAlpha;
     float index;
     vec3 bgTest;
     int semiTransparentFlag;
+    float objectIDColor;
 };
 
 layout(location = 0) rayPayloadInEXT RayPayload rayPayload;
