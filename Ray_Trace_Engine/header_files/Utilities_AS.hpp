@@ -13,7 +13,7 @@ public:
     int textureIndexNormal = -1;
     int textureIndexEmissive = -1;
     int semiTransparentFlag = 0;
-    float objectIDColor = 0.0f;
+    float objectIDColor;
   };
 
   struct GeometryIndex {

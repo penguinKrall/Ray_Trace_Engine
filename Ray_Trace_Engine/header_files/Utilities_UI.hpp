@@ -48,7 +48,7 @@ public:
   };
 
   struct RenderData {
-    bool showColorImage = false;
+    bool showColorImage = true;
     bool showIDImage = false;
   };
 };

@@ -285,6 +285,13 @@ void Utilities_AS::createBLAS(
 
           geometryNode.semiTransparentFlag = model->semiTransparentFlag;
 
+          geometryNode.objectIDColor =
+              (static_cast<float>(textureOffset) * 8.0f / 255.0f);
+
+          std::cout << "\ngeometry node obj id color: "
+                    << (static_cast<float>(textureOffset) * 8.0f / 255.0f)
+                    << std::endl;
+
           geometryNodeBuf->push_back(geometryNode);
         }
       }

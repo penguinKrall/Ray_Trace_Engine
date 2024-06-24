@@ -382,7 +382,8 @@ void Engine::Draw() {
     BeginGraphicsCommandBuffer(currentFrame);
 
     // multi blas
-    this->renderers.mainRenderer.RebuildCommandBuffers(currentFrame);
+    this->renderers.mainRenderer.RebuildCommandBuffers(
+        currentFrame, this->UI.rendererData.showIDImage);
 
     /*---------------------------------*/
     //     render dearImGui           //

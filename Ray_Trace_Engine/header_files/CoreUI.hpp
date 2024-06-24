@@ -90,6 +90,9 @@ public:
   //--utilities structs
   //model data
   Utilities_UI::ModelData modelData{};
+  
+  // -- renderer data
+  Utilities_UI::RenderData rendererData{};
 
   // -- ctors
   CoreUI();

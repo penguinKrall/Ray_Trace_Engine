@@ -1301,7 +1301,7 @@ void MainRenderer::BuildCommandBuffers() {
   }
 }
 
-void MainRenderer::RebuildCommandBuffers(int frame) {
+void MainRenderer::RebuildCommandBuffers(int frame, bool showObjectColorID) {
 
   // subresource range
   VkImageSubresourceRange subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1,
@@ -1337,6 +1337,8 @@ void MainRenderer::RebuildCommandBuffers(int frame) {
   ////std::cout << "test"<< std::endl;
   // prepare ray tracing output image as transfer source
 
+  if (!showObjectColorID) {
+
   gtp::Utilities_EngCore::setImageLayout(
       pEngineCore->commandBuffers.graphics[frame], storageImage.image,
       VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
@@ -1367,6 +1369,40 @@ void MainRenderer::RebuildCommandBuffers(int frame) {
       pEngineCore->commandBuffers.graphics[frame], storageImage.image,
       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
       subresourceRange);
+  }
+
+  else {
+    gtp::Utilities_EngCore::setImageLayout(
+      pEngineCore->commandBuffers.graphics[frame], positionStorageImage.image,
+      VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      subresourceRange);
+
+    VkImageCopy copyRegion{};
+    copyRegion.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+    copyRegion.srcOffset = { 0, 0, 0 };
+    copyRegion.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+    copyRegion.dstOffset = { 0, 0, 0 };
+    copyRegion.extent = { pEngineCore->swapchainData.swapchainExtent2D.width,
+                         pEngineCore->swapchainData.swapchainExtent2D.height, 1 };
+
+    vkCmdCopyImage(pEngineCore->commandBuffers.graphics[frame],
+      positionStorageImage.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      pEngineCore->swapchainData.swapchainImages.image[frame],
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+
+    // transition swap chain image back for presentation
+    gtp::Utilities_EngCore::setImageLayout(
+      pEngineCore->commandBuffers.graphics[frame],
+      pEngineCore->swapchainData.swapchainImages.image[frame],
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+      subresourceRange);
+
+    // transition ray tracing output image back to general layout
+    gtp::Utilities_EngCore::setImageLayout(
+      pEngineCore->commandBuffers.graphics[frame], positionStorageImage.image,
+      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
+      subresourceRange);
+  }
 }
 
 void MainRenderer::UpdateBLAS() {

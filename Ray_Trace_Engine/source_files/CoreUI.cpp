@@ -928,6 +928,16 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
                                             ".gltf", config);
   }
 
+  if (ImGui::Button("Show Object Color IDS ON")) {
+    this->rendererData.showColorImage = false;
+    this->rendererData.showIDImage = true;
+  }
+
+  if (ImGui::Button("Show Object Color IDS OFF")) {
+    this->rendererData.showColorImage = true;
+    this->rendererData.showIDImage = false;
+  }
+
   // display
   if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey")) {
     if (ImGuiFileDialog::Instance()->IsOk()) { // action if OK

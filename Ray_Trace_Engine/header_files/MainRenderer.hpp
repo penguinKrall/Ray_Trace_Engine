@@ -177,7 +177,7 @@ public:
   void BuildCommandBuffers();
 
   // -- rebuild command buffers
-  void RebuildCommandBuffers(int frame);
+  void RebuildCommandBuffers(int frame, bool showObjectColorID);
 
   // -- update BLAS
   void UpdateBLAS();

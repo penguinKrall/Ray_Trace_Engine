@@ -19,6 +19,7 @@ struct RayPayload {
     float index;
     vec3 bgTest;
     int semiTransparentFlag;
+    vec4 colorID;
 };
 
 layout(location = 0) rayPayloadInEXT RayPayload rayPayload;
@@ -41,7 +42,7 @@ struct GeometryNode {
     int textureIndexNormal;
     int textureIndexEmissive;
     int semiTransparentFlag;
-    float objectIDColor;
+    float objectColorID;
 };
 
 struct GeometryIndex {
@@ -61,7 +62,7 @@ void main() {
     Triangle tri = unpackTriangle2(gl_PrimitiveID, 112);
     GeometryNode geometryNode = g_nodes_buffer.nodes[gl_GeometryIndexEXT + g_nodes_indices.indices[instanceCustomIndex].offset];
     rayPayload.semiTransparentFlag = geometryNode.semiTransparentFlag;
-
+     rayPayload.colorID = vec4(vec3(geometryNode.objectColorID), 1.0f);
     vec4 color = vec4(1.0f); // Default color
 
     if (geometryNode.textureIndexBaseColor > -1) {

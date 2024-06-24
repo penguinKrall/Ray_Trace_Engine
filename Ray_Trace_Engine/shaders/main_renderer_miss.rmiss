@@ -12,7 +12,7 @@ struct RayPayload {
     float index;
     vec3 bgTest;
     int semiTransparentFlag;
-    float objectIDColor;
+    vec4 colorID;
 };
 
 layout(location = 0) rayPayloadInEXT RayPayload rayPayload;
@@ -53,5 +53,6 @@ void main() {
     rayPayload.distance = -100.0f;
     rayPayload.normal = vec3(1.0f);
     rayPayload.reflector = 1.0f;
+    rayPayload.colorID = vec4(0.0f);
 }
 
