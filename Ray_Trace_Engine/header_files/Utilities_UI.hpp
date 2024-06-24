@@ -46,4 +46,9 @@ public:
     std::vector<bool> updateBLAS;
     std::vector<int> semiTransparentFlag;
   };
+
+  struct RenderData {
+    bool showColorImage = false;
+    bool showIDImage = false;
+  };
 };

@@ -153,10 +153,10 @@ void Engine::userInput() {
     camera->ProcessMouseMovement(xoffset, yoffset);
   }
 
-  if (glfwGetKey(windowGLFW, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-    camera->viewUpdated = true;
-    glfwSetWindowShouldClose(windowGLFW, true);
-  }
+  // if (glfwGetKey(windowGLFW, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+  //   camera->viewUpdated = true;
+  //   glfwSetWindowShouldClose(windowGLFW, true);
+  // }
 
   if (glfwGetKey(windowGLFW, GLFW_KEY_W) == GLFW_PRESS) {
     camera->viewUpdated = true;
