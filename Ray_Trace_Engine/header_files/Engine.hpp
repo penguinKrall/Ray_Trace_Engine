@@ -14,11 +14,11 @@ private:
   float lastTime = 0.0f;
   float timer = 0.0f;
 
-  double lastX = 0.0f;
-  double lastY = 0.0f;
-
-  double posX = 0.0f;
-  double posY = 0.0f;
+  //double lastX = 0.0f;
+  //double lastY = 0.0f;
+  //
+  //double posX = 0.0f;
+  //double posY = 0.0f;
 
   // -- user input
   void userInput();

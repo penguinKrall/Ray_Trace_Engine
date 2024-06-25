@@ -32,6 +32,9 @@ Camera::Camera(glm::vec3 position, glm::vec3 up, GLFWwindow *pWindow) {
 
   // framebuffer size callback
   glfwSetFramebufferSizeCallback(window, framebufferResizeCallbackStatic);
+
+  // window enter callback
+  glfwSetCursorEnterCallback(window, Camera::staticCursorEnterCallback);
 }
 
 glm::mat4 Camera::GetViewMatrix() {

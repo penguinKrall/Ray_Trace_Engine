@@ -551,7 +551,7 @@ void MainRenderer::CreateColorIDImageBuffer() {
 
   // create color id image buffer
   validate_vk_result(pEngineCore->CreateBuffer(
-      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+      VK_BUFFER_USAGE_TRANSFER_DST_BIT,
       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
       &buffers.colorIDImageBuffer, bufferSize, nullptr));
@@ -582,34 +582,49 @@ void MainRenderer::RetrieveObjectIDFromImage(int frame) {
   region.imageExtent = {pEngineCore->swapchainData.swapchainExtent2D.width,
                         pEngineCore->swapchainData.swapchainExtent2D.height, 1};
 
-  // vkCmdCopyImageToBuffer(pEngineCore->commandBuffers.graphics[frame],
-  // colorIDStorageImage.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer, 1,
-  // &region);
+  vkCmdCopyImageToBuffer(
+      pEngineCore->commandBuffers.graphics[frame], colorIDStorageImage.image,
+      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      this->buffers.colorIDImageBuffer.bufferData.buffer, 1, &region);
 
-  //// Map the buffer memory
-  // void* data;
-  // vkMapMemory(device, bufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
-  //
-  //// Adjust mouse coordinates if necessary
-  // int adjustedY = imageHeight - 1 - mouseY;
-  //
-  //// Calculate the index
-  // int index = (adjustedY * imageWidth + mouseX) * 4;
-  //
-  //// Retrieve the color at the mouse position
-  // uint8_t* pixel = static_cast<uint8_t*>(data) + index;
-  // uint8_t red = pixel[0];
-  // uint8_t green = pixel[1];
-  // uint8_t blue = pixel[2];
-  // uint8_t alpha = pixel[3];
-  //
-  //// Unmap the buffer memory
-  // vkUnmapMemory(device, bufferMemory);
-  //
-  //// Identify the object using the color
-  // uint32_t objectID = (red << 16) | (green << 8) | blue;
-  //
-  // std::cout << "Selected Object ID: " << objectID << std::endl;
+  // Map the buffer memory
+  void *data;
+  vkMapMemory(pEngineCore->devices.logical,
+              this->buffers.colorIDImageBuffer.bufferData.memory, 0,
+              VK_WHOLE_SIZE, 0, &data);
+
+  // Adjust mouse coordinates if necessary
+  auto adjustedY =
+      static_cast<int>(pEngineCore->swapchainData.swapchainExtent2D.height - 1 -
+                       this->pEngineCore->posY);
+
+  // Calculate the index
+  int index = static_cast<int>(
+      (adjustedY * pEngineCore->swapchainData.swapchainExtent2D.width +
+       this->pEngineCore->posX) *
+      4);
+
+  // Retrieve the color at the mouse position
+  uint8_t *pixel = static_cast<uint8_t *>(data) + index;
+  uint8_t red = pixel[0];
+  uint8_t green = pixel[1];
+  uint8_t blue = pixel[2];
+  uint8_t alpha = pixel[3];
+
+  // Unmap the buffer memory
+  vkUnmapMemory(pEngineCore->devices.logical,
+                this->buffers.colorIDImageBuffer.bufferData.memory);
+
+  // Identify the object using the color
+  float objectID = red;
+
+  std::cout << "Selected Object ID: " << objectID << std::endl;
+
+  // set color ID image layout to transfer src optimal
+  gtp::Utilities_EngCore::setImageLayout(
+      pEngineCore->commandBuffers.graphics[frame], colorIDStorageImage.image,
+      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
+      subresourceRange);
 }
 
 void MainRenderer::CreateUniformBuffer() {
@@ -1481,6 +1496,10 @@ void MainRenderer::RebuildCommandBuffers(int frame, bool showObjectColorID) {
         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
         subresourceRange);
   }
+
+  if (this->pEngineCore->camera->mouseOnWindow) {
+    this->RetrieveObjectIDFromImage(frame);
+  }
 }
 
 void MainRenderer::UpdateBLAS() {
@@ -2210,8 +2229,14 @@ void MainRenderer::HandleResize() {
   vkFreeMemory(pEngineCore->devices.logical, colorIDStorageImage.memory,
                nullptr);
 
+  // -- destroy color id image buffer
+  this->buffers.colorIDImageBuffer.destroy(this->pEngineCore->devices.logical);
+
   // Recreate image
   this->CreateStorageImages();
+
+  // re create color id image buffer
+  this->CreateColorIDImageBuffer();
 
   // Update descriptor
   this->UpdateDescriptorSet();

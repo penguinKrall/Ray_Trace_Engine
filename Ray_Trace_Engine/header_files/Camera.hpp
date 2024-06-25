@@ -53,6 +53,9 @@ public:
   // view updated
   bool viewUpdated = false;
 
+  // mouse on window
+  bool mouseOnWindow = false;
+
   // -- default ctor
   Camera();
 
@@ -90,6 +93,25 @@ private:
                                    double yoffset);
 
   void scrollCallback(double xoffset, double yoffset);
+
+  void cursorEnterCallback(GLFWwindow* window, int entered){
+    if (entered) {
+      // The cursor entered the window
+      std::cout << "Cursor entered the window." << std::endl;
+      this->mouseOnWindow = true;
+    } else {
+      // The cursor left the window
+      std::cout << "Cursor left the window." << std::endl;
+      this->mouseOnWindow = false;
+    }
+  }
+
+  static void staticCursorEnterCallback(GLFWwindow *window, int entered) {
+    Camera* instance = static_cast<Camera*>(glfwGetWindowUserPointer(window));
+    if (instance) {
+      instance->cursorEnterCallback(window, entered);
+    }
+  }
 };
 
 } // namespace gtp

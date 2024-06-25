@@ -40,59 +40,61 @@ void Engine::Run() {
     this->deltaTime = now - this->lastTime;
     this->lastTime = now;
 
-    // handle input
-    userInput();
+    if (camera->activeWindow) {
 
-    // update ui
-    this->UpdateUI();
+      // handle input
+      userInput();
 
-    // draw
-    Draw();
+      // update ui
+      this->UpdateUI();
 
-    if (this->UI.modelData.loadModel) {
-      this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
-      this->renderers.mainRenderer.LoadModel(
-          this->renderers.mainRenderer.assets.modelData.loadModelFilepath);
-      this->renderers.mainRenderer.UpdateGeometryNodesBuffer(
-          this->renderers.mainRenderer.assets
-              .models[this->renderers.mainRenderer.assets.models.size() - 1]);
-      std::cout
-          << "loaded model name from engine: "
-          << this->renderers.mainRenderer.assets
-                 .models[this->renderers.mainRenderer.assets.models.size() - 1]
-                 ->modelName
-          << std::endl;
-      this->renderers.mainRenderer.assets.modelData.loadModel = false;
-      this->renderers.mainRenderer.assets.modelData.loadModelFilepath = " ";
-      this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
+      // draw
+      Draw();
+
+      if (this->UI.modelData.loadModel) {
+        this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
+        this->renderers.mainRenderer.LoadModel(
+            this->renderers.mainRenderer.assets.modelData.loadModelFilepath);
+        this->renderers.mainRenderer.UpdateGeometryNodesBuffer(
+            this->renderers.mainRenderer.assets
+                .models[this->renderers.mainRenderer.assets.models.size() - 1]);
+        std::cout
+            << "loaded model name from engine: "
+            << this->renderers.mainRenderer.assets
+                   .models[this->renderers.mainRenderer.assets.models.size() -
+                           1]
+                   ->modelName
+            << std::endl;
+        this->renderers.mainRenderer.assets.modelData.loadModel = false;
+        this->renderers.mainRenderer.assets.modelData.loadModelFilepath = " ";
+        this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
+      }
+
+      if (this->UI.modelData.deleteModel) {
+        this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
+        // this->renderers.mainRenderer.UpdateGeometryNodesBuffer(
+        //     this->renderers.mainRenderer.assets
+        //         .models[this->UI.modelData.modelIndex]);
+        this->renderers.mainRenderer.DeleteModel(
+            this->renderers.mainRenderer.assets
+                .models[this->UI.modelData.modelIndex]);
+
+        this->renderers.mainRenderer.assets.modelData.deleteModel = false;
+        this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
+        this->UI.modelData.isUpdated = true;
+      }
+
+      // -- if model data in ui has been changed
+      if (this->UI.modelData.isUpdated) {
+        // -- update renderer model data struct with ui
+        this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
+        this->renderers.mainRenderer.assets.modelData.isUpdated = false;
+        // -- update ui data to updated renderer model data with updated flags
+        this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
+      }
     }
-
-    if (this->UI.modelData.deleteModel) {
-      this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
-      // this->renderers.mainRenderer.UpdateGeometryNodesBuffer(
-      //     this->renderers.mainRenderer.assets
-      //         .models[this->UI.modelData.modelIndex]);
-      this->renderers.mainRenderer.DeleteModel(
-          this->renderers.mainRenderer.assets
-              .models[this->UI.modelData.modelIndex]);
-
-      this->renderers.mainRenderer.assets.modelData.deleteModel = false;
-      this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
-      this->UI.modelData.isUpdated = true;
-    }
-
-    // -- if model data in ui has been changed
-    if (this->UI.modelData.isUpdated) {
-      // -- update renderer model data struct with ui
-      this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
-      this->renderers.mainRenderer.assets.modelData.isUpdated = false;
-      // -- update ui data to updated renderer model data with updated flags
-      this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
-    }
-
     // set to false - wont update buffers again unless view changes
     pEngineCore->camera->viewUpdated = false;
-
     this->timer += deltaTime;
   }
 }
@@ -145,6 +147,7 @@ void Engine::userInput() {
 
   auto xoffset = static_cast<float>(posX - lastX);
   auto yoffset = static_cast<float>(lastY - posY);
+
   lastX = posX;
   lastY = posY;
 

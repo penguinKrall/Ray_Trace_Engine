@@ -33,6 +33,12 @@ public:
 
   CoreWindow();
 
+  double lastX = 0.0f;
+  double lastY = 0.0f;
+
+  double posX = 0.0f;
+  double posY = 0.0f;
+
   VkClearValue colorClearValue{};
   VkClearValue depthClearValue{};
 
