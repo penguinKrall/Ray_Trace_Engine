@@ -53,6 +53,6 @@ void main() {
     rayPayload.distance = -100.0f;
     rayPayload.normal = vec3(1.0f);
     rayPayload.reflector = 1.0f;
-    rayPayload.colorID = vec4(0.0f);
+    rayPayload.colorID = vec4(vec3(0.0f), 1.0f);
 }
 

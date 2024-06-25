@@ -1,18 +1,7 @@
 #pragma once
 
-#include <EngineCore.hpp>
-// #include <Raytracing.hpp>
-// #include <glTFShadows.hpp>
-// #include <glTFTextured.hpp>
-// #include <glTFAnimation.hpp>
 #include <CoreUI.hpp>
-// #include <glTF_PBR.hpp>
-// #include <Math_Compute.hpp>
-// #include <glTF_Reflections.hpp>
-// #include <Multi_Model.hpp>
-// #include <Complex_Scene.hpp>
-// #include <multi_blas.hpp>
-// #include <Build_Scene.hpp>
+#include <EngineCore.hpp>
 #include <MainRenderer.hpp>
 
 namespace gtp {

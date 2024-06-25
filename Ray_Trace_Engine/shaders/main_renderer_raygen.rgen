@@ -49,6 +49,7 @@ void main(){
 		    rayPayload.reflector = 1.0f;
 		    rayPayload.normal = vec3(1.0f);
 				//rayPayload.colorID = 0.0f;
+				bool isColorIDImageStored = false;
 
 				//ray coords
 				const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5);
@@ -68,10 +69,16 @@ void main(){
 
 						for (int i = 0; i < MAX_RECURSION; i++) {
 										
-										//if(rayPayload.semiTransparentFlag == 0){
+										// trace rays opaque to get all color
 										traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, origin.xyz, tmin, direction.xyz, tmax, 0);
-										//}
+										
+										// store object id image without transparency trace
+										if(!isColorIDImageStored){
+												imageStore(objectIDImage, ivec2(gl_LaunchIDEXT.xy), vec4(rayPayload.colorID.rgb, 1.0f));
+												isColorIDImageStored = true;
+										}
 
+										// transparency ray trace
 										if(rayPayload.semiTransparentFlag == 1){
 												traceRayEXT(topLevelAS, gl_RayFlagsNoneEXT, 0xff, 0, 0, 0, origin.xyz, tmin, direction.xyz, tmax, 0);
 										}
@@ -103,7 +110,6 @@ void main(){
 				vec3 hitVal = hitValues;
 
 				imageStore(image, ivec2(gl_LaunchIDEXT.xy), vec4(hitVal, 1.0f));
-				hitVal = rayPayload.colorID.rgb;
-				imageStore(objectIDImage, ivec2(gl_LaunchIDEXT.xy), vec4(hitVal, 1.0f));
+
 
 }

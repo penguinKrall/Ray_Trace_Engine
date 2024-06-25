@@ -36,8 +36,9 @@ public:
     gtp::Buffer blas_scratch{};
     gtp::Buffer second_blas_scratch{};
     gtp::Buffer tlas_scratch{};
-    gtp::Buffer tlas_instancesBuffer;
-    gtp::Buffer ubo;
+    gtp::Buffer tlas_instancesBuffer{};
+    gtp::Buffer ubo{};
+    gtp::Buffer colorIDImageBuffer{};
   };
 
   // -- assets data struct
@@ -90,7 +91,7 @@ public:
   Utilities_AS::StorageImage storageImage{};
 
   // -- storage image
-  Utilities_AS::StorageImage positionStorageImage{};
+  Utilities_AS::StorageImage colorIDStorageImage{};
 
   // -- uniform data
   UniformData uniformData{};
@@ -151,6 +152,13 @@ public:
 
   // -- create storage image
   void CreateStorageImages();
+
+  // -- create color id image buffer
+  void CreateColorIDImageBuffer();
+
+  // -- retrieve object id from image
+  // -- copy object id image to buffer
+  void RetrieveObjectIDFromImage(int frame);
 
   // -- create uniform buffer
   void CreateUniformBuffer();

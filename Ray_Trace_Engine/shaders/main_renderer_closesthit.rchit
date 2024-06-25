@@ -58,40 +58,58 @@ layout(binding = 8, set = 0) uniform sampler2D textures[];
 #include "main_renderer_geometrytypes.glsl"
 
 void main() {
-    uint instanceCustomIndex = gl_InstanceCustomIndexEXT;
-    Triangle tri = unpackTriangle2(gl_PrimitiveID, 112);
-    GeometryNode geometryNode = g_nodes_buffer.nodes[gl_GeometryIndexEXT + g_nodes_indices.indices[instanceCustomIndex].offset];
-    rayPayload.semiTransparentFlag = geometryNode.semiTransparentFlag;
-     rayPayload.colorID = vec4(vec3(geometryNode.objectColorID), 1.0f);
-    vec4 color = vec4(1.0f); // Default color
 
+    //get geometry node index
+    uint instanceCustomIndex = gl_InstanceCustomIndexEXT;
+
+    //unpack triangles
+    Triangle tri = unpackTriangle2(gl_PrimitiveID, 112);
+
+    //get geometry node data from buffer
+    GeometryNode geometryNode = g_nodes_buffer.nodes[gl_GeometryIndexEXT + g_nodes_indices.indices[instanceCustomIndex].offset];
+
+    //set ray payload semi transparent flag
+    rayPayload.semiTransparentFlag = geometryNode.semiTransparentFlag;
+
+    //set ray payload color ID data
+    rayPayload.colorID = vec4(vec3(geometryNode.objectColorID), 1.0f);
+
+    //default color
+    vec4 color = vec4(1.0f);
+
+    //assign texture color if geometry node has texture
     if (geometryNode.textureIndexBaseColor > -1) {
 
         color = texture(textures[nonuniformEXT(geometryNode.textureIndexBaseColor)], tri.uv);
 
+        //set semi transparency flag according to base color alpha
         if(color.a < 1.0f){
             rayPayload.semiTransparentFlag = 1;
         }
     } 
     
+    //assign vertex color to color if no texture
     else {
         color = vec4(tri.color.rgb, 1.0f); // Use vertex color if no texture
     }
 
-   // Apply transparency only to the third model (custom index 2)
-   //if (geometryNode.semiTransparentFlag == 1) {
-   //    float transparency = 0.5; // Example transparency value
-   //    color *= transparency;
-   //}
-
+    //assign occlusion color map if model has one -- currently unused?
     if (geometryNode.textureIndexOcclusion > -1) {
         float occlusion = texture(textures[nonuniformEXT(geometryNode.textureIndexOcclusion)], tri.uv).r;
         color *= occlusion;
     }
 
+    //distance used by reflection
     rayPayload.distance = gl_RayTmaxEXT;
+
+    //assign ray payload normal from tri - can rewrite this to use normal map texture if available
     rayPayload.normal = normalize(tri.normal.xyz);
+
+    //assign ray payload color
     rayPayload.color = color.rgb;
+
+    //assign ray payload index - referred to in ray gen?
+    rayPayload.index = float(gl_InstanceCustomIndexEXT);
 
     // Basic lighting
     vec3 lightVector = normalize(ubo.lightPos.xyz);
@@ -108,12 +126,11 @@ void main() {
     // Objects with full white vertex color are treated as reflectors
     rayPayload.reflector = ((color.r == 1.0f) && (color.g == 1.0f) && (color.b == 1.0f)) ? 1.0f : 0.0f;
 
-    rayPayload.index = float(gl_InstanceCustomIndexEXT);
-
     // Trace shadow ray and offset indices to match shadow hit/miss shader group indices
     traceRayEXT(topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT | gl_RayFlagsSkipClosestHitShaderEXT,
         0xFF, 0, 0, 1, origin, tmin, lightVector, tmax, 2);
-
+    
+    //blend shadow
     if (shadowed) {
         rayPayload.color *= 0.7;
     }

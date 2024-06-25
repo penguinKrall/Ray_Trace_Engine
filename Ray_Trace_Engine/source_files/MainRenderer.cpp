@@ -36,6 +36,9 @@ void MainRenderer::Init_MainRenderer(EngineCore *coreBase) {
 
   std::cout << "\nfinished creating storage image" << std::endl;
 
+  // create color id image buffer
+  this->CreateColorIDImageBuffer();
+
   // create uniform buffer
   this->CreateUniformBuffer();
 
@@ -529,23 +532,97 @@ void MainRenderer::CreateStorageImages() {
   Utilities_AS::createStorageImage(this->pEngineCore, &this->storageImage,
                                    "mainRenderer_storageImage");
 
-  // position storage image
+  // color id storage image
   Utilities_AS::createStorageImage(this->pEngineCore,
-                                   &this->positionStorageImage,
-                                   "mainRenderer_positionStorageImage");
+                                   &this->colorIDStorageImage,
+                                   "mainRenderer_colorIDStorageImage");
+}
+
+void MainRenderer::CreateColorIDImageBuffer() {
+  // name color image id buffer
+  buffers.colorIDImageBuffer.bufferData.bufferName = "Color_Image_ID_Buffer";
+  buffers.colorIDImageBuffer.bufferData.bufferMemoryName =
+      "Color_Image_ID_BufferMemory";
+
+  // buffer size
+  VkDeviceSize bufferSize =
+      pEngineCore->swapchainData.swapchainExtent2D.width *
+      pEngineCore->swapchainData.swapchainExtent2D.height * 4;
+
+  // create color id image buffer
+  validate_vk_result(pEngineCore->CreateBuffer(
+      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+      &buffers.colorIDImageBuffer, bufferSize, nullptr));
+}
+
+void MainRenderer::RetrieveObjectIDFromImage(int frame) {
+
+  // subresource range
+  VkImageSubresourceRange subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1,
+                                              0, 1};
+
+  // set color ID image layout to transfer src optimal
+  gtp::Utilities_EngCore::setImageLayout(
+      pEngineCore->commandBuffers.graphics[frame], colorIDStorageImage.image,
+      VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      subresourceRange);
+
+  // copy region
+  VkBufferImageCopy region{};
+  region.bufferOffset = 0;
+  region.bufferRowLength = 0;
+  region.bufferImageHeight = 0;
+  region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  region.imageSubresource.mipLevel = 0;
+  region.imageSubresource.baseArrayLayer = 0;
+  region.imageSubresource.layerCount = 1;
+  region.imageOffset = {0, 0, 0};
+  region.imageExtent = {pEngineCore->swapchainData.swapchainExtent2D.width,
+                        pEngineCore->swapchainData.swapchainExtent2D.height, 1};
+
+  // vkCmdCopyImageToBuffer(pEngineCore->commandBuffers.graphics[frame],
+  // colorIDStorageImage.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer, 1,
+  // &region);
+
+  //// Map the buffer memory
+  // void* data;
+  // vkMapMemory(device, bufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
+  //
+  //// Adjust mouse coordinates if necessary
+  // int adjustedY = imageHeight - 1 - mouseY;
+  //
+  //// Calculate the index
+  // int index = (adjustedY * imageWidth + mouseX) * 4;
+  //
+  //// Retrieve the color at the mouse position
+  // uint8_t* pixel = static_cast<uint8_t*>(data) + index;
+  // uint8_t red = pixel[0];
+  // uint8_t green = pixel[1];
+  // uint8_t blue = pixel[2];
+  // uint8_t alpha = pixel[3];
+  //
+  //// Unmap the buffer memory
+  // vkUnmapMemory(device, bufferMemory);
+  //
+  //// Identify the object using the color
+  // uint32_t objectID = (red << 16) | (green << 8) | blue;
+  //
+  // std::cout << "Selected Object ID: " << objectID << std::endl;
 }
 
 void MainRenderer::CreateUniformBuffer() {
 
-  buffers.ubo.bufferData.bufferName = "shadowUBOBuffer";
-  buffers.ubo.bufferData.bufferMemoryName = "shadowUBOBufferMemory";
+  buffers.ubo.bufferData.bufferName = "UBOBuffer";
+  buffers.ubo.bufferData.bufferMemoryName = "UBOBufferMemory";
 
   if (pEngineCore->CreateBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                 &buffers.ubo, sizeof(UniformData),
                                 &uniformData) != VK_SUCCESS) {
-    throw std::invalid_argument("failed to create shadow uniform buffer!");
+    throw std::invalid_argument("failed to create  uniform buffer!");
   }
 
   UpdateUniformBuffer(0.0f);
@@ -610,8 +687,8 @@ void MainRenderer::CreateRayTracingPipeline() {
           1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1,
           VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
 
-  // position storage image layout binding
-  VkDescriptorSetLayoutBinding positionStorageImageLayoutBinding =
+  // color id storage image layout binding
+  VkDescriptorSetLayoutBinding colorIDStorageImageLayoutBinding =
       gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
           2, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1,
           VK_SHADER_STAGE_RAYGEN_BIT_KHR, nullptr);
@@ -667,7 +744,7 @@ void MainRenderer::CreateRayTracingPipeline() {
   std::vector<VkDescriptorSetLayoutBinding> bindings({
       accelerationStructureLayoutBinding,
       storageImageLayoutBinding,
-      positionStorageImageLayoutBinding,
+      colorIDStorageImageLayoutBinding,
       uniformBufferLayoutBinding,
       g_node_bufferLayoutBinding,
       g_node_indicesLayoutBinding,
@@ -776,7 +853,7 @@ void MainRenderer::CreateRayTracingPipeline() {
     shaderStages.push_back(shader.loadShader(
         projDirectory.string() +
             "/shaders/compiled/main_renderer_shadow.rmiss.spv",
-        VK_SHADER_STAGE_MISS_BIT_KHR, "main_renderer_shadowmiss"));
+        VK_SHADER_STAGE_MISS_BIT_KHR, "main_renderer_miss_shadow"));
     shaderGroup.generalShader = static_cast<uint32_t>(shaderStages.size()) - 1;
     shaderGroups.push_back(shaderGroup);
   }
@@ -886,10 +963,9 @@ void MainRenderer::CreateShaderBindingTable() {
   try {
     // create buffers
     // raygen
-    raygenShaderBindingTable.bufferData.bufferName =
-        "shadowRaygenShaderBindingTable";
+    raygenShaderBindingTable.bufferData.bufferName = "RaygenShaderBindingTable";
     raygenShaderBindingTable.bufferData.bufferMemoryName =
-        "shadowRaygenShaderBindingTableMemory";
+        "RaygenShaderBindingTableMemory";
     if (pEngineCore->CreateBuffer(bufferUsageFlags, memoryUsageFlags,
                                   &raygenShaderBindingTable, handleSize,
                                   nullptr) != VK_SUCCESS) {
@@ -897,10 +973,9 @@ void MainRenderer::CreateShaderBindingTable() {
     }
 
     // miss
-    missShaderBindingTable.bufferData.bufferName =
-        "shadowMissShaderBindingTable";
+    missShaderBindingTable.bufferData.bufferName = "MissShaderBindingTable";
     missShaderBindingTable.bufferData.bufferMemoryName =
-        "shadowMissShaderBindingTableMemory";
+        "MissShaderBindingTableMemory";
     if (pEngineCore->CreateBuffer(bufferUsageFlags, memoryUsageFlags,
                                   &missShaderBindingTable, handleSize * 2,
                                   nullptr) != VK_SUCCESS) {
@@ -908,9 +983,9 @@ void MainRenderer::CreateShaderBindingTable() {
     }
 
     // hit
-    hitShaderBindingTable.bufferData.bufferName = "shadowHitShaderBindingTable";
+    hitShaderBindingTable.bufferData.bufferName = "HitShaderBindingTable";
     hitShaderBindingTable.bufferData.bufferMemoryName =
-        "shadowHitShaderBindingTableMemory";
+        "HitShaderBindingTableMemory";
     if (pEngineCore->CreateBuffer(bufferUsageFlags, memoryUsageFlags,
                                   &hitShaderBindingTable, handleSize * 2,
                                   nullptr) != VK_SUCCESS) {
@@ -1037,17 +1112,17 @@ void MainRenderer::CreateDescriptorSet() {
   storageImageWrite.pImageInfo = &storageImageDescriptor;
   storageImageWrite.descriptorCount = 1;
 
-  VkDescriptorImageInfo positionStorageImageDescriptor{
-      VK_NULL_HANDLE, positionStorageImage.view, VK_IMAGE_LAYOUT_GENERAL};
+  VkDescriptorImageInfo colorIDStorageImageDescriptor{
+      VK_NULL_HANDLE, colorIDStorageImage.view, VK_IMAGE_LAYOUT_GENERAL};
 
   // storage/result image write
-  VkWriteDescriptorSet positionStorageImageWrite{};
-  positionStorageImageWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  positionStorageImageWrite.dstSet = pipelineData.descriptorSet;
-  positionStorageImageWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-  positionStorageImageWrite.dstBinding = 2;
-  positionStorageImageWrite.pImageInfo = &positionStorageImageDescriptor;
-  positionStorageImageWrite.descriptorCount = 1;
+  VkWriteDescriptorSet colorIDStorageImageWrite{};
+  colorIDStorageImageWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  colorIDStorageImageWrite.dstSet = pipelineData.descriptorSet;
+  colorIDStorageImageWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+  colorIDStorageImageWrite.dstBinding = 2;
+  colorIDStorageImageWrite.pImageInfo = &colorIDStorageImageDescriptor;
+  colorIDStorageImageWrite.descriptorCount = 1;
 
   // ubo descriptor info
   VkDescriptorBufferInfo uboDescriptor{};
@@ -1126,7 +1201,7 @@ void MainRenderer::CreateDescriptorSet() {
       // Binding 1: Ray tracing result image
       storageImageWrite,
       // Binding 1: Ray tracing result image
-      positionStorageImageWrite,
+      colorIDStorageImageWrite,
       // Binding 2: Uniform data
       uniformBufferWrite,
       // Binding 3: g_nodes_buffer write
@@ -1339,69 +1414,72 @@ void MainRenderer::RebuildCommandBuffers(int frame, bool showObjectColorID) {
 
   if (!showObjectColorID) {
 
-  gtp::Utilities_EngCore::setImageLayout(
-      pEngineCore->commandBuffers.graphics[frame], storageImage.image,
-      VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      subresourceRange);
+    gtp::Utilities_EngCore::setImageLayout(
+        pEngineCore->commandBuffers.graphics[frame], storageImage.image,
+        VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        subresourceRange);
 
-  VkImageCopy copyRegion{};
-  copyRegion.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-  copyRegion.srcOffset = {0, 0, 0};
-  copyRegion.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-  copyRegion.dstOffset = {0, 0, 0};
-  copyRegion.extent = {pEngineCore->swapchainData.swapchainExtent2D.width,
-                       pEngineCore->swapchainData.swapchainExtent2D.height, 1};
+    VkImageCopy copyRegion{};
+    copyRegion.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    copyRegion.srcOffset = {0, 0, 0};
+    copyRegion.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    copyRegion.dstOffset = {0, 0, 0};
+    copyRegion.extent = {pEngineCore->swapchainData.swapchainExtent2D.width,
+                         pEngineCore->swapchainData.swapchainExtent2D.height,
+                         1};
 
-  vkCmdCopyImage(pEngineCore->commandBuffers.graphics[frame],
-                 storageImage.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                 pEngineCore->swapchainData.swapchainImages.image[frame],
-                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+    vkCmdCopyImage(pEngineCore->commandBuffers.graphics[frame],
+                   storageImage.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                   pEngineCore->swapchainData.swapchainImages.image[frame],
+                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
-  // transition swap chain image back for presentation
-  gtp::Utilities_EngCore::setImageLayout(
-      pEngineCore->commandBuffers.graphics[frame],
-      pEngineCore->swapchainData.swapchainImages.image[frame],
-      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-      subresourceRange);
+    // transition swap chain image back for presentation
+    gtp::Utilities_EngCore::setImageLayout(
+        pEngineCore->commandBuffers.graphics[frame],
+        pEngineCore->swapchainData.swapchainImages.image[frame],
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        subresourceRange);
 
-  // transition ray tracing output image back to general layout
-  gtp::Utilities_EngCore::setImageLayout(
-      pEngineCore->commandBuffers.graphics[frame], storageImage.image,
-      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
-      subresourceRange);
+    // transition ray tracing output image back to general layout
+    gtp::Utilities_EngCore::setImageLayout(
+        pEngineCore->commandBuffers.graphics[frame], storageImage.image,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
+        subresourceRange);
   }
 
   else {
     gtp::Utilities_EngCore::setImageLayout(
-      pEngineCore->commandBuffers.graphics[frame], positionStorageImage.image,
-      VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      subresourceRange);
+        pEngineCore->commandBuffers.graphics[frame], colorIDStorageImage.image,
+        VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        subresourceRange);
 
     VkImageCopy copyRegion{};
-    copyRegion.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
-    copyRegion.srcOffset = { 0, 0, 0 };
-    copyRegion.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
-    copyRegion.dstOffset = { 0, 0, 0 };
-    copyRegion.extent = { pEngineCore->swapchainData.swapchainExtent2D.width,
-                         pEngineCore->swapchainData.swapchainExtent2D.height, 1 };
+    copyRegion.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    copyRegion.srcOffset = {0, 0, 0};
+    copyRegion.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    copyRegion.dstOffset = {0, 0, 0};
+    copyRegion.extent = {pEngineCore->swapchainData.swapchainExtent2D.width,
+                         pEngineCore->swapchainData.swapchainExtent2D.height,
+                         1};
 
     vkCmdCopyImage(pEngineCore->commandBuffers.graphics[frame],
-      positionStorageImage.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      pEngineCore->swapchainData.swapchainImages.image[frame],
-      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+                   colorIDStorageImage.image,
+                   VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                   pEngineCore->swapchainData.swapchainImages.image[frame],
+                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
     // transition swap chain image back for presentation
     gtp::Utilities_EngCore::setImageLayout(
-      pEngineCore->commandBuffers.graphics[frame],
-      pEngineCore->swapchainData.swapchainImages.image[frame],
-      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-      subresourceRange);
+        pEngineCore->commandBuffers.graphics[frame],
+        pEngineCore->swapchainData.swapchainImages.image[frame],
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        subresourceRange);
 
     // transition ray tracing output image back to general layout
     gtp::Utilities_EngCore::setImageLayout(
-      pEngineCore->commandBuffers.graphics[frame], positionStorageImage.image,
-      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
-      subresourceRange);
+        pEngineCore->commandBuffers.graphics[frame], colorIDStorageImage.image,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
+        subresourceRange);
   }
 }
 
@@ -1977,17 +2055,17 @@ void MainRenderer::UpdateDescriptorSet() {
   storageImageWrite.pImageInfo = &storageImageDescriptor;
   storageImageWrite.descriptorCount = 1;
 
-  VkDescriptorImageInfo positionStorageImageDescriptor{
-      VK_NULL_HANDLE, positionStorageImage.view, VK_IMAGE_LAYOUT_GENERAL};
+  VkDescriptorImageInfo colorIDStorageImageDescriptor{
+      VK_NULL_HANDLE, colorIDStorageImage.view, VK_IMAGE_LAYOUT_GENERAL};
 
   // storage/result image write
-  VkWriteDescriptorSet positionStorageImageWrite{};
-  positionStorageImageWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  positionStorageImageWrite.dstSet = pipelineData.descriptorSet;
-  positionStorageImageWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-  positionStorageImageWrite.dstBinding = 2;
-  positionStorageImageWrite.pImageInfo = &positionStorageImageDescriptor;
-  positionStorageImageWrite.descriptorCount = 1;
+  VkWriteDescriptorSet colorIDStorageImageWrite{};
+  colorIDStorageImageWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  colorIDStorageImageWrite.dstSet = pipelineData.descriptorSet;
+  colorIDStorageImageWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+  colorIDStorageImageWrite.dstBinding = 2;
+  colorIDStorageImageWrite.pImageInfo = &colorIDStorageImageDescriptor;
+  colorIDStorageImageWrite.descriptorCount = 1;
 
   // ubo descriptor info
   VkDescriptorBufferInfo uboDescriptor{};
@@ -2066,7 +2144,7 @@ void MainRenderer::UpdateDescriptorSet() {
       // Binding 1: Ray tracing result image
       storageImageWrite,
       // Binding 1: Ray tracing result image
-      positionStorageImageWrite,
+      colorIDStorageImageWrite,
       // Binding 2: Uniform data
       uniformBufferWrite,
       // Binding 3: g_nodes_buffer write
@@ -2125,11 +2203,11 @@ void MainRenderer::HandleResize() {
   vkFreeMemory(pEngineCore->devices.logical, storageImage.memory, nullptr);
 
   // Delete allocated resources
-  vkDestroyImageView(pEngineCore->devices.logical, positionStorageImage.view,
+  vkDestroyImageView(pEngineCore->devices.logical, colorIDStorageImage.view,
                      nullptr);
-  vkDestroyImage(pEngineCore->devices.logical, positionStorageImage.image,
+  vkDestroyImage(pEngineCore->devices.logical, colorIDStorageImage.image,
                  nullptr);
-  vkFreeMemory(pEngineCore->devices.logical, positionStorageImage.memory,
+  vkFreeMemory(pEngineCore->devices.logical, colorIDStorageImage.memory,
                nullptr);
 
   // Recreate image
@@ -2179,12 +2257,12 @@ void MainRenderer::Destroy_MainRenderer() {
   vkFreeMemory(pEngineCore->devices.logical, this->storageImage.memory,
                nullptr);
 
-  // -- position storage image
+  // -- color id storage image
   vkDestroyImageView(pEngineCore->devices.logical,
-                     this->positionStorageImage.view, nullptr);
-  vkDestroyImage(pEngineCore->devices.logical, this->positionStorageImage.image,
+                     this->colorIDStorageImage.view, nullptr);
+  vkDestroyImage(pEngineCore->devices.logical, this->colorIDStorageImage.image,
                  nullptr);
-  vkFreeMemory(pEngineCore->devices.logical, this->positionStorageImage.memory,
+  vkFreeMemory(pEngineCore->devices.logical, this->colorIDStorageImage.memory,
                nullptr);
 
   // g node buffer
@@ -2238,6 +2316,9 @@ void MainRenderer::Destroy_MainRenderer() {
 
   // transforms buffer
   this->buffers.transformBuffer.destroy(this->pEngineCore->devices.logical);
+
+  // color id image buffer
+  this->buffers.colorIDImageBuffer.destroy(this->pEngineCore->devices.logical);
 
   // -- compute class
   for (int i = 0; i < this->gltfCompute.size(); i++) {
