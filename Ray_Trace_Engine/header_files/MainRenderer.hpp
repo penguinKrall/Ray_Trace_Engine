@@ -158,7 +158,7 @@ public:
 
   // -- retrieve object id from image
   // -- copy object id image to buffer
-  void RetrieveObjectIDFromImage(int frame);
+  void RetrieveObjectIDFromImage();
 
   // -- create uniform buffer
   void CreateUniformBuffer();

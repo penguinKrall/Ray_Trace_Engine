@@ -51,6 +51,10 @@ void Engine::Run() {
       // draw
       Draw();
 
+      if (this->pEngineCore->camera->mouseOnWindow) {
+        this->renderers.mainRenderer.RetrieveObjectIDFromImage();
+      }
+
       if (this->UI.modelData.loadModel) {
         this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
         this->renderers.mainRenderer.LoadModel(
