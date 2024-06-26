@@ -47,6 +47,13 @@ public:
     std::vector<int> semiTransparentFlag;
   };
 
+  struct LoadModelFlags {
+    bool none = false;
+    bool preTransform = false;
+    bool preMultiplyColors = false;
+    bool flipY = false;
+  };
+
   struct RenderData {
     bool showColorImage = true;
     bool showIDImage = false;

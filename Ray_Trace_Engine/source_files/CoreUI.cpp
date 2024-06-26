@@ -921,66 +921,54 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
   // floating window
   ImGui::Begin("controls");
 
-  if (ImGui::Button("Open File Dialog")) {
-    IGFD::FileDialogConfig config;
-    config.path = ".";
-    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File",
-                                            ".gltf", config);
-  }
+  if (ImGui::BeginCombo(
+          "Model", pModelData->modelName[pModelData->modelIndex].c_str())) {
 
-  if (ImGui::Button("Show Object Color IDS ON")) {
-    this->rendererData.showColorImage = false;
-    this->rendererData.showIDImage = true;
-  }
+    for (int i = 0; i < pModelData->modelName.size(); ++i) {
+      bool isSelected = (pModelData->modelIndex == i);
+      if (ImGui::Selectable(pModelData->modelName[i].c_str(), isSelected)) {
+        pModelData->modelIndex = i;
 
-  if (ImGui::Button("Show Object Color IDS OFF")) {
-    this->rendererData.showColorImage = true;
-    this->rendererData.showIDImage = false;
-  }
+        std::cout << "Selected Model: "
+                  << pModelData->modelName[pModelData->modelIndex] << std::endl;
+      }
 
-  // display
-  if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey")) {
-    if (ImGuiFileDialog::Instance()->IsOk()) { // action if OK
-                                               // std::string filePathName =
-       this->modelData.loadModelFilepath = ImGuiFileDialog::Instance()->GetFilePathName();
-       this->modelData.loadModel = true;
-       //std::string filePath =
-      // ImGuiFileDialog::Instance()->GetCurrentPath(); std::cout <<
-      // "filePathName: " << filePath << std::endl;
-      //   action
+      if (isSelected) {
+        ImGui::SetItemDefaultFocus();
+      }
     }
 
-    // close
-    ImGuiFileDialog::Instance()->Close();
+    ImGui::EndCombo();
+  }
+
+  if (ImGui::CollapsingHeader("Add/Delete Model")) {
+
+    if (ImGui::Button("Open File")) {
+      IGFD::FileDialogConfig config;
+      config.path = ".";
+      ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File",
+                                              ".gltf", config);
+    }
+    // display
+    if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey")) {
+      if (ImGuiFileDialog::Instance()->IsOk()) {
+        this->modelData.loadModelFilepath =
+            ImGuiFileDialog::Instance()->GetFilePathName();
+        this->modelData.loadModel = true;
+      }
+
+      // close
+      ImGuiFileDialog::Instance()->Close();
+    }
+
+    // delete model
+    if (ImGui::Button("Delete Model")) {
+      this->modelData.deleteModel = true;
+    }
   }
 
   if (pModelData->modelName.size() != 0) {
     if (ImGui::CollapsingHeader("Model Controls")) {
-
-      if (ImGui::Button("Delete Model")) {
-        this->modelData.deleteModel = true;
-      }
-
-      if (ImGui::BeginCombo(
-              "Model", pModelData->modelName[pModelData->modelIndex].c_str())) {
-
-        for (int i = 0; i < pModelData->modelName.size(); ++i) {
-          bool isSelected = (pModelData->modelIndex == i);
-          if (ImGui::Selectable(pModelData->modelName[i].c_str(), isSelected)) {
-            pModelData->modelIndex = i;
-
-            std::cout << "Selected Model: "
-                      << pModelData->modelName[pModelData->modelIndex]
-                      << std::endl;
-          }
-
-          if (isSelected) {
-            ImGui::SetItemDefaultFocus();
-          }
-        }
-
-        ImGui::EndCombo();
-      }
 
       if (ImGui::BeginCombo(
               "Animation",
@@ -1098,6 +1086,18 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
                       << std::endl;
           }
         }
+      }
+    }
+    if (ImGui::CollapsingHeader("Render/Debug Controls")) {
+
+      if (ImGui::Button("Show Object Color IDS ON")) {
+        this->rendererData.showColorImage = false;
+        this->rendererData.showIDImage = true;
+      }
+
+      if (ImGui::Button("Show Object Color IDS OFF")) {
+        this->rendererData.showColorImage = true;
+        this->rendererData.showIDImage = false;
       }
     }
   } else {
