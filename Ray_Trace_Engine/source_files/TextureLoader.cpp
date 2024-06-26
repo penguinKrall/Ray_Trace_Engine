@@ -1054,28 +1054,28 @@ void TextureLoader::LoadCubemap() {
   std::vector<stbi_uc *> imageData = {
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/desert_cartoon_sunset/px.png", &width,
-          &height, &imageSize)},
+          "/assets/textures/cubemaps/dusk2/px.png", &width, &height,
+          &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/desert_cartoon_sunset/nx.png", &width,
-          &height, &imageSize)},
+          "/assets/textures/cubemaps/dusk2/nx.png", &width, &height,
+          &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/desert_cartoon_sunset/py.png", &width,
-          &height, &imageSize)},
+          "/assets/textures/cubemaps/dusk2/py.png", &width, &height,
+          &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/desert_cartoon_sunset/ny.png", &width,
-          &height, &imageSize)},
+          "/assets/textures/cubemaps/dusk2/ny.png", &width, &height,
+          &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/desert_cartoon_sunset/pz.png", &width,
-          &height, &imageSize)},
+          "/assets/textures/cubemaps/dusk2/pz.png", &width, &height,
+          &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/desert_cartoon_sunset/nz.png", &width,
-          &height, &imageSize)}};
+          "/assets/textures/cubemaps/dusk2/nz.png", &width, &height,
+          &imageSize)}};
 
   // Calculate the image size and the layer size.
   const VkDeviceSize cubemapImageSize = width * height * 4 * 6;

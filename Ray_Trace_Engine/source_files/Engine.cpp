@@ -43,59 +43,32 @@ void Engine::Run() {
     if (camera->activeWindow) {
 
       // handle input
-      userInput();
+      this->userInput();
 
       // update ui
       this->UpdateUI();
 
       // draw
-      Draw();
+      this->Draw();
 
-      if (this->pEngineCore->camera->mouseOnWindow) {
-        this->renderers.mainRenderer.RetrieveObjectIDFromImage();
-      }
+      //retrieve object id from image
+      this->RetrieveColorID();
 
-      if (this->UI.modelData.loadModel) {
-        this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
-        this->renderers.mainRenderer.LoadModel(
-            this->renderers.mainRenderer.assets.modelData.loadModelFilepath);
-        this->renderers.mainRenderer.UpdateGeometryNodesBuffer(
-            this->renderers.mainRenderer.assets
-                .models[this->renderers.mainRenderer.assets.models.size() - 1]);
-        std::cout
-            << "loaded model name from engine: "
-            << this->renderers.mainRenderer.assets
-                   .models[this->renderers.mainRenderer.assets.models.size() -
-                           1]
-                   ->modelName
-            << std::endl;
-        this->renderers.mainRenderer.assets.modelData.loadModel = false;
-        this->renderers.mainRenderer.assets.modelData.loadModelFilepath = " ";
-        this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
-      }
+      // load new models
+      this->LoadModel();
 
-      if (this->UI.modelData.deleteModel) {
-        this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
-        // this->renderers.mainRenderer.UpdateGeometryNodesBuffer(
-        //     this->renderers.mainRenderer.assets
-        //         .models[this->UI.modelData.modelIndex]);
-        this->renderers.mainRenderer.DeleteModel(
-            this->renderers.mainRenderer.assets
-                .models[this->UI.modelData.modelIndex]);
-
-        this->renderers.mainRenderer.assets.modelData.deleteModel = false;
-        this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
-        this->UI.modelData.isUpdated = true;
-      }
+      // delete model
+      this->DeleteModel();
 
       // -- if model data in ui has been changed
-      if (this->UI.modelData.isUpdated) {
-        // -- update renderer model data struct with ui
-        this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
-        this->renderers.mainRenderer.assets.modelData.isUpdated = false;
-        // -- update ui data to updated renderer model data with updated flags
-        this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
-      }
+      this->UpdateRenderer();
+      //if (this->UI.modelData.isUpdated) {
+      //  // -- update renderer model data struct with ui
+      //  this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
+      //  this->renderers.mainRenderer.assets.modelData.isUpdated = false;
+      //  // -- update ui data to updated renderer model data with updated flags
+      //  this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
+      //}
     }
     // set to false - wont update buffers again unless view changes
     pEngineCore->camera->viewUpdated = false;
@@ -138,6 +111,58 @@ void Engine::HandleUI() {
 
   // draw UI
   this->UI.DrawUI(commandBuffers.graphics[currentFrame], currentFrame);
+}
+
+void Engine::RetrieveColorID() {
+
+  if (this->pEngineCore->camera->mouseOnWindow) {
+    this->renderers.mainRenderer.RetrieveObjectIDFromImage();
+  }
+
+}
+
+void Engine::LoadModel() {
+  if (this->UI.modelData.loadModel) {
+    this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
+    this->renderers.mainRenderer.LoadModel(
+      this->renderers.mainRenderer.assets.modelData.loadModelFilepath);
+    this->renderers.mainRenderer.UpdateGeometryNodesBuffer(
+      this->renderers.mainRenderer.assets
+      .models[this->renderers.mainRenderer.assets.models.size() - 1]);
+    std::cout
+      << "loaded model name from engine: "
+      << this->renderers.mainRenderer.assets
+      .models[this->renderers.mainRenderer.assets.models.size() -
+      1]
+      ->modelName
+      << std::endl;
+    this->renderers.mainRenderer.assets.modelData.loadModel = false;
+    this->renderers.mainRenderer.assets.modelData.loadModelFilepath = " ";
+    this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
+  }
+}
+
+void Engine::DeleteModel() {
+  if (this->UI.modelData.deleteModel) {
+    this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
+    this->renderers.mainRenderer.DeleteModel(
+      this->renderers.mainRenderer.assets
+      .models[this->UI.modelData.modelIndex]);
+
+    this->renderers.mainRenderer.assets.modelData.deleteModel = false;
+    this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
+    this->UI.modelData.isUpdated = true;
+  }
+}
+
+void Engine::UpdateRenderer() {
+  if (this->UI.modelData.isUpdated) {
+    // -- update renderer model data struct with ui
+    this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
+    this->renderers.mainRenderer.assets.modelData.isUpdated = false;
+    // -- update ui data to updated renderer model data with updated flags
+    this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
+  }
 }
 
 void Engine::userInput() {
