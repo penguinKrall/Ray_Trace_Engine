@@ -48,6 +48,7 @@ public:
   };
 
   struct LoadModelFlags {
+    std::string loadModelName = "none";
     bool none = false;
     bool preTransform = false;
     bool preMultiplyColors = false;

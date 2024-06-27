@@ -22,6 +22,9 @@ private:
 
   // -- user input
   void userInput();
+  
+  //mouse clicked on window
+  bool isLMBPressed = false;
 
   // -- renderers
   struct Renderers {

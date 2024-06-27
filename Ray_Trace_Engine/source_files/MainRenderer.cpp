@@ -616,7 +616,7 @@ void MainRenderer::RetrieveObjectIDFromImage() {
       // Identify the object using the color
       float objectID = red;
 
-      // std::cout << "Selected Object ID: " << objectID << std::endl;
+      std::cout << "Selected Object ID: " << objectID << std::endl;
 
       // set color ID image layout to transfer src optimal
       gtp::Utilities_EngCore::setImageLayout(

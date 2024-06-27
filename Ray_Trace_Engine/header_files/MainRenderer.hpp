@@ -49,6 +49,7 @@ public:
     // models
     std::vector<gtp::Model *> models;
     Utilities_UI::ModelData modelData;
+    Utilities_UI::LoadModelFlags loadModelFlags;
 
     // colored glass texture
     gtp::TextureLoader coloredGlassTexture;

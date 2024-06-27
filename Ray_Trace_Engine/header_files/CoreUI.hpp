@@ -94,6 +94,9 @@ public:
   // -- renderer data
   Utilities_UI::RenderData rendererData{};
 
+  // -- load model flags
+  Utilities_UI::LoadModelFlags loadModelFlags{};
+
   // -- ctors
   CoreUI();
   CoreUI(EngineCore *coreBase);
