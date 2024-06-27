@@ -13,20 +13,11 @@
 
 class MainRenderer {
 public:
+  // -- geometry node vector
   std::vector<Utilities_AS::GeometryNode> geometryNodeBuf;
+
+  // -- geometry node index vector
   std::vector<Utilities_AS::GeometryIndex> geometryIndexBuf;
-
-  // -- uniform data struct
-  struct UniformData {
-    glm::mat4 viewInverse = glm::mat4(1.0f);
-    glm::mat4 projInverse = glm::mat4(1.0f);
-    glm::vec4 lightPos = glm::vec4(0.0f);
-  };
-
-  // storage buffer data struct
-  struct StorageBufferData {
-    std::vector<int> reflectGeometryID;
-  };
 
   // -- buffers
   struct Buffers {
@@ -58,29 +49,7 @@ public:
     gtp::TextureLoader cubemap;
   };
 
-  // -- pipeline data struct
-  struct PipelineData {
-    VkPipeline pipeline{};
-    VkPipelineLayout pipelineLayout{};
-    VkDescriptorSet descriptorSet{};
-    VkDescriptorSetLayout descriptorSetLayout{};
-    VkDescriptorPool descriptorPool{};
-  };
-
-  // -- raytracing ray generation shader binding table
-  gtp::Buffer raygenShaderBindingTable;
-  VkStridedDeviceAddressRegionKHR raygenStridedDeviceAddressRegion{};
-
-  // -- raytracing miss shader binding table
-  gtp::Buffer missShaderBindingTable;
-  VkStridedDeviceAddressRegionKHR missStridedDeviceAddressRegion{};
-
-  // -- raytracing hit shader binding table
-  gtp::Buffer hitShaderBindingTable;
-  VkStridedDeviceAddressRegionKHR hitStridedDeviceAddressRegion{};
-
-  // -- shader groups
-  std::vector<VkRayTracingShaderGroupCreateInfoKHR> shaderGroups{};
+  Utilities_Renderer::ShaderBindingTableData shaderBindingTableData{};
 
   // -- top level acceleration structure
   Utilities_AS::AccelerationStructure TLAS{};
@@ -95,10 +64,7 @@ public:
   Utilities_AS::StorageImage colorIDStorageImage{};
 
   // -- uniform data
-  UniformData uniformData{};
-
-  // -- storage buffer data
-  StorageBufferData storageBufferData{};
+  Utilities_Renderer::UniformData uniformData{};
 
   // -- bottom level acceleration structures
   std::vector<Utilities_AS::BLASData *> bottomLevelAccelerationStructures;
@@ -113,10 +79,7 @@ public:
   Assets assets{};
 
   // -- pipeline data
-  PipelineData pipelineData{};
-
-  // -- ui data
-  // Utilities_UI::ModelData uiModelData{};
+  Utilities_Renderer::PipelineData pipelineData{};
 
   // -- shader
   gtp::Shader shader;
@@ -193,9 +156,6 @@ public:
 
   // -- update TLAS
   void UpdateTLAS();
-
-  // -- pre transform animation model vertices
-  // void PreTransformModels();
 
   // -- create geometry nodes buffer
   void CreateGeometryNodesBuffer();

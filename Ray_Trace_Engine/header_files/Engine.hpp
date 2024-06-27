@@ -65,6 +65,9 @@ public:
   //@brief calls inherited 'initCore' func and initializes renderers
   VkResult InitEngine();
 
+  // -- init X and Y pos
+  void InitXYPos();
+
   // -- draw
   //@brief handles update ubos, record command buffers, queue submit, and
   // present submit
@@ -77,6 +80,12 @@ public:
   // -- terminate
   //@brief destroy. everything.
   void Terminate();
+
+  // -- update delta time
+  void UpdateDeltaTime();
+
+  // -- update animation timer
+  void UpdateAnimationTimer();
 
   // -- update ui
   void UpdateUI();

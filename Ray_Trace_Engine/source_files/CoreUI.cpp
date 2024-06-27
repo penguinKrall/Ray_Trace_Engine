@@ -920,25 +920,27 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
 
   // floating window
   ImGui::Begin("controls");
+  if (pModelData->modelName.size() != 0) {
+    if (ImGui::BeginCombo(
+            "Model", pModelData->modelName[pModelData->modelIndex].c_str())) {
 
-  if (ImGui::BeginCombo(
-          "Model", pModelData->modelName[pModelData->modelIndex].c_str())) {
+      for (int i = 0; i < pModelData->modelName.size(); ++i) {
+        bool isSelected = (pModelData->modelIndex == i);
+        if (ImGui::Selectable(pModelData->modelName[i].c_str(), isSelected)) {
+          pModelData->modelIndex = i;
 
-    for (int i = 0; i < pModelData->modelName.size(); ++i) {
-      bool isSelected = (pModelData->modelIndex == i);
-      if (ImGui::Selectable(pModelData->modelName[i].c_str(), isSelected)) {
-        pModelData->modelIndex = i;
+          std::cout << "Selected Model: "
+                    << pModelData->modelName[pModelData->modelIndex]
+                    << std::endl;
+        }
 
-        std::cout << "Selected Model: "
-                  << pModelData->modelName[pModelData->modelIndex] << std::endl;
+        if (isSelected) {
+          ImGui::SetItemDefaultFocus();
+        }
       }
 
-      if (isSelected) {
-        ImGui::SetItemDefaultFocus();
-      }
+      ImGui::EndCombo();
     }
-
-    ImGui::EndCombo();
   }
 
   if (ImGui::CollapsingHeader("Add/Delete Model")) {
@@ -1035,105 +1037,101 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
       }
 
       // -- Model Transform Values
-      if (ImGui::CollapsingHeader("Model Transform Values")) {
+      qRot = {
 
-        qRot = {
+          this->modelData.transformValues[this->modelData.modelIndex].rotate.w,
+          this->modelData.transformValues[this->modelData.modelIndex].rotate.x,
+          this->modelData.transformValues[this->modelData.modelIndex].rotate.y,
+          this->modelData.transformValues[this->modelData.modelIndex].rotate.z};
 
-            this->modelData.transformValues[this->modelData.modelIndex]
-                .rotate.w,
-            this->modelData.transformValues[this->modelData.modelIndex]
-                .rotate.x,
-            this->modelData.transformValues[this->modelData.modelIndex]
-                .rotate.y,
-            this->modelData.transformValues[this->modelData.modelIndex]
-                .rotate.z};
+      //////// get/setRotation are helper funcs that you have ideally defined
+      /// to
+      //////// manage your global/member objs
+      if (ImGui::gizmo3D("Rotation", qRot, 100,
+                         imguiGizmo::mode3Axes | imguiGizmo::cubeAtOrigin)) {
+        this->modelData.transformValues[this->modelData.modelIndex].rotate.w =
+            qRot.w;
+        this->modelData.transformValues[this->modelData.modelIndex].rotate.x =
+            qRot.x;
+        this->modelData.transformValues[this->modelData.modelIndex].rotate.y =
+            qRot.y;
+        this->modelData.transformValues[this->modelData.modelIndex].rotate.z =
+            qRot.z;
 
-        //////// get/setRotation are helper funcs that you have ideally defined
-        /// to
-        //////// manage your global/member objs
-        if (ImGui::gizmo3D("Rotation", qRot, 100,
-                           imguiGizmo::mode3Axes | imguiGizmo::cubeAtOrigin)) {
-          this->modelData.transformValues[this->modelData.modelIndex].rotate.w =
-              qRot.w;
-          this->modelData.transformValues[this->modelData.modelIndex].rotate.x =
-              qRot.x;
-          this->modelData.transformValues[this->modelData.modelIndex].rotate.y =
-              qRot.y;
-          this->modelData.transformValues[this->modelData.modelIndex].rotate.z =
-              qRot.z;
+        this->modelData.transformMatrices[this->modelData.modelIndex].rotate =
+            glm::mat4(glm::normalize(glm::quat(
+                this->modelData.transformValues[this->modelData.modelIndex]
+                    .rotate.w,
+                this->modelData.transformValues[this->modelData.modelIndex]
+                    .rotate.x,
+                this->modelData.transformValues[this->modelData.modelIndex]
+                    .rotate.y,
+                this->modelData.transformValues[this->modelData.modelIndex]
+                    .rotate.z)));
 
-          this->modelData.transformMatrices[this->modelData.modelIndex].rotate =
-              glm::mat4(glm::normalize(glm::quat(
-                  this->modelData.transformValues[this->modelData.modelIndex]
-                      .rotate.w,
-                  this->modelData.transformValues[this->modelData.modelIndex]
-                      .rotate.x,
-                  this->modelData.transformValues[this->modelData.modelIndex]
-                      .rotate.y,
-                  this->modelData.transformValues[this->modelData.modelIndex]
-                      .rotate.z)));
+        this->modelData.rotateUpdated = true;
+      }
 
-          this->modelData.rotateUpdated = true;
-        }
+      if (ImGui::SliderFloat4("Translate",
+                              (float *)&this->modelData
+                                  .transformValues[this->modelData.modelIndex]
+                                  .translate,
+                              -20.0f, 20.0f)) {
+        this->modelData.transformMatrices[this->modelData.modelIndex]
+            .translate = glm::translate(
+            glm::mat4(1.0f),
+            glm::vec3(
+                this->modelData.transformValues[this->modelData.modelIndex]
+                    .translate));
+        this->modelData.translateUpdated = true;
+      }
 
-        if (ImGui::SliderFloat4("Translate",
-                                (float *)&this->modelData
-                                    .transformValues[this->modelData.modelIndex]
-                                    .translate,
-                                -20.0f, 20.0f)) {
-          this->modelData.transformMatrices[this->modelData.modelIndex]
-              .translate = glm::translate(
-              glm::mat4(1.0f),
-              glm::vec3(
-                  this->modelData.transformValues[this->modelData.modelIndex]
-                      .translate));
-          this->modelData.translateUpdated = true;
-        }
+      if (ImGui::SliderFloat("Scale",
+                             (float *)&this->modelData
+                                 .transformValues[this->modelData.modelIndex]
+                                 .scale,
+                             0.001f, 10.0f)) {
+        this->modelData.transformMatrices[this->modelData.modelIndex].scale =
+            glm::scale(
+                glm::mat4(1.0f),
+                glm::vec3(
+                    this->modelData.transformValues[this->modelData.modelIndex]
+                        .scale));
+        this->modelData.scaleUpdated = true;
+      }
 
-        if (ImGui::SliderFloat("Scale",
-                               (float *)&this->modelData
-                                   .transformValues[this->modelData.modelIndex]
-                                   .scale,
-                               0.001f, 10.0f)) {
-          this->modelData.transformMatrices[this->modelData.modelIndex].scale =
-              glm::scale(
-                  glm::mat4(1.0f),
-                  glm::vec3(this->modelData
-                                .transformValues[this->modelData.modelIndex]
-                                .scale));
-          this->modelData.scaleUpdated = true;
-        }
-
-        if (this->modelData.rotateUpdated || this->modelData.translateUpdated ||
-            this->modelData.scaleUpdated) {
-          this->modelData.rotateUpdated = false;
-          this->modelData.translateUpdated = false;
-          this->modelData.scaleUpdated = false;
-          this->modelData.isUpdated = true;
-          this->modelData.updateBLAS.resize(pModelData->modelName.size());
-          this->modelData.updateBLAS[pModelData->modelIndex] = true;
-          for (int i = 0; i < this->modelData.updateBLAS.size(); i++) {
-            std::cout << "model[" << i
-                      << "] update blas: " << this->modelData.updateBLAS[i]
-                      << std::endl;
-          }
+      if (this->modelData.rotateUpdated || this->modelData.translateUpdated ||
+          this->modelData.scaleUpdated) {
+        this->modelData.rotateUpdated = false;
+        this->modelData.translateUpdated = false;
+        this->modelData.scaleUpdated = false;
+        this->modelData.isUpdated = true;
+        this->modelData.updateBLAS.resize(pModelData->modelName.size());
+        this->modelData.updateBLAS[pModelData->modelIndex] = true;
+        for (int i = 0; i < this->modelData.updateBLAS.size(); i++) {
+          std::cout << "model[" << i
+                    << "] update blas: " << this->modelData.updateBLAS[i]
+                    << std::endl;
         }
       }
     }
-    if (ImGui::CollapsingHeader("Render/Debug Controls")) {
 
-      if (ImGui::Button("Show Object Color IDS ON")) {
-        this->rendererData.showColorImage = false;
-        this->rendererData.showIDImage = true;
-      }
-
-      if (ImGui::Button("Show Object Color IDS OFF")) {
-        this->rendererData.showColorImage = true;
-        this->rendererData.showIDImage = false;
-      }
-    }
   } else {
     if (ImGui::CollapsingHeader("Model Controls - no models loaded")) {
+    }
+  }
+
+  // -- Debug Controls
+  if (ImGui::CollapsingHeader("Render/Debug Controls")) {
+
+    if (ImGui::Button("Show Object Color IDS ON")) {
+      this->rendererData.showColorImage = false;
+      this->rendererData.showIDImage = true;
+    }
+
+    if (ImGui::Button("Show Object Color IDS OFF")) {
+      this->rendererData.showColorImage = true;
+      this->rendererData.showIDImage = false;
     }
   }
 

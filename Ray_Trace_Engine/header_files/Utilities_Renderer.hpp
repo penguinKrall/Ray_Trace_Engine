@@ -5,6 +5,42 @@
 
 class Utilities_Renderer {
 public:
+
+  // -- pipeline data struct
+  struct PipelineData {
+    VkPipeline pipeline{};
+    VkPipelineLayout pipelineLayout{};
+    VkDescriptorSet descriptorSet{};
+    VkDescriptorSetLayout descriptorSetLayout{};
+    VkDescriptorPool descriptorPool{};
+  };
+
+  // -- shader binding table data
+  struct ShaderBindingTableData {
+    // -- raytracing ray generation shader binding table
+    gtp::Buffer raygenShaderBindingTable;
+    VkStridedDeviceAddressRegionKHR raygenStridedDeviceAddressRegion{};
+
+    // -- raytracing miss shader binding table
+    gtp::Buffer missShaderBindingTable;
+    VkStridedDeviceAddressRegionKHR missStridedDeviceAddressRegion{};
+
+    // -- raytracing hit shader binding table
+    gtp::Buffer hitShaderBindingTable;
+    VkStridedDeviceAddressRegionKHR hitStridedDeviceAddressRegion{};
+
+    // -- shader groups
+    std::vector<VkRayTracingShaderGroupCreateInfoKHR> shaderGroups{};
+  };
+
+  // -- uniform data struct
+  struct UniformData {
+    glm::mat4 viewInverse = glm::mat4(1.0f);
+    glm::mat4 projInverse = glm::mat4(1.0f);
+    glm::vec4 lightPos = glm::vec4(0.0f);
+  };
+
+  // -- model loading flags
   enum ModelLoadingFlags {
     None = 0x00000000,
     Animated = 0x00000001,
@@ -12,6 +48,8 @@ public:
     PositionModel = 0x00000003
   };
 
+  // -- transforms data
+  //@brief -- transform matrices and model ptr
   struct TransformsData {
     glm::mat4 rotate = glm::mat4(1.0f);
     glm::mat4 translate = glm::mat4(1.0f);
@@ -19,6 +57,8 @@ public:
     gtp::Model *model = nullptr;
   };
 
+  // -- get vertices from buffer
+  //@brief -- returns a vector of gt::Model::Vertex from a VkBuffer of vertices
   static std::vector<gtp::Model::Vertex>
   GetVerticesFromBuffer(VkDevice device, gtp::Model *model) {
 
@@ -43,32 +83,4 @@ public:
     return tempVertexBuffer;
   }
 
-  //static void TransformModelVertices(EngineCore *engineCore,
-  //                                   TransformsData *transformsData) {
-  //
-  //  std::cout << "transformsData->model->verticesBuffer.size(): "
-  //            << transformsData->model->verticesBuffer.size() << std::endl;
-  //
-  //  for (int i = 0; i < transformsData->model->verticesBuffer.size(); i++) {
-  //    transformsData->model->verticesBuffer[i].pos =
-  //        transformsData->rotate * transformsData->model->verticesBuffer[i].pos;
-  //    transformsData->model->verticesBuffer[i].pos =
-  //        transformsData->translate *
-  //        transformsData->model->verticesBuffer[i].pos;
-  //    transformsData->model->verticesBuffer[i].pos =
-  //        transformsData->scale * transformsData->model->verticesBuffer[i].pos;
-  //  }
-  //
-  //  void *verticesData;
-  //
-  //  vkMapMemory(engineCore->devices.logical,
-  //              transformsData->model->vertices.memory, 0,
-  //              transformsData->model->vertexBufferSize, 0, &verticesData);
-  //
-  //  memcpy(verticesData, transformsData->model->verticesBuffer.data(),
-  //         transformsData->model->vertexBufferSize);
-  //
-  //  vkUnmapMemory(engineCore->devices.logical,
-  //                transformsData->model->vertices.memory);
-  //}
 };
