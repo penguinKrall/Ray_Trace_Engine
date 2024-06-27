@@ -103,6 +103,9 @@ void MainRenderer::LoadModel(
   this->assets.modelData.animatedModelIndex.push_back(
       static_cast<int>(isAnimated));
 
+  //add animated toggle to list
+  this->assets.modelData.isAnimated.push_back(false);
+
   // animations
   std::vector<std::string> tempNames;
   std::vector<int> tempAnimationIndex;
@@ -1962,6 +1965,13 @@ void MainRenderer::DeleteModel(gtp::Model *pModel) {
     this->assets.modelData.modelName.erase(
         this->assets.modelData.modelName.begin() +
         this->assets.modelData.modelIndex);
+  }
+
+  if (this->assets.modelData.modelIndex <
+    this->assets.modelData.isAnimated.size()) {
+    this->assets.modelData.isAnimated.erase(
+      this->assets.modelData.isAnimated.begin() +
+      this->assets.modelData.modelIndex);
   }
 
   // if (this->assets.modelData.modelIndex <

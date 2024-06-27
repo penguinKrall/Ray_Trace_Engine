@@ -422,8 +422,10 @@ namespace gtp {
 					int activeAnimation =
 						this->renderers.mainRenderer.assets.modelData.activeAnimation[i][0];
 					// std::cout << "active animation: " << activeAnimation << std::endl;
-					this->renderers.mainRenderer.assets.models[i]->updateAnimation(
-						activeAnimation, deltaTime);
+					if (this->renderers.mainRenderer.assets.modelData.isAnimated[i]) {
+						this->renderers.mainRenderer.assets.models[i]->updateAnimation(
+							activeAnimation, deltaTime);
+					}
 				}
 			}
 

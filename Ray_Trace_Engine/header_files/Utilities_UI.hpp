@@ -35,7 +35,10 @@ public:
     bool translateUpdated = false;
     bool scaleUpdated = false;
     bool isUpdated = false;
+    std::vector<bool> isAnimated;
+
     int modelIndex = 0;
+
     std::string loadModelFilepath;
     std::vector<std::string> modelName;
     std::vector<TransformMatrices> transformMatrices{};
