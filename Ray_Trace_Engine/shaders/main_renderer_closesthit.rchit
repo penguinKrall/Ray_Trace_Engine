@@ -52,6 +52,7 @@ struct GeometryIndex {
 layout(binding = 4, set = 0) buffer G_Nodes_Buffer { GeometryNode nodes[]; } g_nodes_buffer;
 layout(binding = 5, set = 0) buffer G_Nodes_Index { GeometryIndex indices[]; } g_nodes_indices;
 layout(binding = 6, set = 0) uniform sampler2D glassTexture;
+layout(binding = 7, set = 0) uniform samplerCube cubemapTexture;
 layout(binding = 8, set = 0) uniform sampler2D textures[];
 
 #include "main_renderer_bufferreferences.glsl"
@@ -102,9 +103,17 @@ void main() {
     //distance used by reflection
     rayPayload.distance = gl_RayTmaxEXT;
 
-    //assign ray payload normal from tri - can rewrite this to use normal map texture if available
-    rayPayload.normal = normalize(tri.normal.xyz);
+    //use normal map texture if available
+    if (geometryNode.textureIndexNormal > -1) {
+        vec3 normalSample = texture(textures[nonuniformEXT(geometryNode.textureIndexNormal)], tri.uv).rgb;
+        // Convert from [0, 1] to [-1, 1]
+        rayPayload.normal = normalize(normalSample * 2.0 - 1.0);
+    }
 
+    //assign ray payload normal from tri
+    else{
+    rayPayload.normal = normalize(tri.normal.xyz);
+    }
     //assign ray payload color
     rayPayload.color = color.rgb;
 
@@ -113,14 +122,20 @@ void main() {
 
     // Basic lighting
     vec3 lightVector = normalize(ubo.lightPos.xyz);
-    float dot_product = max(dot(lightVector, tri.normal.xyz), 0.95);
+    float dot_product = max(dot(lightVector, rayPayload.normal.xyz), 0.95);
     rayPayload.color *= dot_product;
+
+    //add sky color
+    // Sample the cubemap texture using the normalized ray direction
+    vec3 skyColor = texture(cubemapTexture, rayPayload.normal.xyz).rgb;
+
+    rayPayload.color = mix(rayPayload.color, skyColor, 0.1);
 
     // Shadow casting
     float tmin = 0.001;
     float tmax = 10000.0;
     float epsilon = 0.001;
-    vec3 origin = gl_WorldRayOriginEXT + gl_WorldRayDirectionEXT * gl_HitTEXT + tri.normal.xyz * epsilon;
+    vec3 origin = gl_WorldRayOriginEXT + gl_WorldRayDirectionEXT * gl_HitTEXT + rayPayload.normal.xyz * epsilon;
     shadowed = true;
 
     // Objects with full white vertex color are treated as reflectors

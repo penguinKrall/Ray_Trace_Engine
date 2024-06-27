@@ -231,7 +231,7 @@ void MainRenderer::LoadAssets() {
   // -- load scene
   this->LoadModel(
       "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
-      "test_scene/testScene.gltf",
+      "desert_scene/testScene.gltf",
       gtp::FileLoadingFlags::None, Utilities_Renderer::ModelLoadingFlags::None,
       nullptr);
 
@@ -616,7 +616,7 @@ void MainRenderer::RetrieveObjectIDFromImage() {
       // Identify the object using the color
       float objectID = red;
 
-      std::cout << "Selected Object ID: " << objectID << std::endl;
+      // std::cout << "Selected Object ID: " << objectID << std::endl;
 
       // set color ID image layout to transfer src optimal
       gtp::Utilities_EngCore::setImageLayout(
@@ -670,7 +670,7 @@ void MainRenderer::UpdateUniformBuffer(float deltaTime) {
   //		25.0f + sin(glm::radians(rotationTime * 360.0f)) * 5.0f,
   //		0.0f);
 
-  uniformData.lightPos = glm::vec4(0.0f, 10.0f, 10.0f, 0.0f);
+  uniformData.lightPos = glm::vec4(20.0f, 10.0f, -10.0f, 0.0f);
 
   memcpy(buffers.ubo.bufferData.mapped, &uniformData, sizeof(UniformData));
 }
