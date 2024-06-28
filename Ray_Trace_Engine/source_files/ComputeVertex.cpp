@@ -16,7 +16,7 @@ ComputeVertex::ComputeVertex(EngineCore *coreBase, gtp::Model *modelPtr) {
 
   CreateCommandBuffers();
 
- // UpdateTransformsBuffer(&this->transformMatrices);
+  // UpdateTransformsBuffer(&this->transformMatrices);
 }
 
 void ComputeVertex::Init_ComputeVertex(EngineCore *coreBase,
@@ -55,8 +55,7 @@ void ComputeVertex::CreateComputeBuffers() {
   this->pEngineCore->CreateBuffer(
       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
           VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-      &this->storageInputBuffer,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &this->storageInputBuffer,
       static_cast<uint32_t>(this->model->vertexCount) *
           sizeof(gtp::Model::Vertex),
       nullptr);
@@ -70,9 +69,7 @@ void ComputeVertex::CreateComputeBuffers() {
   this->pEngineCore->CreateBuffer(
       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
           VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-      &this->storageOutputBuffer,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &this->storageOutputBuffer,
       static_cast<uint32_t>(this->model->vertexCount) *
           sizeof(gtp::Model::Vertex),
       nullptr);

@@ -8,6 +8,7 @@
 #include <Utilities_Renderer.hpp>
 #include <Utilities_UI.hpp>
 #include <glTFModel.hpp>
+#include <Particle.hpp>
 
 #define VK_GLTF_MATERIAL_IDS
 
@@ -47,6 +48,10 @@ public:
 
     // cube map
     gtp::TextureLoader cubemap;
+
+    // particle
+    gtp::Particle particle;
+
   };
 
   Utilities_Renderer::ShaderBindingTableData shaderBindingTableData{};
