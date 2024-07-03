@@ -6,28 +6,64 @@ gtp::Particle::Particle(EngineCore *corePtr) : Sphere(corePtr) {
   this->InitParticle(corePtr);
 }
 
+VkCommandBuffer gtp::Particle::RecordComputeCommands(int frame) {
+
+  // -- compute command buffer begin info
+  VkCommandBufferBeginInfo computeBeginInfo{};
+  computeBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+  // reset command buffer
+  validate_vk_result(vkResetCommandBuffer(this->commandBuffers[frame],
+                                          /*VkCommandBufferResetFlagBits*/ 0));
+
+  // begin command buffer
+  validate_vk_result(
+      vkBeginCommandBuffer(this->commandBuffers[frame], &computeBeginInfo));
+
+  // bind pipeline
+  vkCmdBindPipeline(this->commandBuffers[frame], VK_PIPELINE_BIND_POINT_COMPUTE,
+                    this->pipelineData.pipeline);
+
+  // bind descriptor set
+  vkCmdBindDescriptorSets(this->commandBuffers[frame],
+                          VK_PIPELINE_BIND_POINT_COMPUTE,
+                          this->pipelineData.pipelineLayout, 0, 1,
+                          &this->pipelineData.descriptorSet, 0, nullptr);
+
+  // dispatch compute shader
+  vkCmdDispatch(
+      this->commandBuffers[frame],
+      (static_cast<uint32_t>(this->SphereVertices().size()) + 255) / 256, 1, 1);
+
+  // end compute command buffer
+  validate_vk_result(vkEndCommandBuffer(this->commandBuffers[frame]));
+
+  return this->commandBuffers[frame];
+}
+
 void gtp::Particle::DestroyParticle() {
 
   // descriptor pool
-  // vkDestroyDescriptorPool(this->pEngineCore->devices.logical,
-  //  this->pipelineData.descriptorPool, nullptr);
+  vkDestroyDescriptorPool(this->pEngineCore->devices.logical,
+                          this->pipelineData.descriptorPool, nullptr);
 
   // shaders
   this->shader.DestroyShader();
 
   // pipeline and layout
   vkDestroyPipelineLayout(this->pEngineCore->devices.logical,
-    this->pipelineData.pipelineLayout, nullptr);
+                          this->pipelineData.pipelineLayout, nullptr);
   vkDestroyPipeline(this->pEngineCore->devices.logical,
-    this->pipelineData.pipeline, nullptr);
+                    this->pipelineData.pipeline, nullptr);
 
   // descriptor set layout
   vkDestroyDescriptorSetLayout(this->pEngineCore->devices.logical,
-    this->pipelineData.descriptorSetLayout, nullptr);
+                               this->pipelineData.descriptorSetLayout, nullptr);
 
   // buffers
   this->buffers.computeBlockSSBO.destroy(this->pEngineCore->devices.logical);
-  this->buffers.vertexSSBO.destroy(this->pEngineCore->devices.logical);
+  this->buffers.vertexInputSSBO.destroy(this->pEngineCore->devices.logical);
+  this->buffers.vertexOutputSSBO.destroy(this->pEngineCore->devices.logical);
   this->buffers.vertexSSBOStaging.destroy(this->pEngineCore->devices.logical);
 
   this->DestroySphere();
@@ -51,6 +87,12 @@ void gtp::Particle::InitParticle(EngineCore *corePtr) {
 
   // -- create particle compute pipeline
   this->CreateComputePipeline();
+
+  // -- create particle compute descriptor set
+  this->CreateDescriptorSet();
+
+  // -- create particle compute command buffers
+  this->CreateCommandBuffers();
 
   std::cout << " initialized particle!" << std::endl;
 }
@@ -76,20 +118,34 @@ void gtp::Particle::CreateVertexStorageBuffer() {
       &this->buffers.vertexSSBOStaging, storageBufferSize,
       this->SphereVertices().data());
 
-  /* SSBO */
-  // -- init ssbo and fill with particle attribute data
-  this->buffers.vertexSSBO.bufferData.bufferName = "gtp::Particle_ssbo_buffer";
-  this->buffers.vertexSSBO.bufferData.bufferMemoryName =
-      "gtp::Particle_ssbo_bufferMemory";
+  /* SSBOs */
+  // -- init input ssbo and fill with particle attribute data
+  this->buffers.vertexInputSSBO.bufferData.bufferName =
+      "gtp::Particle_input_ssbo_buffer";
+  this->buffers.vertexInputSSBO.bufferData.bufferMemoryName =
+      "gtp::Particle_input_ssbo_bufferMemory";
 
-  // -- create ssbo
+  // -- create input ssbo
   this->pEngineCore->CreateBuffer(
       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
           VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &this->buffers.vertexSSBO,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &this->buffers.vertexInputSSBO,
       storageBufferSize, nullptr);
 
-  /* Copy From Staging Buffer To SSBO */
+  // -- init output ssbo and fill with particle attribute data
+  this->buffers.vertexOutputSSBO.bufferData.bufferName =
+      "gtp::Particle_output_ssbo_buffer";
+  this->buffers.vertexOutputSSBO.bufferData.bufferMemoryName =
+      "gtp::Particle_output_ssbo_bufferMemory";
+
+  // -- create output ssbo
+  this->pEngineCore->CreateBuffer(
+      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+          VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &this->buffers.vertexOutputSSBO,
+      storageBufferSize, nullptr);
+
+  /* Copy From Staging Buffer To SSBOs */
   // -- one time submit command buffer and copy buffer command
   VkCommandBuffer cmdBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(
       VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -101,8 +157,15 @@ void gtp::Particle::CreateVertexStorageBuffer() {
   copyRegion.size = storageBufferSize;
 
   // vulkan api copy command
+  // input
   vkCmdCopyBuffer(cmdBuffer, this->buffers.vertexSSBOStaging.bufferData.buffer,
-                  this->buffers.vertexSSBO.bufferData.buffer, 1, &copyRegion);
+                  this->buffers.vertexInputSSBO.bufferData.buffer, 1,
+                  &copyRegion);
+
+  // output
+  vkCmdCopyBuffer(cmdBuffer, this->buffers.vertexSSBOStaging.bufferData.buffer,
+                  this->buffers.vertexOutputSSBO.bufferData.buffer, 1,
+                  &copyRegion);
 
   // submit temporary command buffer and destroy command buffer/memory
   pEngineCore->FlushCommandBuffer(cmdBuffer, pEngineCore->queue.graphics,
@@ -228,6 +291,118 @@ void gtp::Particle::CreateComputePipeline() {
   validate_vk_result(vkCreateComputePipelines(
       pEngineCore->devices.logical, VK_NULL_HANDLE, 1,
       &computePipelineCreateInfo, nullptr, &this->pipelineData.pipeline));
+}
+
+void gtp::Particle::CreateDescriptorSet() {
+  std::vector<VkDescriptorPoolSize> poolSizes = {
+      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3}};
+
+  // descriptor pool create info
+  VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
+  descriptorPoolCreateInfo.sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  descriptorPoolCreateInfo.poolSizeCount =
+      static_cast<uint32_t>(poolSizes.size());
+  descriptorPoolCreateInfo.pPoolSizes = poolSizes.data();
+  descriptorPoolCreateInfo.maxSets = 1;
+
+  // create descriptor pool
+  pEngineCore->add(
+      [this, &descriptorPoolCreateInfo]() {
+        return pEngineCore->objCreate.VKCreateDescriptorPool(
+            &descriptorPoolCreateInfo, nullptr,
+            &this->pipelineData.descriptorPool);
+      },
+      "gltf_compute_DescriptorPool");
+
+  VkDescriptorSetAllocateInfo descriptorSetAllocateInfo{};
+  descriptorSetAllocateInfo.sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  descriptorSetAllocateInfo.descriptorPool = this->pipelineData.descriptorPool;
+  descriptorSetAllocateInfo.pSetLayouts = &pipelineData.descriptorSetLayout;
+  descriptorSetAllocateInfo.descriptorSetCount = 1;
+
+  // create descriptor set
+  pEngineCore->add(
+      [this, &descriptorSetAllocateInfo]() {
+        return pEngineCore->objCreate.VKAllocateDescriptorSet(
+            &descriptorSetAllocateInfo, nullptr,
+            &this->pipelineData.descriptorSet);
+      },
+      "gltf_compute_DescriptorSet");
+
+  // storage input buffer descriptor info
+  VkDescriptorBufferInfo storageInputBufferDescriptor{};
+  storageInputBufferDescriptor.buffer =
+      this->buffers.vertexInputSSBO.bufferData.buffer;
+  storageInputBufferDescriptor.offset = 0;
+  storageInputBufferDescriptor.range =
+      static_cast<uint32_t>(this->SphereVertices().size()) *
+      sizeof(gtp::Model::Vertex);
+
+  // storage input buffer descriptor write info
+  VkWriteDescriptorSet storageInputBufferWrite{};
+  storageInputBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  storageInputBufferWrite.dstSet = pipelineData.descriptorSet;
+  storageInputBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  storageInputBufferWrite.dstBinding = 0;
+  storageInputBufferWrite.pBufferInfo = &storageInputBufferDescriptor;
+  storageInputBufferWrite.descriptorCount = 1;
+
+  // storage output buffer descriptor info
+  VkDescriptorBufferInfo storageOutputBufferDescriptor{};
+  storageOutputBufferDescriptor.buffer =
+      this->buffers.vertexOutputSSBO.bufferData.buffer;
+  storageOutputBufferDescriptor.offset = 0;
+  storageOutputBufferDescriptor.range =
+      static_cast<uint32_t>(this->SphereVertices().size()) *
+      sizeof(gtp::Model::Vertex);
+
+  // storage output buffer descriptor write info
+  VkWriteDescriptorSet storageOutputBufferWrite{};
+  storageOutputBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  storageOutputBufferWrite.dstSet = pipelineData.descriptorSet;
+  storageOutputBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  storageOutputBufferWrite.dstBinding = 1;
+  storageOutputBufferWrite.pBufferInfo = &storageOutputBufferDescriptor;
+  storageOutputBufferWrite.descriptorCount = 1;
+
+  // compute block descriptor info
+  VkDescriptorBufferInfo computeBlockDescriptor{};
+  computeBlockDescriptor.buffer =
+      this->buffers.computeBlockSSBO.bufferData.buffer;
+  computeBlockDescriptor.offset = 0;
+  computeBlockDescriptor.range = sizeof(gtp::Particle::ComputeBlock);
+
+  // compute block descriptor write info
+  VkWriteDescriptorSet computeBlockBufferWrite{};
+  computeBlockBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  computeBlockBufferWrite.dstSet = pipelineData.descriptorSet;
+  computeBlockBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  computeBlockBufferWrite.dstBinding = 2;
+  computeBlockBufferWrite.pBufferInfo = &computeBlockDescriptor;
+  computeBlockBufferWrite.descriptorCount = 1;
+
+  std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
+      storageInputBufferWrite, storageOutputBufferWrite,
+      computeBlockBufferWrite};
+
+  vkUpdateDescriptorSets(this->pEngineCore->devices.logical,
+                         static_cast<uint32_t>(writeDescriptorSets.size()),
+                         writeDescriptorSets.data(), 0, VK_NULL_HANDLE);
+}
+
+void gtp::Particle::CreateCommandBuffers() {
+  commandBuffers.resize(frame_draws);
+
+  VkCommandBufferAllocateInfo allocInfo{};
+  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocInfo.commandPool = pEngineCore->commandPools.compute;
+  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocInfo.commandBufferCount = frame_draws;
+
+  validate_vk_result(vkAllocateCommandBuffers(
+      pEngineCore->devices.logical, &allocInfo, commandBuffers.data()));
 }
 
 void gtp::Particle::CreateParticleBLAS(

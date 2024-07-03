@@ -17,10 +17,11 @@ struct Vtx {
 };
 
 //transforms struct
-struct TransformMatrices{
-    mat4 rotate;
-    mat4 translate;
-    mat4 scale;
+struct ComputeBlock{
+    float deltaT;
+    float destX;
+    float destY;
+    uint particleCount;
 };
 
 // Define storage buffer layout for input vertices and joint data
@@ -34,9 +35,9 @@ layout(std140, binding = 1) buffer OutputSSBOData {
 }outputSSBO;
 
 // Define storage buffer layout for transform matrices
-layout(std140, binding = 2) buffer TransformSSBOData {
-    TransformMatrices transformMatrices;
-}transformSSBO;
+layout(std140, binding = 2) buffer ComputeBlockSSBO {
+    ComputeBlock computeBlock;
+}computeBlockSSBO;
 
 void main() {
     

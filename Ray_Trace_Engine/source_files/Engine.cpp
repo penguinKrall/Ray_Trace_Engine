@@ -386,6 +386,11 @@ void Engine::Draw() {
       }
     }
 
+    // particle commands
+    computeCommands.push_back(
+        this->renderers.mainRenderer.assets.particle.RecordComputeCommands(
+            currentFrame));
+
     // compute pipeline wait stages
     std::vector<VkPipelineStageFlags> computeWaitStages = {
         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT};

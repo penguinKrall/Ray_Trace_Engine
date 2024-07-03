@@ -28,7 +28,8 @@ public:
   // -- buffers
   struct Buffers {
     gtp::Buffer vertexSSBOStaging{};
-    gtp::Buffer vertexSSBO{};
+    gtp::Buffer vertexInputSSBO{};
+    gtp::Buffer vertexOutputSSBO{};
     gtp::Buffer computeBlockSSBO{};
   };
 
@@ -37,6 +38,9 @@ public:
 
   // -- init ctor
   Particle(EngineCore *corePtr);
+
+  // -- record commands
+  VkCommandBuffer RecordComputeCommands(int frame);
 
   // -- destroy particle
   void DestroyParticle();
@@ -50,6 +54,9 @@ private:
 
   // -- particle buffers
   Buffers buffers{};
+
+  // -- command buffers
+  std::vector<VkCommandBuffer> commandBuffers;
 
   // -- shader
   gtp::Shader shader;
@@ -72,17 +79,23 @@ private:
   // -- init func
   void InitParticle(EngineCore *corePtr);
 
-  // -- create vertex ssbo
+  // -- create particle vertex shader storage buffer objects
   void CreateVertexStorageBuffer();
 
-  // -- create compute block ssbo
+  // -- create particle compute block ssbo
   void CreateComputeBlockStorageBuffer();
 
-  // -- update compute block ssbo
+  // -- update particle compute block ssbo
   void UpdateComputeBlockSSBO(float deltaTime, float timer);
 
-  // -- create compute pipeline
+  // -- create particle compute pipeline
   void CreateComputePipeline();
+
+  // -- create particle compute pipeline descriptor set
+  void CreateDescriptorSet();
+
+  // -- create particle compute pipeline command buffers
+  void CreateCommandBuffers();
 
   // -- create particle BLAS
   void CreateParticleBLAS(
