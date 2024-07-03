@@ -1430,8 +1430,8 @@ void Model::loadFromFile(std::string filename, EngineCore *coreBase,
     vkFreeMemory(coreBase->devices.logical, indexStaging.memory, nullptr);
   }
 
-  delete[] loaderInfo.vertexBuffer;
-  delete[] loaderInfo.indexBuffer;
+  //delete[] loaderInfo.vertexBuffer;
+  //delete[] loaderInfo.indexBuffer;
 
   getSceneDimensions();
 }

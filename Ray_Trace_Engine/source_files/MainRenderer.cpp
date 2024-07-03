@@ -190,6 +190,129 @@ void MainRenderer::LoadModel(
   CreateBLAS(tempModel);
 }
 
+void MainRenderer::LoadParticle(
+    std::string filename, uint32_t fileLoadingFlags,
+    Utilities_Renderer::ModelLoadingFlags modelLoadingFlags,
+    Utilities_UI::TransformMatrices *pTransformMatrices) {
+
+  //// model instance pointer to initialize and add to list
+  // auto* tempModel = new gtp::Model();
+
+  // model index
+  auto modelIdx = static_cast<int>(this->assets.models.size());
+
+  // -- Load From File ---- gtp::Model function
+  // tempModel->loadFromFile(filename, pEngineCore, pEngineCore->queue.graphics,
+  //  fileLoadingFlags);
+
+  // set semi transparent flag
+  const bool isSemiTransparent =
+      modelLoadingFlags ==
+              Utilities_Renderer::ModelLoadingFlags::SemiTransparent
+          ? 1
+          : 0;
+
+  this->assets.particle.sphereModel->semiTransparentFlag =
+      static_cast<int>(isSemiTransparent);
+
+  // Set "isAnimated" flag and add to list
+  // referenced by blas/tlas/compute vertex
+  const bool isAnimated =
+      !this->assets.particle.sphereModel->animations.empty() ? true : false;
+
+  this->assets.modelData.animatedModelIndex.push_back(
+      static_cast<int>(isAnimated));
+
+  // add animated toggle to list
+  this->assets.modelData.isAnimated.push_back(false);
+
+  // add active animation and animation name to their lists.
+  // assign 0 and "none" if model is not animated
+  std::vector<std::string> tempNames;
+  std::vector<int> tempAnimationIndex;
+
+  if (this->assets.particle.sphereModel->animations.empty()) {
+    tempAnimationIndex.push_back(0);
+    this->assets.modelData.activeAnimation.push_back(tempAnimationIndex);
+    tempNames.push_back("none");
+    this->assets.modelData.animationNames.push_back(tempNames);
+  }
+
+  else {
+    tempAnimationIndex.push_back(0);
+    this->assets.modelData.activeAnimation.push_back(tempAnimationIndex);
+    for (int i = 0; i < this->assets.particle.sphereModel->animations.size();
+         i++) {
+      tempNames.push_back(
+          this->assets.particle.sphereModel->animations[i].name);
+      std::cout << this->assets.particle.sphereModel->animations[i].name
+                << std::endl;
+    }
+    this->assets.modelData.animationNames.push_back(tempNames);
+  }
+
+  // add model to model list
+  this->assets.models.push_back(this->assets.particle.sphereModel);
+
+  // init modelData struct
+  this->assets.modelData.modelName.push_back(
+      this->assets.particle.sphereModel->modelName);
+
+  // matrices
+  Utilities_UI::TransformMatrices transformMatrices{};
+
+  // vectors of xyzw values
+  Utilities_UI::TransformValues transformValues{};
+
+  // assign transform matrices if passed in on load
+  // pre transforms
+  if (pTransformMatrices != nullptr) {
+
+    transformMatrices.rotate = pTransformMatrices->rotate;
+
+    transformMatrices.translate = pTransformMatrices->translate;
+
+    transformMatrices.scale = pTransformMatrices->scale;
+  }
+  // rotate transform values
+  //  Extract the upper 3x3 part of the matrix
+  glm::mat3 rotationMatrix = glm::mat3(transformMatrices.rotate);
+
+  // Normalize the columns to remove scaling
+  rotationMatrix[0] = glm::normalize(rotationMatrix[0]);
+  rotationMatrix[1] = glm::normalize(rotationMatrix[1]);
+  rotationMatrix[2] = glm::normalize(rotationMatrix[2]);
+
+  // Convert the 3x3 rotation matrix to a quaternion
+  glm::quat rotationQuaternion = glm::quat_cast(rotationMatrix);
+
+  // Convert the quaternion to a vec4 (xyzw)
+  glm::vec4 rotationVec4 =
+      glm::vec4(rotationQuaternion.x, rotationQuaternion.y,
+                rotationQuaternion.z, rotationQuaternion.w);
+
+  // Assign it to transformValues.rotate
+  transformValues.rotate = rotationVec4;
+
+  // translate transform values
+  transformValues.translate = glm::vec4(transformMatrices.translate[3]);
+
+  // scale transform values
+  transformValues.scale =
+      glm::vec4(transformMatrices.scale * glm::vec4(1.0f)).x;
+
+  // add transform values/matrices to lists
+  this->assets.modelData.transformMatrices.push_back(transformMatrices);
+  this->assets.modelData.transformValues.push_back(transformValues);
+
+  // load gltf -- internally conditional if model contains animations else ==
+  // nullptr
+  LoadGltfCompute(this->assets.particle.sphereModel);
+
+  // create bottom level acceleration structure for model
+  CreateBLAS(this->assets.particle.sphereModel);
+}
+
 void MainRenderer::LoadAssets() {
 
   // cubemap and default textures
@@ -198,6 +321,7 @@ void MainRenderer::LoadAssets() {
 
   // -- load glass texture just because why not load a ktx
   this->assets.coloredGlassTexture = gtp::TextureLoader(this->pEngineCore);
+
   this->assets.coloredGlassTexture.loadFromFile(
       "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/"
       "textures/"
@@ -246,6 +370,10 @@ void MainRenderer::LoadAssets() {
       "test_scene/pool_water_surface/pool_water_surface.gltf",
       gtp::FileLoadingFlags::None,
       Utilities_Renderer::ModelLoadingFlags::SemiTransparent, nullptr);
+
+  // -- load particle
+  this->LoadParticle("", gtp::FileLoadingFlags::None,
+                     Utilities_Renderer::ModelLoadingFlags::None, nullptr);
 
   for (int i = 0; i < this->assets.modelData.animatedModelIndex.size(); i++) {
     std::cout << "\nanimated model index[" << i

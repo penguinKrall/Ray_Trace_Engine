@@ -106,6 +106,12 @@ public:
                      Utilities_Renderer::ModelLoadingFlags::None,
                  Utilities_UI::TransformMatrices *pTransformMatrices = nullptr);
 
+  // -- load particle
+  void LoadParticle(
+    std::string filename, uint32_t fileLoadingFlags,
+    Utilities_Renderer::ModelLoadingFlags modelLoadingFlags,
+    Utilities_UI::TransformMatrices* pTransformMatrices);
+
   // -- load assets
   void LoadAssets();
 

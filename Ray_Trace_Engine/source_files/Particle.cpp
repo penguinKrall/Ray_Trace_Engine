@@ -2,9 +2,7 @@
 
 gtp::Particle::Particle() {}
 
-gtp::Particle::Particle(EngineCore *corePtr) : Sphere(corePtr) {
-  this->InitParticle(corePtr);
-}
+gtp::Particle::Particle(EngineCore *corePtr) { this->InitParticle(corePtr); }
 
 VkCommandBuffer gtp::Particle::RecordComputeCommands(int frame) {
 
@@ -31,9 +29,10 @@ VkCommandBuffer gtp::Particle::RecordComputeCommands(int frame) {
                           &this->pipelineData.descriptorSet, 0, nullptr);
 
   // dispatch compute shader
-  vkCmdDispatch(
-      this->commandBuffers[frame],
-      (static_cast<uint32_t>(this->SphereVertices().size()) + 255) / 256, 1, 1);
+  vkCmdDispatch(this->commandBuffers[frame],
+                (static_cast<uint32_t>(this->sphereModel->vertexCount) + 255) /
+                    256,
+                1, 1);
 
   // end compute command buffer
   validate_vk_result(vkEndCommandBuffer(this->commandBuffers[frame]));
@@ -60,15 +59,14 @@ void gtp::Particle::DestroyParticle() {
   vkDestroyDescriptorSetLayout(this->pEngineCore->devices.logical,
                                this->pipelineData.descriptorSetLayout, nullptr);
 
+  // model
+  this->sphereModel->destroy(this->pEngineCore->devices.logical);
+
   // buffers
   this->buffers.computeBlockSSBO.destroy(this->pEngineCore->devices.logical);
   this->buffers.vertexInputSSBO.destroy(this->pEngineCore->devices.logical);
   this->buffers.vertexOutputSSBO.destroy(this->pEngineCore->devices.logical);
-  this->buffers.vertexSSBOStaging.destroy(this->pEngineCore->devices.logical);
-  this->buffers.indexSSBOStaging.destroy(this->pEngineCore->devices.logical);
   this->buffers.indexSSBO.destroy(this->pEngineCore->devices.logical);
-
-  this->DestroySphere();
 
   std::cout << " destroyed particle!" << std::endl;
 }
@@ -80,6 +78,18 @@ void gtp::Particle::InitParticle(EngineCore *corePtr) {
 
   // initialize shader
   this->shader = gtp::Shader(pEngineCore);
+
+  // model instance pointer to initialize and add to list
+  this->sphereModel = new gtp::Model();
+
+  // model index
+  // auto modelIdx = static_cast<int>(this->assets.models.size());
+
+  // -- Load From File ---- gtp::Model function
+  this->sphereModel->loadFromFile(
+      "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/"
+      "assets/models/plain_sphere/plain_sphere.gltf",
+      pEngineCore, pEngineCore->queue.graphics);
 
   // create particle vertex storage buffer
   this->CreateVertexStorageBuffer();
@@ -105,22 +115,22 @@ void gtp::Particle::InitParticle(EngineCore *corePtr) {
 void gtp::Particle::CreateVertexStorageBuffer() {
 
   VkDeviceSize vertexStorageBufferSize =
-      this->SphereVertices().size() * sizeof(gtp::Model::Vertex);
+      this->sphereModel->vertexCount * sizeof(gtp::Model::Vertex);
 
-  // init ssbo staging buffer and fill with particle attribute data
-  this->buffers.vertexSSBOStaging.bufferData.bufferName =
-      "gtp::Particle_vertex_ssbo_staging_buffer";
-  this->buffers.vertexSSBOStaging.bufferData.bufferMemoryName =
-      "gtp::Particle_vertex_ssbo_staging_bufferMemory";
-
-  // create ssbo staging buffer
-  this->pEngineCore->CreateBuffer(
-      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-          VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-      &this->buffers.vertexSSBOStaging, vertexStorageBufferSize,
-      this->SphereVertices().data());
+  //// init ssbo staging buffer and fill with particle attribute data
+  // this->buffers.vertexSSBOStaging.bufferData.bufferName =
+  //   "gtp::Particle_vertex_ssbo_staging_buffer";
+  // this->buffers.vertexSSBOStaging.bufferData.bufferMemoryName =
+  //   "gtp::Particle_vertex_ssbo_staging_bufferMemory";
+  //
+  //// create ssbo staging buffer
+  // this->pEngineCore->CreateBuffer(
+  //   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+  //   VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+  //   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+  //   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+  //   &this->buffers.vertexSSBOStaging, vertexStorageBufferSize,
+  //  this->sphereModel->loaderInfo.vertexBuffer);
 
   // init input ssbo and fill with particle attribute data
   this->buffers.vertexInputSSBO.bufferData.bufferName =
@@ -144,7 +154,9 @@ void gtp::Particle::CreateVertexStorageBuffer() {
   // create output ssbo
   this->pEngineCore->CreateBuffer(
       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-          VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+          VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+          VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &this->buffers.vertexOutputSSBO,
       vertexStorageBufferSize, nullptr);
 
@@ -160,12 +172,12 @@ void gtp::Particle::CreateVertexStorageBuffer() {
 
   // vulkan api copy command
   // input
-  vkCmdCopyBuffer(cmdBuffer, this->buffers.vertexSSBOStaging.bufferData.buffer,
+  vkCmdCopyBuffer(cmdBuffer, this->sphereModel->vertices.buffer,
                   this->buffers.vertexInputSSBO.bufferData.buffer, 1,
                   &copyRegion);
 
   // output
-  vkCmdCopyBuffer(cmdBuffer, this->buffers.vertexSSBOStaging.bufferData.buffer,
+  vkCmdCopyBuffer(cmdBuffer, this->sphereModel->vertices.buffer,
                   this->buffers.vertexOutputSSBO.bufferData.buffer, 1,
                   &copyRegion);
 
@@ -178,22 +190,22 @@ void gtp::Particle::CreateIndexStorageBuffer() {
 
   // index storage buffer size
   VkDeviceSize indexStorageBufferSize =
-      this->SphereIndices().size() * sizeof(uint32_t);
+      this->sphereModel->indexCount * sizeof(uint32_t);
 
-  // index staging buffer
-  this->buffers.indexSSBOStaging.bufferData.bufferName =
-      "gtp::Particle_index_ssbo_staging_buffer";
-  this->buffers.indexSSBOStaging.bufferData.bufferMemoryName =
-      "gtp::Particle_index_ssbo_staging_bufferMemory";
-
-  // create ssbo staging buffer
-  this->pEngineCore->CreateBuffer(
-      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-          VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-      &this->buffers.indexSSBOStaging, indexStorageBufferSize,
-      this->SphereIndices().data());
+  //// index staging buffer
+  // this->buffers.indexSSBOStaging.bufferData.bufferName =
+  //   "gtp::Particle_index_ssbo_staging_buffer";
+  // this->buffers.indexSSBOStaging.bufferData.bufferMemoryName =
+  //   "gtp::Particle_index_ssbo_staging_bufferMemory";
+  //
+  //// create ssbo staging buffer
+  // this->pEngineCore->CreateBuffer(
+  //   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+  //   VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+  //   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+  //   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+  //   &this->buffers.indexSSBOStaging, indexStorageBufferSize,
+  //   this->SphereIndices().data());
 
   // index buffer
   // init input ssbo and fill with particle attribute data
@@ -205,7 +217,9 @@ void gtp::Particle::CreateIndexStorageBuffer() {
   // create input ssbo
   this->pEngineCore->CreateBuffer(
       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-          VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+          VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+          VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &this->buffers.indexSSBO,
       indexStorageBufferSize, nullptr);
 
@@ -220,7 +234,7 @@ void gtp::Particle::CreateIndexStorageBuffer() {
   copyRegion.size = indexStorageBufferSize;
 
   // vulkan api copy command
-  vkCmdCopyBuffer(cmdBuffer, this->buffers.indexSSBOStaging.bufferData.buffer,
+  vkCmdCopyBuffer(cmdBuffer, this->sphereModel->indices.buffer,
                   this->buffers.indexSSBO.bufferData.buffer, 1, &copyRegion);
 
   // submit temporary command buffer and destroy command buffer/memory
@@ -393,7 +407,7 @@ void gtp::Particle::CreateDescriptorSet() {
       this->buffers.vertexInputSSBO.bufferData.buffer;
   storageInputBufferDescriptor.offset = 0;
   storageInputBufferDescriptor.range =
-      static_cast<uint32_t>(this->SphereVertices().size()) *
+      static_cast<uint32_t>(this->sphereModel->vertexCount) *
       sizeof(gtp::Model::Vertex);
 
   // storage input buffer descriptor write info
@@ -411,7 +425,7 @@ void gtp::Particle::CreateDescriptorSet() {
       this->buffers.vertexOutputSSBO.bufferData.buffer;
   storageOutputBufferDescriptor.offset = 0;
   storageOutputBufferDescriptor.range =
-      static_cast<uint32_t>(this->SphereVertices().size()) *
+      static_cast<uint32_t>(this->sphereModel->vertexCount) *
       sizeof(gtp::Model::Vertex);
 
   // storage output buffer descriptor write info
@@ -459,184 +473,4 @@ void gtp::Particle::CreateCommandBuffers() {
 
   validate_vk_result(vkAllocateCommandBuffers(
       pEngineCore->devices.logical, &allocInfo, commandBuffers.data()));
-}
-
-void gtp::Particle::CreateParticleBLAS(
-    std::vector<Utilities_AS::GeometryNode> *geometryNodeBuf,
-    std::vector<Utilities_AS::GeometryIndex> *geometryIndexBuf,
-    uint32_t textureOffset) {
-
-  // geometry index data  -- for geometry index buffer
-  Utilities_AS::GeometryIndex geometryIndex{};
-
-  // initialize the data member
-  geometryIndex.nodeOffset = static_cast<int>(geometryNodeBuf->size());
-
-  // add geometry index data to buffer
-  geometryIndexBuf->push_back(geometryIndex);
-
-  // vertex and index buffer device addresses for geometry node buffer
-  VkDeviceOrHostAddressConstKHR vertexBufferDeviceAddress;
-  VkDeviceOrHostAddressConstKHR indexBufferDeviceAddress;
-
-  vertexBufferDeviceAddress.deviceAddress =
-      Utilities_AS::getBufferDeviceAddress(
-          pEngineCore, this->buffers.vertexOutputSSBO.bufferData.buffer);
-
-  indexBufferDeviceAddress.deviceAddress =
-      Utilities_AS::getBufferDeviceAddress(
-          pEngineCore, this->buffers.indexSSBO.bufferData.buffer) *
-      sizeof(uint32_t);
-
-  // vertex and index count
-  uint32_t vertexCount = static_cast<uint32_t>(this->SphereVertices().size());
-  uint32_t indexCount = static_cast<uint32_t>(this->SphereIndices().size());
-
-  // acceleration structure geometry data
-  VkAccelerationStructureGeometryKHR geometry{};
-  geometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
-  geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
-  geometry.geometry.triangles.sType =
-      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
-  geometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
-  geometry.geometry.triangles.vertexData = vertexBufferDeviceAddress;
-  geometry.geometry.triangles.maxVertex = vertexCount;
-  geometry.geometry.triangles.vertexStride = sizeof(gtp::Model::Vertex);
-  geometry.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
-  geometry.geometry.triangles.indexData = indexBufferDeviceAddress;
-
-  this->blasData.geometries.push_back(geometry);
-  this->blasData.maxPrimitiveCounts.push_back(indexCount / 3);
-  this->blasData.maxPrimitiveCount += indexCount / 3;
-
-  // acceleration structure build range info
-  VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo{};
-  buildRangeInfo.firstVertex = 0;
-  buildRangeInfo.primitiveOffset = 0;
-  buildRangeInfo.primitiveCount = indexCount / 3;
-  buildRangeInfo.transformOffset = 0;
-
-  this->blasData.buildRangeInfos.push_back(buildRangeInfo);
-
-  // geometry node data
-  Utilities_AS::GeometryNode geometryNode{};
-
-  // assign vertex and index buffer device addresses to geometry node data
-  // members
-  geometryNode.vertexBufferDeviceAddress =
-      vertexBufferDeviceAddress.deviceAddress;
-
-  geometryNode.indexBufferDeviceAddress =
-      indexBufferDeviceAddress.deviceAddress;
-
-  // assign texture data to geometry node -- no textures rn.. rework this
-  geometryNode.textureIndexBaseColor = -1;
-
-  geometryNode.textureIndexOcclusion = -1;
-
-  geometryNode.textureIndexMetallicRoughness = -1;
-
-  geometryNode.textureIndexNormal = -1;
-
-  geometryNode.semiTransparentFlag = 0;
-
-  geometryNode.objectIDColor =
-      (static_cast<float>(textureOffset) * 8.0f / 255.0f);
-
-  std::cout << "\ngeometry node obj id color: "
-            << ((static_cast<float>(textureOffset) + 8.0f) / 255.0f)
-            << std::endl;
-
-  geometryNodeBuf->push_back(geometryNode);
-
-  for (auto &rangeInfo : this->blasData.buildRangeInfos) {
-    this->blasData.pBuildRangeInfos.push_back(&rangeInfo);
-  }
-
-  // Get size info
-  // acceleration structure build geometry info
-  this->blasData.accelerationStructureBuildGeometryInfo.sType =
-      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-  this->blasData.accelerationStructureBuildGeometryInfo.type =
-      VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-  this->blasData.accelerationStructureBuildGeometryInfo.flags =
-      VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
-  this->blasData.accelerationStructureBuildGeometryInfo.geometryCount =
-      static_cast<uint32_t>(this->blasData.geometries.size());
-  this->blasData.accelerationStructureBuildGeometryInfo.pGeometries =
-      this->blasData.geometries.data();
-
-  this->blasData.accelerationStructureBuildSizesInfo.sType =
-      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
-  pEngineCore->coreExtensions->vkGetAccelerationStructureBuildSizesKHR(
-      pEngineCore->devices.logical,
-      VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
-      &this->blasData.accelerationStructureBuildGeometryInfo,
-      this->blasData.maxPrimitiveCounts.data(),
-      &this->blasData.accelerationStructureBuildSizesInfo);
-
-  Utilities_AS::createAccelerationStructureBuffer(
-      pEngineCore, &BLAS.memory, &BLAS.buffer,
-      &this->blasData.accelerationStructureBuildSizesInfo,
-      "gtp::Particle::createBLAS___AccelerationStructureBuffer");
-
-  VkAccelerationStructureCreateInfoKHR accelerationStructureCreateInfo{};
-  accelerationStructureCreateInfo.sType =
-      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
-  accelerationStructureCreateInfo.buffer = BLAS.buffer;
-  accelerationStructureCreateInfo.size =
-      this->blasData.accelerationStructureBuildSizesInfo
-          .accelerationStructureSize;
-  accelerationStructureCreateInfo.type =
-      VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-
-  // create acceleration structure
-  pEngineCore->add(
-      [this, &accelerationStructureCreateInfo]() {
-        return this->pEngineCore->objCreate.VKCreateAccelerationStructureKHR(
-            &accelerationStructureCreateInfo, nullptr,
-            &BLAS.accelerationStructureKHR);
-      },
-      "gtp::Particle::createBLAS___BLASAccelerationStructureKHR");
-
-  // create scratch buffer for acceleration structure build
-  Utilities_AS::createScratchBuffer(
-      pEngineCore, &BLAS.scratchBuffer,
-      this->blasData.accelerationStructureBuildSizesInfo.buildScratchSize,
-      "gtp::Particle::createBLAS___blas_ScratchBufferBLAS");
-
-  this->blasData.accelerationStructureBuildGeometryInfo.mode =
-      VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
-  this->blasData.accelerationStructureBuildGeometryInfo
-      .dstAccelerationStructure = BLAS.accelerationStructureKHR;
-  this->blasData.accelerationStructureBuildGeometryInfo.scratchData
-      .deviceAddress =
-      BLAS.scratchBuffer.bufferData.bufferDeviceAddress.deviceAddress;
-
-  const VkAccelerationStructureBuildRangeInfoKHR *buildOffsetInfo =
-      this->blasData.buildRangeInfos.data();
-
-  // Build the acceleration structure on the device via a one-time command
-  // buffer submission create command buffer
-  VkCommandBuffer commandBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(
-      VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-
-  // build BLAS
-  pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
-      commandBuffer, 1, &this->blasData.accelerationStructureBuildGeometryInfo,
-      this->blasData.pBuildRangeInfos.data());
-
-  // end and submit and destroy command buffer
-  pEngineCore->FlushCommandBuffer(commandBuffer, pEngineCore->queue.graphics,
-                                  pEngineCore->commandPools.graphics, true);
-
-  // get acceleration structure device address
-  VkAccelerationStructureDeviceAddressInfoKHR accelerationDeviceAddressInfo{};
-  accelerationDeviceAddressInfo.sType =
-      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
-  accelerationDeviceAddressInfo.accelerationStructure =
-      BLAS.accelerationStructureKHR;
-  BLAS.deviceAddress =
-      pEngineCore->coreExtensions->vkGetAccelerationStructureDeviceAddressKHR(
-          pEngineCore->devices.logical, &accelerationDeviceAddressInfo);
 }

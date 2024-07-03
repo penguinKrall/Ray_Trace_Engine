@@ -14,8 +14,10 @@
 
 namespace gtp {
 
-class Particle : private Sphere {
+class Particle{
 public:
+
+  gtp::Model* sphereModel = nullptr;
 
   // -- compute shader data
   struct ComputeBlock {
@@ -101,12 +103,6 @@ private:
 
   // -- create particle compute pipeline command buffers
   void CreateCommandBuffers();
-
-  // -- create particle BLAS
-  void CreateParticleBLAS(
-    std::vector<Utilities_AS::GeometryNode>* geometryNodeBuf,
-    std::vector<Utilities_AS::GeometryIndex>* geometryIndexBuf,
-    uint32_t textureOffset);
 
 };
 
