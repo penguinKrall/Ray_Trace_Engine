@@ -1,11 +1,33 @@
 #include "Sphere.hpp"
 
+namespace gtp {
+
 Sphere::Sphere() {}
 
 Sphere::Sphere(EngineCore *engineCorePtr) { InitSphere(engineCorePtr); }
 
+std::vector<gtp::Model::Vertex> Sphere::SphereVertices() {
+  return this->sphereVertices;
+}
+
+std::vector<uint32_t> Sphere::SphereIndices() { return this->sphereIndices; }
+
+// -- destroy sphere
+void Sphere::DestroySphere() {
+
+  std::cout << "\nCleaning Up Sphere Resources" << std::endl;
+
+  std::cout << "Sphere class resources destroyed!" << std::endl;
+}
+
 void Sphere::InitSphere(EngineCore *engineCorePtr) {
+  // assign core pointer
   this->pEngineCore = engineCorePtr;
+
+  // initialize vertex and index data for sphere
+  this->InitSphereGeometry();
+
+  std::cout << "initialized sphere!" << std::endl;
 }
 
 void Sphere::InitSphereGeometry() {
@@ -30,19 +52,21 @@ void Sphere::InitSphereGeometry() {
       vertex.joint0 = {0.0f, 0.0f, 0.0f, 0.0f};
       vertex.weight0 = {0.0f, 0.0f, 0.0f, 0.0f};
       vertex.tangent = {0.0f, 0.0f, 0.0f, 0.0f};
-      vertices.push_back(vertex);
+      sphereVertices.push_back(vertex);
     }
   }
 
   for (unsigned int y = 0; y < Y_SEGMENTS; ++y) {
     for (unsigned int x = 0; x < X_SEGMENTS; ++x) {
-      indices.push_back(y * (X_SEGMENTS + 1) + x);
-      indices.push_back((y + 1) * (X_SEGMENTS + 1) + x);
-      indices.push_back((y + 1) * (X_SEGMENTS + 1) + x + 1);
+      sphereIndices.push_back(y * (X_SEGMENTS + 1) + x);
+      sphereIndices.push_back((y + 1) * (X_SEGMENTS + 1) + x);
+      sphereIndices.push_back((y + 1) * (X_SEGMENTS + 1) + x + 1);
 
-      indices.push_back(y * (X_SEGMENTS + 1) + x);
-      indices.push_back((y + 1) * (X_SEGMENTS + 1) + x + 1);
-      indices.push_back(y * (X_SEGMENTS + 1) + x + 1);
+      sphereIndices.push_back(y * (X_SEGMENTS + 1) + x);
+      sphereIndices.push_back((y + 1) * (X_SEGMENTS + 1) + x + 1);
+      sphereIndices.push_back(y * (X_SEGMENTS + 1) + x + 1);
     }
   }
 }
+
+} // namespace gtp

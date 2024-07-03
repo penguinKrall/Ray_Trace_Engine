@@ -2,13 +2,13 @@
 
 #include <ComputeVertex.hpp>
 #include <EngineCore.hpp>
+#include <Particle.hpp>
 #include <Shader.hpp>
 #include <TextureLoader.hpp>
 #include <Utilities_AS.hpp>
 #include <Utilities_Renderer.hpp>
 #include <Utilities_UI.hpp>
 #include <glTFModel.hpp>
-#include <Particle.hpp>
 
 #define VK_GLTF_MATERIAL_IDS
 
@@ -51,7 +51,6 @@ public:
 
     // particle
     gtp::Particle particle;
-
   };
 
   Utilities_Renderer::ShaderBindingTableData shaderBindingTableData{};

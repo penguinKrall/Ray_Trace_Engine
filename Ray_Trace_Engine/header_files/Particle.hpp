@@ -3,6 +3,7 @@
 #include <ComputeVertex.hpp>
 #include <EngineCore.hpp>
 #include <Shader.hpp>
+#include <Sphere.hpp>
 #include <TextureLoader.hpp>
 #include <Utilities_AS.hpp>
 #include <Utilities_Renderer.hpp>
@@ -13,14 +14,8 @@
 
 namespace gtp {
 
-class Particle {
+class Particle : private Sphere {
 public:
-  // -- particle "vertex"
-  struct Vertex {
-    glm::vec2 pos;
-    glm::vec2 vel;
-    glm::vec4 gradientPos;
-  };
 
   // -- compute shader data
   struct ComputeBlock {
@@ -37,6 +32,19 @@ public:
     gtp::Buffer computeBlockSSBO{};
   };
 
+  // -- default ctor
+  Particle();
+
+  // -- init ctor
+  Particle(EngineCore *corePtr);
+
+  // -- destroy particle
+  void DestroyParticle();
+
+private:
+  // -- core pointer
+  EngineCore *pEngineCore = nullptr;
+
   // -- particle compute block struct
   ComputeBlock computeBlock{};
 
@@ -46,20 +54,23 @@ public:
   // -- shader
   gtp::Shader shader;
 
-  // -- core pointer
-  EngineCore *pEngineCore = nullptr;
+  // -- pipeline data struct
+  struct PipelineData {
+    VkDescriptorPool descriptorPool{};
+    VkDescriptorSetLayout descriptorSetLayout{};
+    VkDescriptorSet descriptorSet{};
+    VkPipeline pipeline{};
+    VkPipelineLayout pipelineLayout{};
+  };
 
-  // -- default ctor
-  Particle();
+  PipelineData pipelineData{};
 
-  // -- init ctor
-  Particle(EngineCore *corePtr);
+  // -- bottom level acceleration structure/data
+  Utilities_AS::BLASData blasData;
+  Utilities_AS::AccelerationStructure BLAS;
 
   // -- init func
   void InitParticle(EngineCore *corePtr);
-
-  // -- destroy particle
-  void DestroyParticle();
 
   // -- create vertex ssbo
   void CreateVertexStorageBuffer();
@@ -69,6 +80,15 @@ public:
 
   // -- update compute block ssbo
   void UpdateComputeBlockSSBO(float deltaTime, float timer);
+
+  // -- create compute pipeline
+  void CreateComputePipeline();
+
+  // -- create particle BLAS
+  void CreateParticleBLAS(
+    std::vector<Utilities_AS::GeometryNode>* geometryNodeBuf,
+    std::vector<Utilities_AS::GeometryIndex>* geometryIndexBuf,
+    uint32_t textureOffset);
 
 };
 

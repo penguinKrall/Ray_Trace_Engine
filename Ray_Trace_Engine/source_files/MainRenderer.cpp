@@ -15,7 +15,7 @@ void MainRenderer::Init_MainRenderer(EngineCore *coreBase) {
   // shader
   shader = gtp::Shader(pEngineCore);
 
-  //particle
+  // particle
   this->assets.particle = gtp::Particle(coreBase);
 
   // load assets
@@ -247,21 +247,6 @@ void MainRenderer::LoadAssets() {
       gtp::FileLoadingFlags::None,
       Utilities_Renderer::ModelLoadingFlags::SemiTransparent, nullptr);
 
-  //// -- load flight helmet model
-  // Utilities_UI::TransformMatrices helmetModelTransformMatrices{};
-  //
-  // helmetModelTransformMatrices.translate =
-  //     glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-  //
-  // helmetModelTransformMatrices.scale =
-  //     glm::scale(glm::mat4(1.0f), glm::vec3(10.0f));
-  //
-  // this->LoadModel(
-  //     "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
-  //     "FlightHelmet/glTF/FlightHelmet.gltf",
-  //     glTFLoadingFlags, Utilities_Renderer::ModelLoadingFlags::PositionModel,
-  //     &helmetModelTransformMatrices);
-
   for (int i = 0; i < this->assets.modelData.animatedModelIndex.size(); i++) {
     std::cout << "\nanimated model index[" << i
               << "]: " << this->assets.modelData.animatedModelIndex[i]
@@ -281,6 +266,7 @@ void MainRenderer::LoadGltfCompute(gtp::Model *pModel) {
 }
 
 void MainRenderer::CreateBLAS(gtp::Model *pModel) {
+
   Utilities_AS::BLASData *tempBLAS = new Utilities_AS::BLASData();
 
   std::cout << "before this->assets.textureOffset: "
@@ -2411,7 +2397,6 @@ void MainRenderer::Destroy_MainRenderer() {
   this->assets.cubemap.DestroyTextureLoader();
   this->assets.coloredGlassTexture.DestroyTextureLoader();
 
-  //particle
+  // particle
   this->assets.particle.DestroyParticle();
-
 }

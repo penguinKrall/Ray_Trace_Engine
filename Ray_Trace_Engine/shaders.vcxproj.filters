@@ -22,6 +22,9 @@
     <CustomBuild Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\CMakeFiles\7e257bb3c1514eaf5d51ec02d10c4ad6\main_renderer_shadow.rmiss.spv.rule">
       <Filter>CMake Rules</Filter>
     </CustomBuild>
+    <CustomBuild Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\CMakeFiles\7e257bb3c1514eaf5d51ec02d10c4ad6\particle_compute.comp.spv.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
     <CustomBuild Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\CMakeFiles\7e257bb3c1514eaf5d51ec02d10c4ad6\ui_fragment.frag.spv.rule">
       <Filter>CMake Rules</Filter>
     </CustomBuild>
