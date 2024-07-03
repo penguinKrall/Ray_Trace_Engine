@@ -30,6 +30,8 @@ public:
     gtp::Buffer vertexSSBOStaging{};
     gtp::Buffer vertexInputSSBO{};
     gtp::Buffer vertexOutputSSBO{};
+    gtp::Buffer indexSSBOStaging{};
+    gtp::Buffer indexSSBO{};
     gtp::Buffer computeBlockSSBO{};
   };
 
@@ -81,6 +83,9 @@ private:
 
   // -- create particle vertex shader storage buffer objects
   void CreateVertexStorageBuffer();
+
+  // -- creat particle index shader storage buffer
+  void CreateIndexStorageBuffer();
 
   // -- create particle compute block ssbo
   void CreateComputeBlockStorageBuffer();

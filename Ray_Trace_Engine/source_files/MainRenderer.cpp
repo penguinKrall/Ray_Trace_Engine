@@ -1265,11 +1265,6 @@ void MainRenderer::CreateDescriptorSet() {
     }
   }
 
-  // else {
-  //   VkDescriptorImageInfo nullDescriptor{};
-  //   textureDescriptors.push_back(nullDescriptor);
-  // }
-
   VkWriteDescriptorSet writeDescriptorImgArray{};
   writeDescriptorImgArray.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   writeDescriptorImgArray.dstBinding = 8;
