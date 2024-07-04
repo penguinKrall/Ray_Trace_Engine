@@ -129,6 +129,9 @@ public:
   // -- create top level acceleration structure
   void CreateTLAS();
 
+  // -- handle particle tlas instances
+  void HandleParticleInstancesTLAS(int particleIdx);
+
   // -- create storage image
   void CreateStorageImages();
 

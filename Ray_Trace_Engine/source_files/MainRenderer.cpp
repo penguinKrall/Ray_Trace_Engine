@@ -13,14 +13,13 @@ glm::vec3 generateRandomTorusPosition(float outerRadius, float innerRadius) {
   float v = randomFloat(0.0f, 2.0f * glm::pi<float>());
   float x = (outerRadius + innerRadius * cos(v)) * cos(u);
   float z = (outerRadius + innerRadius * cos(v)) * sin(u); // swapped y with z
-  float y = innerRadius * sin(v);                          // swapped z with y
+  float y = innerRadius * sin(v) / 4;                      // swapped z with y
   return glm::vec3(x, y, z);
 }
 
 MainRenderer::MainRenderer() {}
 
 MainRenderer::MainRenderer(EngineCore *coreBase) {
-
   Init_MainRenderer(coreBase);
 }
 
@@ -231,6 +230,8 @@ void MainRenderer::LoadParticle(
 
   this->assets.particle.sphereModel->semiTransparentFlag =
       static_cast<int>(isSemiTransparent);
+
+  this->assets.particle.sphereModel->isParticle = true;
 
   // Set "isAnimated" flag and add to list
   // referenced by blas/tlas/compute vertex
@@ -448,92 +449,51 @@ void MainRenderer::CreateTLAS() {
 
   // initialize instances array
   if (blasInstances.size() != 0) {
-    for (int i = 0; i < blasInstances.size(); i++) {
-      // Assuming you have separate rotation, translation, and scale for each
-      // instance
-      glm::mat4 rotationMatrix = this->assets.modelData.transformMatrices[i]
-                                     .rotate; // Example rotation matrix
-      glm::mat4 translationMatrix =
-          this->assets.modelData.transformMatrices[i]
-              .translate; // Example translation matrix
-      glm::mat4 scaleMatrix = this->assets.modelData.transformMatrices[i]
-                                  .scale; // Example scale matrix
+    for (int i = 0; i < this->assets.models.size(); i++) {
+      if (i > 0 && this->assets.models[i]->isParticle) {
+        this->HandleParticleInstancesTLAS(i);
+      }
 
-      // Combine rotation, translation, and scale into a single 4x4 matrix
-      glm::mat4 transformMatrix =
-          translationMatrix * rotationMatrix * scaleMatrix;
+      else {
 
-      // Convert glm::mat4 to VkTransformMatrixKHR
-      VkTransformMatrixKHR vkTransformMatrix;
+        // Assuming you have separate rotation, translation, and scale for each
+        // instance
+        glm::mat4 rotationMatrix = this->assets.modelData.transformMatrices[i]
+                                       .rotate; // Example rotation matrix
+        glm::mat4 translationMatrix =
+            this->assets.modelData.transformMatrices[i]
+                .translate; // Example translation matrix
+        glm::mat4 scaleMatrix = this->assets.modelData.transformMatrices[i]
+                                    .scale; // Example scale matrix
 
-      for (int col = 0; col < 4; ++col) {
-        for (int row = 0; row < 3; ++row) {
-          vkTransformMatrix.matrix[row][col] =
-              transformMatrix[col][row]; // Vulkan expects column-major order
+        // Combine rotation, translation, and scale into a single 4x4 matrix
+        glm::mat4 transformMatrix =
+            translationMatrix * rotationMatrix * scaleMatrix;
+
+        // Convert glm::mat4 to VkTransformMatrixKHR
+        VkTransformMatrixKHR vkTransformMatrix;
+
+        for (int col = 0; col < 4; ++col) {
+          for (int row = 0; row < 3; ++row) {
+            vkTransformMatrix.matrix[row][col] =
+                transformMatrix[col][row]; // Vulkan expects column-major order
+          }
         }
-      }
 
-      // Assign this VkTransformMatrixKHR to your instance
-      blasInstances[i].transform = vkTransformMatrix;
-      blasInstances[i].instanceCustomIndex = i;
-      blasInstances[i].mask = 0xFF;
-      blasInstances[i].instanceShaderBindingTableRecordOffset = 0;
-      blasInstances[i].accelerationStructureReference =
-          this->bottomLevelAccelerationStructures[i]
-              ->accelerationStructure.deviceAddress;
-      std::cout << "this->secondBLAS.deviceAddress"
-                << this->bottomLevelAccelerationStructures[i]
-                       ->accelerationStructure.deviceAddress
-                << std::endl;
-    }
-  }
-
-  // particle test
-  int particleIdx = static_cast<int>(
-      this->bottomLevelAccelerationStructures.size() - 1); // particle blas idx
-
-  for (int i = 0; i < PARTICLE_COUNT; i++) {
-    VkAccelerationStructureInstanceKHR particleInstance;
-    glm::mat4 rotationMatrix =
-        this->assets.modelData.transformMatrices[particleIdx].rotate;
-
-    // Scale down to 10%
-    glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
-
-    // Generate a random position on the torus
-    glm::vec3 randomPosition = generateRandomTorusPosition(100.0f, 25.0f);
-
-    // Apply translation
-    glm::mat4 translationMatrix =
-        glm::translate(glm::mat4(1.0f), randomPosition);
-
-    // Combine rotation, translation, and scale into a single 4x4 matrix
-    glm::mat4 transformMatrix =
-        translationMatrix * rotationMatrix * scaleMatrix;
-
-    // Convert glm::mat4 to VkTransformMatrixKHR
-    VkTransformMatrixKHR vkTransformMatrix;
-
-    for (int col = 0; col < 4; ++col) {
-      for (int row = 0; row < 3; ++row) {
-        vkTransformMatrix.matrix[row][col] =
-            transformMatrix[col][row]; // Vulkan expects column-major order
+        // Assign this VkTransformMatrixKHR to your instance
+        blasInstances[i].transform = vkTransformMatrix;
+        blasInstances[i].instanceCustomIndex = i;
+        blasInstances[i].mask = 0xFF;
+        blasInstances[i].instanceShaderBindingTableRecordOffset = 0;
+        blasInstances[i].accelerationStructureReference =
+            this->bottomLevelAccelerationStructures[i]
+                ->accelerationStructure.deviceAddress;
+        std::cout << "this->secondBLAS.deviceAddress"
+                  << this->bottomLevelAccelerationStructures[i]
+                         ->accelerationStructure.deviceAddress
+                  << std::endl;
       }
     }
-
-    // Assign this VkTransformMatrixKHR to your instance
-    particleInstance.transform = vkTransformMatrix;
-    particleInstance.instanceCustomIndex = particleIdx;
-    particleInstance.mask = 0xFF;
-    particleInstance.instanceShaderBindingTableRecordOffset = 0;
-    particleInstance.accelerationStructureReference =
-        this->bottomLevelAccelerationStructures[particleIdx]
-            ->accelerationStructure.deviceAddress;
-    // std::cout << "this->secondBLAS.deviceAddress"
-    //   << this->bottomLevelAccelerationStructures[particleIdx]
-    //   ->accelerationStructure.deviceAddress
-    //   << std::endl;
-    blasInstances.push_back(particleInstance);
   }
 
   // -- create instances buffer
@@ -695,6 +655,52 @@ void MainRenderer::CreateTLAS() {
   this->TLAS.deviceAddress =
       pEngineCore->coreExtensions->vkGetAccelerationStructureDeviceAddressKHR(
           pEngineCore->devices.logical, &accelerationDeviceAddressInfo);
+}
+
+void MainRenderer::HandleParticleInstancesTLAS(int particleIdx) {
+  for (int i = 0; i < PARTICLE_COUNT; i++) {
+    VkAccelerationStructureInstanceKHR particleInstance;
+    glm::mat4 rotationMatrix =
+        this->assets.modelData.transformMatrices[particleIdx].rotate;
+
+    // Scale down to 10%
+    glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
+
+    // Generate a random position on the torus
+    glm::vec3 randomPosition = generateRandomTorusPosition(1000.0f, 450.0f);
+
+    // Apply translation
+    glm::mat4 translationMatrix =
+        glm::translate(glm::mat4(1.0f), randomPosition);
+
+    // Combine rotation, translation, and scale into a single 4x4 matrix
+    glm::mat4 transformMatrix =
+        translationMatrix * rotationMatrix * scaleMatrix;
+
+    // Convert glm::mat4 to VkTransformMatrixKHR
+    VkTransformMatrixKHR vkTransformMatrix;
+
+    for (int col = 0; col < 4; ++col) {
+      for (int row = 0; row < 3; ++row) {
+        vkTransformMatrix.matrix[row][col] =
+            transformMatrix[col][row]; // Vulkan expects column-major order
+      }
+    }
+
+    // Assign this VkTransformMatrixKHR to your instance
+    particleInstance.transform = vkTransformMatrix;
+    particleInstance.instanceCustomIndex = particleIdx;
+    particleInstance.mask = 0xFF;
+    particleInstance.instanceShaderBindingTableRecordOffset = 0;
+    particleInstance.accelerationStructureReference =
+        this->bottomLevelAccelerationStructures[particleIdx]
+            ->accelerationStructure.deviceAddress;
+    // std::cout << "this->secondBLAS.deviceAddress"
+    //   << this->bottomLevelAccelerationStructures[particleIdx]
+    //   ->accelerationStructure.deviceAddress
+    //   << std::endl;
+    blasInstances.push_back(particleInstance);
+  }
 }
 
 void MainRenderer::CreateStorageImages() {
@@ -1772,28 +1778,18 @@ void MainRenderer::UpdateBLAS() {
 
 void MainRenderer::UpdateTLAS() {
 
-  // -- array of instances
-  // std::vector<VkAccelerationStructureInstanceKHR> blasInstances;
-  // VkDeviceSize blasInstancesBufSize = 0;
-  // void *blasInstancesData = nullptr;
-
-  // resize array
-  // blasInstances.resize(this->bottomLevelAccelerationStructures.size());
-  // tlasData.primitive_count = static_cast<uint32_t>(blasInstances.size());
-
   // initialize instances array
   if (blasInstances.size() != 0) {
     for (int i = 0; i < this->assets.modelData.updateBLAS.size(); i++) {
       if (this->assets.modelData.updateBLAS[i]) {
-        // Assuming you have separate rotation, translation, and scale for each
-        // instance
-        glm::mat4 rotationMatrix = this->assets.modelData.transformMatrices[i]
-                                       .rotate; // Example rotation matrix
+
+        glm::mat4 rotationMatrix =
+            this->assets.modelData.transformMatrices[i].rotate;
         glm::mat4 translationMatrix =
-            this->assets.modelData.transformMatrices[i]
-                .translate; // Example translation matrix
-        glm::mat4 scaleMatrix = this->assets.modelData.transformMatrices[i]
-                                    .scale; // Example scale matrix
+            this->assets.modelData.transformMatrices[i].translate;
+
+        glm::mat4 scaleMatrix =
+            this->assets.modelData.transformMatrices[i].scale;
 
         // Combine rotation, translation, and scale into a single 4x4 matrix
         glm::mat4 transformMatrix =
@@ -1819,89 +1815,6 @@ void MainRenderer::UpdateTLAS() {
       }
     }
   }
-
-  // if (blasInstances.size() != 0) {
-  //	for (int i = 0; i < blasInstances.size(); i++) {
-  //		// Assuming you have separate rotation, translation, and scale
-  // for each
-  //		// instance
-  //		glm::mat4 rotationMatrix =
-  // this->assets.modelData.transformMatrices[i] 			.rotate;
-  // // Example rotation matrix 		glm::mat4 translationMatrix =
-  //			this->assets.modelData.transformMatrices[i]
-  //			.translate; // Example translation matrix
-  //		glm::mat4 scaleMatrix =
-  // this->assets.modelData.transformMatrices[i] 			.scale;
-  // // Example scale matrix
-  //
-  //		// Combine rotation, translation, and scale into a single 4x4
-  // matrix 		glm::mat4 transformMatrix =
-  // translationMatrix * rotationMatrix * scaleMatrix;
-  //
-  //		// Convert glm::mat4 to VkTransformMatrixKHR
-  //		VkTransformMatrixKHR vkTransformMatrix;
-  //		for (int col = 0; col < 4; ++col) {
-  //			for (int row = 0; row < 3; ++row) {
-  //				vkTransformMatrix.matrix[row][col] =
-  //					transformMatrix[col][row]; // Vulkan
-  // expects column-major order
-  //			}
-  //		}
-  //
-  //		// Assign this VkTransformMatrixKHR to your instance
-  //		blasInstances[i].transform = vkTransformMatrix;
-  //		blasInstances[i].instanceCustomIndex = i;
-  //		blasInstances[i].mask = 0xFF;
-  //		blasInstances[i].instanceShaderBindingTableRecordOffset = 0;
-  //		blasInstances[i].accelerationStructureReference =
-  //			this->bottomLevelAccelerationStructures[i]
-  //			->accelerationStructure.deviceAddress;
-  //	}
-  // }
-
-  // particle test
-  // int particleIdx = static_cast<int>(
-  //	this->bottomLevelAccelerationStructures.size() - 1); // particle blas
-  // idx
-  //
-  // for (int i = 0; i < PARTICLE_COUNT; i++) {
-  //	VkAccelerationStructureInstanceKHR particleInstance;
-  //	glm::mat4 rotationMatrix =
-  //		this->assets.modelData.transformMatrices[particleIdx].rotate;
-  //	glm::mat4 translationMatrix = glm::translate(
-  //		glm::mat4(1.0f), glm::vec3(static_cast<float>(i), 0.0f, 10.0f));
-  //	glm::mat4 scaleMatrix =
-  //		this->assets.modelData.transformMatrices[particleIdx].scale;
-  //
-  //	// Combine rotation, translation, and scale into a single 4x4 matrix
-  //	glm::mat4 transformMatrix =
-  //		translationMatrix * rotationMatrix * scaleMatrix;
-  //
-  //	// Convert glm::mat4 to VkTransformMatrixKHR
-  //	VkTransformMatrixKHR vkTransformMatrix;
-  //
-  //	for (int col = 0; col < 4; ++col) {
-  //		for (int row = 0; row < 3; ++row) {
-  //			vkTransformMatrix.matrix[row][col] =
-  //				transformMatrix[col][row]; // Vulkan expects
-  // column-major order
-  //		}
-  //	}
-  //
-  //	// Assign this VkTransformMatrixKHR to your instance
-  //	particleInstance.transform = vkTransformMatrix;
-  //	particleInstance.instanceCustomIndex = particleIdx + i;
-  //	particleInstance.mask = 0xFF;
-  //	particleInstance.instanceShaderBindingTableRecordOffset = 0;
-  //	particleInstance.accelerationStructureReference =
-  //		this->bottomLevelAccelerationStructures[particleIdx]
-  //		->accelerationStructure.deviceAddress;
-  //	// std::cout << "this->secondBLAS.deviceAddress"
-  //	//   << this->bottomLevelAccelerationStructures[particleIdx]
-  //	//   ->accelerationStructure.deviceAddress
-  //	//   << std::endl;
-  //	blasInstances.push_back(particleInstance);
-  //}
 
   if (blasInstances.size() != 0) {
 

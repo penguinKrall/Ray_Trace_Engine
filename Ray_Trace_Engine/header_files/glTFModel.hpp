@@ -200,6 +200,8 @@ struct Model {
 
   std::string modelName;
 
+  bool isParticle = false;
+
   struct Vertex {
     glm::vec4 pos;
     glm::vec4 normal;
