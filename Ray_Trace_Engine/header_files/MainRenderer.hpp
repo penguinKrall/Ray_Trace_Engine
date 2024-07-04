@@ -55,7 +55,7 @@ public:
     gtp::TextureLoader cubemap;
 
     // particle
-    gtp::Particle particle;
+    std::vector<gtp::Particle*> particle;
   };
 
   Utilities_Renderer::ShaderBindingTableData shaderBindingTableData{};

@@ -468,7 +468,7 @@ glm::mat4 Node::getMatrix() {
   return m;
 }
 
-void Node::update() {
+void Node::update(gtp::Buffer *jointBuffer) {
   if (mesh) {
     glm::mat4 m = getMatrix();
     if (skin) {
@@ -477,23 +477,30 @@ void Node::update() {
       glm::mat4 inverseTransform = glm::inverse(m);
       size_t numJoints =
           std::min((uint32_t)skin->joints.size(), MAX_NUM_JOINTS);
+      if (mesh->uniformBlock.jointMatrix.empty()) {
+        mesh->uniformBlock.jointMatrix.resize(numJoints);
+      }
       for (size_t i = 0; i < numJoints; i++) {
         gtp::Node *jointNode = skin->joints[i];
         glm::mat4 jointMat =
             jointNode->getMatrix() * skin->inverseBindMatrices[i];
         jointMat = inverseTransform * jointMat;
         mesh->uniformBlock.jointMatrix[i] = jointMat;
+        if (jointBuffer != nullptr) {
+          jointBuffer->copyTo(mesh->uniformBlock.jointMatrix.data(),
+                              sizeof(glm::mat4) * numJoints);
+        }
       }
-      mesh->uniformBlock.jointcount = (float)numJoints;
-      memcpy(mesh->uniformBuffer.mapped, &mesh->uniformBlock,
-             sizeof(mesh->uniformBlock));
+      // mesh->uniformBlock.jointcount = (float)numJoints;
+      // memcpy(mesh->uniformBuffer.mapped, &mesh->uniformBlock,
+      //        sizeof(mesh->uniformBlock));
     } else {
-      memcpy(mesh->uniformBuffer.mapped, &m, sizeof(glm::mat4));
+      // memcpy(mesh->uniformBuffer.mapped, &m, sizeof(glm::mat4));
     }
   }
 
   for (auto &child : children) {
-    child->update();
+    child->update(jointBuffer);
   }
 }
 
@@ -1430,8 +1437,8 @@ void Model::loadFromFile(std::string filename, EngineCore *coreBase,
     vkFreeMemory(coreBase->devices.logical, indexStaging.memory, nullptr);
   }
 
-  //delete[] loaderInfo.vertexBuffer;
-  //delete[] loaderInfo.indexBuffer;
+  // delete[] loaderInfo.vertexBuffer;
+  // delete[] loaderInfo.indexBuffer;
 
   getSceneDimensions();
 }
@@ -1506,7 +1513,8 @@ void Model::getSceneDimensions() {
   aabb[3][2] = dimensions.min[2];
 }
 
-void Model::updateAnimation(uint32_t index, float time) {
+void Model::updateAnimation(uint32_t index, float time,
+                            gtp::Buffer *jointBuffer) {
   if (animations.empty()) {
     std::cout << ".glTF does not contain animation." << std::endl;
     return;
@@ -1573,7 +1581,7 @@ void Model::updateAnimation(uint32_t index, float time) {
   }
   if (updated) {
     for (auto &node : nodes) {
-      node->update();
+      node->update(jointBuffer);
     }
   }
 }

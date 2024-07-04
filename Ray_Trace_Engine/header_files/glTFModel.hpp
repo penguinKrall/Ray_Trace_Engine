@@ -136,7 +136,7 @@ struct Mesh {
   } uniformBuffer;
   struct UniformBlock {
     glm::mat4 matrix;
-    glm::mat4 jointMatrix[MAX_NUM_JOINTS]{};
+    std::vector<glm::mat4> jointMatrix{};
     float jointcount{0};
   } uniformBlock;
   Mesh(EngineCore *coreBase, glm::mat4 matrix);
@@ -167,7 +167,7 @@ struct Node {
   BoundingBox aabb;
   glm::mat4 localMatrix();
   glm::mat4 getMatrix();
-  void update();
+  void update(gtp::Buffer *jointBuffer = nullptr);
   ~Node();
 };
 
@@ -280,7 +280,8 @@ struct Model {
   void draw(VkCommandBuffer commandBuffer);
   void calculateBoundingBox(Node *node, Node *parent);
   void getSceneDimensions();
-  void updateAnimation(uint32_t index, float time);
+  void updateAnimation(uint32_t index, float time,
+                       gtp::Buffer *jointBuffer = nullptr);
   Node *findNode(Node *parent, uint32_t index);
   Node *nodeFromIndex(uint32_t index);
 };

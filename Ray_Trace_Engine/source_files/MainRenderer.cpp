@@ -32,7 +32,7 @@ void MainRenderer::Init_MainRenderer(EngineCore *coreBase) {
   shader = gtp::Shader(pEngineCore);
 
   // particle
-  this->assets.particle = gtp::Particle(coreBase);
+  // this->assets.particle = new gtp::Particle(coreBase);
 
   // load assets
   this->LoadAssets();
@@ -204,6 +204,9 @@ void MainRenderer::LoadModel(
 
   // create bottom level acceleration structure for model
   CreateBLAS(tempModel);
+
+  // not a particle
+  this->assets.particle.push_back(nullptr);
 }
 
 void MainRenderer::LoadParticle(
@@ -211,15 +214,12 @@ void MainRenderer::LoadParticle(
     Utilities_Renderer::ModelLoadingFlags modelLoadingFlags,
     Utilities_UI::TransformMatrices *pTransformMatrices) {
 
-  //// model instance pointer to initialize and add to list
-  // auto* tempModel = new gtp::Model();
-
   // model index
   auto modelIdx = static_cast<int>(this->assets.models.size());
 
-  // -- Load From File ---- gtp::Model function
-  // tempModel->loadFromFile(filename, pEngineCore, pEngineCore->queue.graphics,
-  //  fileLoadingFlags);
+  // particle instance pointer to initialize and add to list
+  // this->assets.particle = new gtp::Particle(this->pEngineCore);
+  auto tempParticle = new gtp::Particle(this->pEngineCore);
 
   // set semi transparent flag
   const bool isSemiTransparent =
@@ -228,15 +228,15 @@ void MainRenderer::LoadParticle(
           ? 1
           : 0;
 
-  this->assets.particle.sphereModel->semiTransparentFlag =
+  tempParticle->sphereModel->semiTransparentFlag =
       static_cast<int>(isSemiTransparent);
 
-  this->assets.particle.sphereModel->isParticle = true;
+  tempParticle->sphereModel->isParticle = true;
 
   // Set "isAnimated" flag and add to list
   // referenced by blas/tlas/compute vertex
   const bool isAnimated =
-      !this->assets.particle.sphereModel->animations.empty() ? true : false;
+      !tempParticle->sphereModel->animations.empty() ? true : false;
 
   this->assets.modelData.animatedModelIndex.push_back(
       static_cast<int>(isAnimated));
@@ -249,7 +249,7 @@ void MainRenderer::LoadParticle(
   std::vector<std::string> tempNames;
   std::vector<int> tempAnimationIndex;
 
-  if (this->assets.particle.sphereModel->animations.empty()) {
+  if (tempParticle->sphereModel->animations.empty()) {
     tempAnimationIndex.push_back(0);
     this->assets.modelData.activeAnimation.push_back(tempAnimationIndex);
     tempNames.push_back("none");
@@ -259,22 +259,19 @@ void MainRenderer::LoadParticle(
   else {
     tempAnimationIndex.push_back(0);
     this->assets.modelData.activeAnimation.push_back(tempAnimationIndex);
-    for (int i = 0; i < this->assets.particle.sphereModel->animations.size();
-         i++) {
-      tempNames.push_back(
-          this->assets.particle.sphereModel->animations[i].name);
-      std::cout << this->assets.particle.sphereModel->animations[i].name
-                << std::endl;
+    for (int i = 0; i < tempParticle->sphereModel->animations.size(); i++) {
+      tempNames.push_back(tempParticle->sphereModel->animations[i].name);
+      std::cout << tempParticle->sphereModel->animations[i].name << std::endl;
     }
     this->assets.modelData.animationNames.push_back(tempNames);
   }
 
   // add model to model list
-  this->assets.models.push_back(this->assets.particle.sphereModel);
+  this->assets.models.push_back(tempParticle->sphereModel);
 
   // init modelData struct
   this->assets.modelData.modelName.push_back(
-      this->assets.particle.sphereModel->modelName);
+      tempParticle->sphereModel->modelName);
 
   // matrices
   Utilities_UI::TransformMatrices transformMatrices{};
@@ -292,6 +289,7 @@ void MainRenderer::LoadParticle(
 
     transformMatrices.scale = pTransformMatrices->scale;
   }
+
   // rotate transform values
   //  Extract the upper 3x3 part of the matrix
   glm::mat3 rotationMatrix = glm::mat3(transformMatrices.rotate);
@@ -325,10 +323,12 @@ void MainRenderer::LoadParticle(
 
   // load gltf -- internally conditional if model contains animations else ==
   // nullptr
-  LoadGltfCompute(this->assets.particle.sphereModel);
+  LoadGltfCompute(tempParticle->sphereModel);
 
   // create bottom level acceleration structure for model
-  CreateBLAS(this->assets.particle.sphereModel);
+  CreateBLAS(tempParticle->sphereModel);
+
+  this->assets.particle.push_back(tempParticle);
 }
 
 void MainRenderer::LoadAssets() {
@@ -659,7 +659,9 @@ void MainRenderer::CreateTLAS() {
 
 void MainRenderer::HandleParticleInstancesTLAS(int particleIdx) {
   for (int i = 0; i < PARTICLE_COUNT; i++) {
+
     VkAccelerationStructureInstanceKHR particleInstance;
+
     glm::mat4 rotationMatrix =
         this->assets.modelData.transformMatrices[particleIdx].rotate;
 
@@ -1803,6 +1805,7 @@ void MainRenderer::UpdateTLAS() {
                 transformMatrix[col][row]; // Vulkan expects column-major order
           }
         }
+
         // this->blasInstances[i]// Assign this VkTransformMatrixKHR to your
         // instance
         blasInstances[i].transform = vkTransformMatrix;
@@ -2080,6 +2083,12 @@ void MainRenderer::DeleteModel(gtp::Model *pModel) {
   std::cout << "\tname: " << pModel->modelName << std::endl;
   std::cout << "\tindex: " << this->assets.modelData.modelIndex << std::endl;
   vkDeviceWaitIdle(this->pEngineCore->devices.logical);
+
+  if (this->assets.models[this->assets.modelData.modelIndex]->isParticle) {
+    this->assets.particle[this->assets.modelData.modelIndex]->DestroyParticle();
+    this->assets.particle.erase(this->assets.particle.begin() +
+                                this->assets.modelData.modelIndex);
+  }
 
   // destroy model
   this->assets.models[this->assets.modelData.modelIndex]->destroy(
@@ -2587,5 +2596,9 @@ void MainRenderer::Destroy_MainRenderer() {
   this->assets.coloredGlassTexture.DestroyTextureLoader();
 
   // particle
-  this->assets.particle.DestroyParticle();
+  for (auto &particles : this->assets.particle) {
+    if (particles != nullptr) {
+      particles->DestroyParticle();
+    }
+  }
 }

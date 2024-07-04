@@ -387,9 +387,13 @@ void Engine::Draw() {
     }
 
     // particle commands
-    computeCommands.push_back(
-        this->renderers.mainRenderer.assets.particle.RecordComputeCommands(
-            currentFrame));
+    for (int i = 0; i > this->renderers.mainRenderer.assets.particle.size();
+         i++) {
+      if (this->renderers.mainRenderer.assets.particle[i] != nullptr) {
+      computeCommands.push_back(this->renderers.mainRenderer.assets.particle[i]
+                                    ->RecordComputeCommands(currentFrame));
+      }
+    }
 
     // compute pipeline wait stages
     std::vector<VkPipelineStageFlags> computeWaitStages = {
@@ -459,17 +463,19 @@ void Engine::Draw() {
         // verify current model is being animated
         if (this->renderers.mainRenderer.assets.modelData.isAnimated[i]) {
           this->renderers.mainRenderer.assets.models[i]->updateAnimation(
-              activeAnimation, deltaTime);
+              activeAnimation, deltaTime,
+              &this->renderers.mainRenderer.gltfCompute[i]->jointBuffer);
         }
       }
     }
 
     // update compute class joint buffer
-    for (int i = 0; i < this->renderers.mainRenderer.gltfCompute.size(); i++) {
-      if (this->renderers.mainRenderer.gltfCompute[i] != nullptr) {
-        this->renderers.mainRenderer.gltfCompute[i]->UpdateJointBuffer();
-      }
-    }
+    // for (int i = 0; i < this->renderers.mainRenderer.gltfCompute.size(); i++)
+    // {
+    //  if (this->renderers.mainRenderer.gltfCompute[i] != nullptr) {
+    //    this->renderers.mainRenderer.gltfCompute[i]->UpdateJointBuffer();
+    //  }
+    //}
 
     this->renderers.mainRenderer.UpdateUniformBuffer(timer);
 
