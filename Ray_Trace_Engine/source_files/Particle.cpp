@@ -88,7 +88,7 @@ void gtp::Particle::InitParticle(EngineCore *corePtr) {
   // -- Load From File ---- gtp::Model function
   this->sphereModel->loadFromFile(
       "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/"
-      "assets/models/plain_sphere/plain_sphere.gltf",
+      "assets/models/plane/plane.gltf",
       pEngineCore, pEngineCore->queue.graphics);
 
   // create particle vertex storage buffer

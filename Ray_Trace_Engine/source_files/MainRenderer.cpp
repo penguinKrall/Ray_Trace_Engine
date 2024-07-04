@@ -450,6 +450,7 @@ void MainRenderer::CreateTLAS() {
   // initialize instances array
   if (blasInstances.size() != 0) {
     for (int i = 0; i < this->assets.models.size(); i++) {
+
       if (i > 0 && this->assets.models[i]->isParticle) {
         this->HandleParticleInstancesTLAS(i);
       }
@@ -666,7 +667,7 @@ void MainRenderer::HandleParticleInstancesTLAS(int particleIdx) {
         this->assets.modelData.transformMatrices[particleIdx].rotate;
 
     // Scale down to 10%
-    glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
+    glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
 
     // Generate a random position on the torus
     glm::vec3 randomPosition = generateRandomTorusPosition(1000.0f, 450.0f);
@@ -2082,13 +2083,21 @@ void MainRenderer::DeleteModel(gtp::Model *pModel) {
 
   std::cout << "\tname: " << pModel->modelName << std::endl;
   std::cout << "\tindex: " << this->assets.modelData.modelIndex << std::endl;
+
+  // wait for device idle
   vkDeviceWaitIdle(this->pEngineCore->devices.logical);
 
+  // clear blas instances 'buffer'
+  blasInstances.clear();
+
+  // destroy particle class if one is associated
   if (this->assets.models[this->assets.modelData.modelIndex]->isParticle) {
     this->assets.particle[this->assets.modelData.modelIndex]->DestroyParticle();
-    this->assets.particle.erase(this->assets.particle.begin() +
-                                this->assets.modelData.modelIndex);
   }
+
+  // erase model index associated particle
+  this->assets.particle.erase(this->assets.particle.begin() +
+                              this->assets.modelData.modelIndex);
 
   // destroy model
   this->assets.models[this->assets.modelData.modelIndex]->destroy(
