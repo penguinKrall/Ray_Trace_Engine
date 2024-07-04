@@ -112,6 +112,8 @@ void gtp::Particle::InitParticle(EngineCore *corePtr) {
   std::cout << " initialized particle!" << std::endl;
 }
 
+void gtp::Particle::InstanceModel() {}
+
 void gtp::Particle::CreateVertexStorageBuffer() {
 
   VkDeviceSize vertexStorageBufferSize =

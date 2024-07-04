@@ -83,6 +83,9 @@ private:
   // -- init func
   void InitParticle(EngineCore *corePtr);
 
+  // -- instance model
+  void InstanceModel();
+
   // -- create particle vertex shader storage buffer objects
   void CreateVertexStorageBuffer();
 

@@ -445,6 +445,9 @@ void Engine::Draw() {
 
     // Update model class animation
     // iterate through model list
+
+    bool isBLASUpdated = false;
+
     for (size_t i = 0; i < this->renderers.mainRenderer.assets.models.size();
          ++i) {
       // check animated index to check against model list for animated models
@@ -469,11 +472,17 @@ void Engine::Draw() {
     }
 
     this->renderers.mainRenderer.UpdateUniformBuffer(timer);
+
     this->renderers.mainRenderer.UpdateBLAS();
+
+    if (this->renderers.mainRenderer.updateTLAS) {
+      this->renderers.mainRenderer.UpdateTLAS();
+      this->renderers.mainRenderer.updateTLAS = false;
+    }
+
     for (int i = 0; i < this->UI.modelData.updateBLAS.size(); i++) {
       this->UI.modelData.updateBLAS[i] = false;
     }
-    this->renderers.mainRenderer.UpdateTLAS();
 
     /*----------------------------------*/
     //     record command buffer       //
