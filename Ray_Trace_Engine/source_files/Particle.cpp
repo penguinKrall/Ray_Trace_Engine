@@ -40,6 +40,10 @@ VkCommandBuffer gtp::Particle::RecordComputeCommands(int frame) {
   return this->commandBuffers[frame];
 }
 
+gtp::Model* gtp::Particle::ParticleModel() {
+  return this->sphereModel;
+}
+
 void gtp::Particle::DestroyParticle() {
 
   // descriptor pool

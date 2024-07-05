@@ -3,7 +3,7 @@
 #include <ComputeVertex.hpp>
 #include <EngineCore.hpp>
 #include <Shader.hpp>
-#include <Sphere.hpp>
+// #include <Sphere.hpp>
 #include <TextureLoader.hpp>
 #include <Utilities_AS.hpp>
 #include <Utilities_Renderer.hpp>
@@ -14,10 +14,25 @@
 
 namespace gtp {
 
-class Particle{
+class Particle {
 public:
+  // -- default ctor
+  Particle();
 
-  gtp::Model* sphereModel = nullptr;
+  // -- init ctor
+  Particle(EngineCore *corePtr);
+
+  // -- record commands
+  VkCommandBuffer RecordComputeCommands(int frame);
+
+  // -- get model
+  gtp::Model* ParticleModel();
+
+  // -- destroy particle
+  void DestroyParticle();
+
+private:
+  gtp::Model *sphereModel = nullptr;
 
   // -- compute shader data
   struct ComputeBlock {
@@ -37,19 +52,6 @@ public:
     gtp::Buffer computeBlockSSBO{};
   };
 
-  // -- default ctor
-  Particle();
-
-  // -- init ctor
-  Particle(EngineCore *corePtr);
-
-  // -- record commands
-  VkCommandBuffer RecordComputeCommands(int frame);
-
-  // -- destroy particle
-  void DestroyParticle();
-
-private:
   // -- core pointer
   EngineCore *pEngineCore = nullptr;
 
@@ -106,7 +108,6 @@ private:
 
   // -- create particle compute pipeline command buffers
   void CreateCommandBuffers();
-
 };
 
 } // namespace gtp

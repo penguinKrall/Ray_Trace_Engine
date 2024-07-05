@@ -13,10 +13,11 @@
 #define VK_GLTF_MATERIAL_IDS
 
 class MainRenderer {
-public:
+private:
 
   //tlas particle update refactor later
   bool updateTLAS = false;
+
   std::vector<VkAccelerationStructureInstanceKHR> blasInstances;
 
   // -- geometry node vector
@@ -37,6 +38,48 @@ public:
     gtp::Buffer ubo{};
     gtp::Buffer colorIDImageBuffer{};
   };
+ 
+  // -- shader binding table data
+  Utilities_Renderer::ShaderBindingTableData shaderBindingTableData{};
+
+  // -- top level acceleration structure
+  Utilities_AS::AccelerationStructure TLAS{};
+
+  // -- core pointer
+  EngineCore* pEngineCore = nullptr;
+
+  // -- storage image
+  Utilities_AS::StorageImage storageImage{};
+
+  // -- storage image
+  Utilities_AS::StorageImage colorIDStorageImage{};
+
+  // -- uniform data
+  Utilities_Renderer::UniformData uniformData{};
+
+  // -- bottom level acceleration structures
+  std::vector<Utilities_AS::BLASData*> bottomLevelAccelerationStructures;
+
+  // -- TLAS data
+  Utilities_AS::TLASData tlasData{};
+
+  // -- Buffers
+  Buffers buffers;
+
+
+  // -- pipeline data
+  Utilities_Renderer::PipelineData pipelineData{};
+
+  // -- shader
+  gtp::Shader shader;
+
+  // -- compute
+  std::vector<ComputeVertex*> gltfCompute;
+
+  // -- destroy class objects
+  void Destroy_MainRenderer();
+
+public:
 
   // -- assets data struct
   struct Assets {
@@ -44,7 +87,7 @@ public:
     std::vector<gtp::TextureLoader> defaultTextures;
 
     // models
-    std::vector<gtp::Model *> models;
+    std::vector<gtp::Model*> models;
     Utilities_UI::ModelData modelData;
     Utilities_UI::LoadModelFlags loadModelFlags;
 
@@ -58,43 +101,8 @@ public:
     std::vector<gtp::Particle*> particle;
   };
 
-  Utilities_Renderer::ShaderBindingTableData shaderBindingTableData{};
-
-  // -- top level acceleration structure
-  Utilities_AS::AccelerationStructure TLAS{};
-
-  // -- core pointer
-  EngineCore *pEngineCore = nullptr;
-
-  // -- storage image
-  Utilities_AS::StorageImage storageImage{};
-
-  // -- storage image
-  Utilities_AS::StorageImage colorIDStorageImage{};
-
-  // -- uniform data
-  Utilities_Renderer::UniformData uniformData{};
-
-  // -- bottom level acceleration structures
-  std::vector<Utilities_AS::BLASData *> bottomLevelAccelerationStructures;
-
-  // -- TLAS data
-  Utilities_AS::TLASData tlasData{};
-
-  // -- Buffers
-  Buffers buffers;
-
   // -- assets
   Assets assets{};
-
-  // -- pipeline data
-  Utilities_Renderer::PipelineData pipelineData{};
-
-  // -- shader
-  gtp::Shader shader;
-
-  // -- compute
-  std::vector<ComputeVertex *> gltfCompute;
 
   // -- constructor
   MainRenderer();
@@ -104,6 +112,12 @@ public:
 
   // -- init class function
   void Init_MainRenderer(EngineCore *pEngineCore);
+
+  // -- get main renderer compute instances
+  std::vector<ComputeVertex*> GetComputeInstances();
+
+  // -- Setup Model Transforms
+  void SetupModelDataTransforms(Utilities_UI::TransformMatrices* pTransformMatrices);
 
   // -- load model
   void LoadModel(std::string filename, uint32_t fileLoadingFlags = 0,
@@ -193,6 +207,7 @@ public:
   // -- set model data from ui
   void SetModelData(Utilities_UI::ModelData *pModelData);
 
-  // -- destroy class objects
-  void Destroy_MainRenderer();
+  // -- Destroy
+  void Destroy();
+
 };

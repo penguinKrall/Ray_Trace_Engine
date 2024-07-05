@@ -87,7 +87,7 @@ void Engine::Terminate() {
 
   // renderers
   // MainRenderer
-  this->renderers.mainRenderer.Destroy_MainRenderer();
+  this->renderers.mainRenderer.Destroy();
 
   // core
   DestroyCore();
@@ -348,19 +348,20 @@ void Engine::Draw() {
     // -- multi blas compute
     // std::cout << "compute record test 1" << std::endl;
 
-    for (int i = 0; i < this->renderers.mainRenderer.gltfCompute.size(); i++) {
-      if (this->renderers.mainRenderer.gltfCompute[i] != nullptr) {
+    for (int i = 0;
+         i < this->renderers.mainRenderer.GetComputeInstances().size(); i++) {
+      if (this->renderers.mainRenderer.GetComputeInstances()[i] != nullptr) {
         // std::cout << "compute record test 2" << std::endl;
-        validate_vk_result(
-            vkResetCommandBuffer(this->renderers.mainRenderer.gltfCompute[i]
-                                     ->commandBuffers[currentFrame],
-                                 /*VkCommandBufferResetFlagBits*/ 0));
+        validate_vk_result(vkResetCommandBuffer(
+            this->renderers.mainRenderer.GetComputeInstances()[i]
+                ->commandBuffers[currentFrame],
+            /*VkCommandBufferResetFlagBits*/ 0));
 
         //  begin compute command buffer
-        validate_vk_result(
-            vkBeginCommandBuffer(this->renderers.mainRenderer.gltfCompute[i]
-                                     ->commandBuffers[currentFrame],
-                                 &computeBeginInfo));
+        validate_vk_result(vkBeginCommandBuffer(
+            this->renderers.mainRenderer.GetComputeInstances()[i]
+                ->commandBuffers[currentFrame],
+            &computeBeginInfo));
 
         //  record compute commands
         for (size_t i = 0;
@@ -371,18 +372,19 @@ void Engine::Draw() {
                   .animatedModelIndex[i] == 1) {
             if (this->renderers.mainRenderer.assets.modelData.isAnimated[i]) {
               // verify current model is being animated
-              this->renderers.mainRenderer.gltfCompute[i]
+              this->renderers.mainRenderer.GetComputeInstances()[i]
                   ->RecordComputeCommands(currentFrame);
             }
           }
         }
 
         //  end compute command buffer
-        validate_vk_result(
-            vkEndCommandBuffer(this->renderers.mainRenderer.gltfCompute[i]
-                                   ->commandBuffers[currentFrame]));
-        computeCommands.push_back(this->renderers.mainRenderer.gltfCompute[i]
-                                      ->commandBuffers[currentFrame]);
+        validate_vk_result(vkEndCommandBuffer(
+            this->renderers.mainRenderer.GetComputeInstances()[i]
+                ->commandBuffers[currentFrame]));
+        computeCommands.push_back(
+            this->renderers.mainRenderer.GetComputeInstances()[i]
+                ->commandBuffers[currentFrame]);
       }
     }
 
@@ -465,28 +467,18 @@ void Engine::Draw() {
         if (this->renderers.mainRenderer.assets.modelData.isAnimated[i]) {
           this->renderers.mainRenderer.assets.models[i]->updateAnimation(
               activeAnimation, deltaTime,
-              &this->renderers.mainRenderer.gltfCompute[i]->jointBuffer);
+              &this->renderers.mainRenderer.GetComputeInstances()[i]
+                   ->jointBuffer);
         }
       }
     }
-
-    // update compute class joint buffer
-    // for (int i = 0; i < this->renderers.mainRenderer.gltfCompute.size(); i++)
-    // {
-    //  if (this->renderers.mainRenderer.gltfCompute[i] != nullptr) {
-    //    this->renderers.mainRenderer.gltfCompute[i]->UpdateJointBuffer();
-    //  }
-    //}
 
     this->renderers.mainRenderer.UpdateUniformBuffer(
         timer, this->UI.rendererData.lightPosition);
 
     this->renderers.mainRenderer.UpdateBLAS();
 
-    if (this->renderers.mainRenderer.updateTLAS) {
-      this->renderers.mainRenderer.UpdateTLAS();
-      this->renderers.mainRenderer.updateTLAS = false;
-    }
+    this->renderers.mainRenderer.UpdateTLAS();
 
     for (int i = 0; i < this->UI.modelData.updateBLAS.size(); i++) {
       this->UI.modelData.updateBLAS[i] = false;

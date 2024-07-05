@@ -89,6 +89,63 @@ void MainRenderer::Init_MainRenderer(EngineCore *pEngineCore) {
   std::cout << "\nfinished building command buffers" << std::endl;
 }
 
+std::vector<ComputeVertex*> MainRenderer::GetComputeInstances()
+{
+  return this->gltfCompute;
+}
+
+void MainRenderer::SetupModelDataTransforms(
+    Utilities_UI::TransformMatrices *pTransformMatrices) {
+  // transform matrices
+  Utilities_UI::TransformMatrices transformMatrices{};
+
+  // transform values
+  // related to UI slider floats that will be used to manipulate transform
+  // matrices
+  Utilities_UI::TransformValues transformValues{};
+
+  // assign transform matrices if passed in on load
+  // pre transforms
+  if (pTransformMatrices != nullptr) {
+
+    transformMatrices.rotate = pTransformMatrices->rotate;
+
+    transformMatrices.translate = pTransformMatrices->translate;
+
+    transformMatrices.scale = pTransformMatrices->scale;
+  }
+  // rotate transform values
+  //  Extract the upper 3x3 part of the matrix
+  glm::mat3 rotationMatrix = glm::mat3(transformMatrices.rotate);
+
+  // Normalize the columns to remove scaling
+  rotationMatrix[0] = glm::normalize(rotationMatrix[0]);
+  rotationMatrix[1] = glm::normalize(rotationMatrix[1]);
+  rotationMatrix[2] = glm::normalize(rotationMatrix[2]);
+
+  // Convert the 3x3 rotation matrix to a quaternion
+  glm::quat rotationQuaternion = glm::quat_cast(rotationMatrix);
+
+  // Convert the quaternion to a vec4 (xyzw)
+  glm::vec4 rotationVec4 =
+      glm::vec4(rotationQuaternion.x, rotationQuaternion.y,
+                rotationQuaternion.z, rotationQuaternion.w);
+
+  // Assign it to transformValues.rotate
+  transformValues.rotate = rotationVec4;
+
+  // translate transform values
+  transformValues.translate = glm::vec4(transformMatrices.translate[3]);
+
+  // scale transform values
+  transformValues.scale =
+      glm::vec4(transformMatrices.scale * glm::vec4(1.0f)).x;
+
+  // add transform values/matrices to lists
+  this->assets.modelData.transformMatrices.push_back(transformMatrices);
+  this->assets.modelData.transformValues.push_back(transformValues);
+}
+
 void MainRenderer::LoadModel(
     std::string filename, uint32_t fileLoadingFlags,
     Utilities_Renderer::ModelLoadingFlags modelLoadingFlags,
@@ -145,60 +202,15 @@ void MainRenderer::LoadModel(
     this->assets.modelData.animationNames.push_back(tempNames);
   }
 
-  // add model to model list
-  this->assets.models.push_back(tempModel);
-
   // add model name to model data's model name list
   this->assets.modelData.modelName.push_back(tempModel->modelName);
 
-  // transform matrices
-  Utilities_UI::TransformMatrices transformMatrices{};
+  // add model to model list
+  this->assets.models.push_back(tempModel);
 
   // transform values
   // related to UI slider floats that will be used to manipulate transform
-  // matrices
-  Utilities_UI::TransformValues transformValues{};
-
-  // assign transform matrices if passed in on load
-  // pre transforms
-  if (pTransformMatrices != nullptr) {
-
-    transformMatrices.rotate = pTransformMatrices->rotate;
-
-    transformMatrices.translate = pTransformMatrices->translate;
-
-    transformMatrices.scale = pTransformMatrices->scale;
-  }
-  // rotate transform values
-  //  Extract the upper 3x3 part of the matrix
-  glm::mat3 rotationMatrix = glm::mat3(transformMatrices.rotate);
-
-  // Normalize the columns to remove scaling
-  rotationMatrix[0] = glm::normalize(rotationMatrix[0]);
-  rotationMatrix[1] = glm::normalize(rotationMatrix[1]);
-  rotationMatrix[2] = glm::normalize(rotationMatrix[2]);
-
-  // Convert the 3x3 rotation matrix to a quaternion
-  glm::quat rotationQuaternion = glm::quat_cast(rotationMatrix);
-
-  // Convert the quaternion to a vec4 (xyzw)
-  glm::vec4 rotationVec4 =
-      glm::vec4(rotationQuaternion.x, rotationQuaternion.y,
-                rotationQuaternion.z, rotationQuaternion.w);
-
-  // Assign it to transformValues.rotate
-  transformValues.rotate = rotationVec4;
-
-  // translate transform values
-  transformValues.translate = glm::vec4(transformMatrices.translate[3]);
-
-  // scale transform values
-  transformValues.scale =
-      glm::vec4(transformMatrices.scale * glm::vec4(1.0f)).x;
-
-  // add transform values/matrices to lists
-  this->assets.modelData.transformMatrices.push_back(transformMatrices);
-  this->assets.modelData.transformValues.push_back(transformValues);
+  this->SetupModelDataTransforms(pTransformMatrices);
 
   // load gltf -- internally conditional if model contains animations else ==
   // nullptr
@@ -230,15 +242,15 @@ void MainRenderer::LoadParticle(
           ? 1
           : 0;
 
-  tempParticle->sphereModel->semiTransparentFlag =
+  tempParticle->ParticleModel()->semiTransparentFlag =
       static_cast<int>(isSemiTransparent);
 
-  tempParticle->sphereModel->isParticle = true;
+  tempParticle->ParticleModel()->isParticle = true;
 
   // Set "isAnimated" flag and add to list
   // referenced by blas/tlas/compute vertex
   const bool isAnimated =
-      !tempParticle->sphereModel->animations.empty() ? true : false;
+      !tempParticle->ParticleModel()->animations.empty() ? true : false;
 
   this->assets.modelData.animatedModelIndex.push_back(
       static_cast<int>(isAnimated));
@@ -251,7 +263,7 @@ void MainRenderer::LoadParticle(
   std::vector<std::string> tempNames;
   std::vector<int> tempAnimationIndex;
 
-  if (tempParticle->sphereModel->animations.empty()) {
+  if (tempParticle->ParticleModel()->animations.empty()) {
     tempAnimationIndex.push_back(0);
     this->assets.modelData.activeAnimation.push_back(tempAnimationIndex);
     tempNames.push_back("none");
@@ -261,19 +273,20 @@ void MainRenderer::LoadParticle(
   else {
     tempAnimationIndex.push_back(0);
     this->assets.modelData.activeAnimation.push_back(tempAnimationIndex);
-    for (int i = 0; i < tempParticle->sphereModel->animations.size(); i++) {
-      tempNames.push_back(tempParticle->sphereModel->animations[i].name);
-      std::cout << tempParticle->sphereModel->animations[i].name << std::endl;
+    for (int i = 0; i < tempParticle->ParticleModel()->animations.size(); i++) {
+      tempNames.push_back(tempParticle->ParticleModel()->animations[i].name);
+      std::cout << tempParticle->ParticleModel()->animations[i].name
+                << std::endl;
     }
     this->assets.modelData.animationNames.push_back(tempNames);
   }
 
   // add model to model list
-  this->assets.models.push_back(tempParticle->sphereModel);
+  this->assets.models.push_back(tempParticle->ParticleModel());
 
   // init modelData struct
   this->assets.modelData.modelName.push_back(
-      tempParticle->sphereModel->modelName);
+      tempParticle->ParticleModel()->modelName);
 
   // matrices
   Utilities_UI::TransformMatrices transformMatrices{};
@@ -325,10 +338,10 @@ void MainRenderer::LoadParticle(
 
   // load gltf -- internally conditional if model contains animations else ==
   // nullptr
-  LoadGltfCompute(tempParticle->sphereModel);
+  LoadGltfCompute(tempParticle->ParticleModel());
 
   // create bottom level acceleration structure for model
-  CreateBLAS(tempParticle->sphereModel);
+  CreateBLAS(tempParticle->ParticleModel());
 
   this->assets.particle.push_back(tempParticle);
 }
@@ -857,7 +870,8 @@ void MainRenderer::CreateUniformBuffer() {
   UpdateUniformBuffer(0.0f, glm::vec4(0.0f));
 }
 
-void MainRenderer::UpdateUniformBuffer(float deltaTime, glm::vec4 lightPosition) {
+void MainRenderer::UpdateUniformBuffer(float deltaTime,
+                                       glm::vec4 lightPosition) {
   float rotationTime = deltaTime * 0.10f;
 
   // projection matrix
@@ -1795,185 +1809,194 @@ void MainRenderer::UpdateBLAS() {
 }
 
 void MainRenderer::UpdateTLAS() {
+  if (this->updateTLAS) {
+    // initialize instances array
+    if (blasInstances.size() != 0) {
+      for (int i = 0; i < this->assets.modelData.updateBLAS.size(); i++) {
+        if (this->assets.modelData.updateBLAS[i]) {
 
-  // initialize instances array
-  if (blasInstances.size() != 0) {
-    for (int i = 0; i < this->assets.modelData.updateBLAS.size(); i++) {
-      if (this->assets.modelData.updateBLAS[i]) {
+          glm::mat4 rotationMatrix =
+              this->assets.modelData.transformMatrices[i].rotate;
+          glm::mat4 translationMatrix =
+              this->assets.modelData.transformMatrices[i].translate;
 
-        glm::mat4 rotationMatrix =
-            this->assets.modelData.transformMatrices[i].rotate;
-        glm::mat4 translationMatrix =
-            this->assets.modelData.transformMatrices[i].translate;
+          glm::mat4 scaleMatrix =
+              this->assets.modelData.transformMatrices[i].scale;
 
-        glm::mat4 scaleMatrix =
-            this->assets.modelData.transformMatrices[i].scale;
+          // Combine rotation, translation, and scale into a single 4x4 matrix
+          glm::mat4 transformMatrix =
+              translationMatrix * rotationMatrix * scaleMatrix;
 
-        // Combine rotation, translation, and scale into a single 4x4 matrix
-        glm::mat4 transformMatrix =
-            translationMatrix * rotationMatrix * scaleMatrix;
-
-        // Convert glm::mat4 to VkTransformMatrixKHR
-        VkTransformMatrixKHR vkTransformMatrix;
-        for (int col = 0; col < 4; ++col) {
-          for (int row = 0; row < 3; ++row) {
-            vkTransformMatrix.matrix[row][col] =
-                transformMatrix[col][row]; // Vulkan expects column-major order
+          // Convert glm::mat4 to VkTransformMatrixKHR
+          VkTransformMatrixKHR vkTransformMatrix;
+          for (int col = 0; col < 4; ++col) {
+            for (int row = 0; row < 3; ++row) {
+              vkTransformMatrix.matrix[row][col] =
+                  transformMatrix[col]
+                                 [row]; // Vulkan expects column-major order
+            }
           }
-        }
 
-        // this->blasInstances[i]// Assign this VkTransformMatrixKHR to your
-        // instance
-        blasInstances[i].transform = vkTransformMatrix;
-        blasInstances[i].instanceCustomIndex = i;
-        blasInstances[i].mask = 0xFF;
-        blasInstances[i].instanceShaderBindingTableRecordOffset = 0;
-        blasInstances[i].accelerationStructureReference =
-            this->bottomLevelAccelerationStructures[i]
-                ->accelerationStructure.deviceAddress;
+          // this->blasInstances[i]// Assign this VkTransformMatrixKHR to your
+          // instance
+          blasInstances[i].transform = vkTransformMatrix;
+          blasInstances[i].instanceCustomIndex = i;
+          blasInstances[i].mask = 0xFF;
+          blasInstances[i].instanceShaderBindingTableRecordOffset = 0;
+          blasInstances[i].accelerationStructureReference =
+              this->bottomLevelAccelerationStructures[i]
+                  ->accelerationStructure.deviceAddress;
+        }
       }
     }
-  }
 
-  if (blasInstances.size() != 0) {
+    if (blasInstances.size() != 0) {
 
-    // -- update instances buffer
-    buffers.tlas_instancesBuffer.copyTo(
-        blasInstances.data(), sizeof(VkAccelerationStructureInstanceKHR) *
-                                  static_cast<uint32_t>(blasInstances.size()));
+      // -- update instances buffer
+      buffers.tlas_instancesBuffer.copyTo(
+          blasInstances.data(),
+          sizeof(VkAccelerationStructureInstanceKHR) *
+              static_cast<uint32_t>(blasInstances.size()));
 
-    // -- instance buffer device address
-    tlasData.instanceDataDeviceAddress.deviceAddress =
-        Utilities_AS::getBufferDeviceAddress(
-            this->pEngineCore, buffers.tlas_instancesBuffer.bufferData.buffer);
+      // -- instance buffer device address
+      tlasData.instanceDataDeviceAddress.deviceAddress =
+          Utilities_AS::getBufferDeviceAddress(
+              this->pEngineCore,
+              buffers.tlas_instancesBuffer.bufferData.buffer);
 
-    // -- acceleration Structure Geometry{};
-    tlasData.accelerationStructureGeometry.sType =
-        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
-    tlasData.accelerationStructureGeometry.geometryType =
-        VK_GEOMETRY_TYPE_INSTANCES_KHR;
-    tlasData.accelerationStructureGeometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
-    tlasData.accelerationStructureGeometry.geometry.instances.sType =
-        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
-    tlasData.accelerationStructureGeometry.geometry.instances.arrayOfPointers =
-        VK_FALSE;
-    tlasData.accelerationStructureGeometry.geometry.instances.data =
-        tlasData.instanceDataDeviceAddress;
+      // -- acceleration Structure Geometry{};
+      tlasData.accelerationStructureGeometry.sType =
+          VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+      tlasData.accelerationStructureGeometry.geometryType =
+          VK_GEOMETRY_TYPE_INSTANCES_KHR;
+      tlasData.accelerationStructureGeometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+      tlasData.accelerationStructureGeometry.geometry.instances.sType =
+          VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
+      tlasData.accelerationStructureGeometry.geometry.instances
+          .arrayOfPointers = VK_FALSE;
+      tlasData.accelerationStructureGeometry.geometry.instances.data =
+          tlasData.instanceDataDeviceAddress;
 
-    //  -- Get size info -- //
-    // Acceleration Structure Build Geometry Info
-    tlasData.accelerationStructureBuildGeometryInfo.sType =
-        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-    tlasData.accelerationStructureBuildGeometryInfo.type =
-        VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-    tlasData.accelerationStructureBuildGeometryInfo.flags =
-        VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
-    tlasData.accelerationStructureBuildGeometryInfo.geometryCount = 1;
-    tlasData.accelerationStructureBuildGeometryInfo.pGeometries =
-        &tlasData.accelerationStructureGeometry;
+      //  -- Get size info -- //
+      // Acceleration Structure Build Geometry Info
+      tlasData.accelerationStructureBuildGeometryInfo.sType =
+          VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+      tlasData.accelerationStructureBuildGeometryInfo.type =
+          VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+      tlasData.accelerationStructureBuildGeometryInfo.flags =
+          VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
+      tlasData.accelerationStructureBuildGeometryInfo.geometryCount = 1;
+      tlasData.accelerationStructureBuildGeometryInfo.pGeometries =
+          &tlasData.accelerationStructureGeometry;
 
-    // -- tlas data member
-    // primitive count
-    tlasData.primitive_count = static_cast<uint32_t>(blasInstances.size());
+      // -- tlas data member
+      // primitive count
+      tlasData.primitive_count = static_cast<uint32_t>(blasInstances.size());
 
-    // -- acceleration Structure Build Sizes Info
-    tlasData.accelerationStructureBuildSizesInfo.sType =
-        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
+      // -- acceleration Structure Build Sizes Info
+      tlasData.accelerationStructureBuildSizesInfo.sType =
+          VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 
-    // -- get acceleration structure build sizes
-    pEngineCore->coreExtensions->vkGetAccelerationStructureBuildSizesKHR(
-        pEngineCore->devices.logical,
-        VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
-        &tlasData.accelerationStructureBuildGeometryInfo,
-        &tlasData.primitive_count,
-        &tlasData.accelerationStructureBuildSizesInfo);
+      // -- get acceleration structure build sizes
+      pEngineCore->coreExtensions->vkGetAccelerationStructureBuildSizesKHR(
+          pEngineCore->devices.logical,
+          VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+          &tlasData.accelerationStructureBuildGeometryInfo,
+          &tlasData.primitive_count,
+          &tlasData.accelerationStructureBuildSizesInfo);
 
-    VkAccelerationStructureGeometryKHR accelerationStructureGeometry{};
-    accelerationStructureGeometry.sType =
-        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
-    accelerationStructureGeometry.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
-    accelerationStructureGeometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
-    accelerationStructureGeometry.geometry.instances.sType =
-        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
-    accelerationStructureGeometry.geometry.instances.arrayOfPointers = VK_FALSE;
-    accelerationStructureGeometry.geometry.instances.data =
-        tlasData.instanceDataDeviceAddress;
+      VkAccelerationStructureGeometryKHR accelerationStructureGeometry{};
+      accelerationStructureGeometry.sType =
+          VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+      accelerationStructureGeometry.geometryType =
+          VK_GEOMETRY_TYPE_INSTANCES_KHR;
+      accelerationStructureGeometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+      accelerationStructureGeometry.geometry.instances.sType =
+          VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
+      accelerationStructureGeometry.geometry.instances.arrayOfPointers =
+          VK_FALSE;
+      accelerationStructureGeometry.geometry.instances.data =
+          tlasData.instanceDataDeviceAddress;
 
-    // Get size info
-    VkAccelerationStructureBuildGeometryInfoKHR
-        accelerationStructureBuildGeometryInfo{};
-    accelerationStructureBuildGeometryInfo.sType =
-        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-    accelerationStructureBuildGeometryInfo.type =
-        VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-    accelerationStructureBuildGeometryInfo.flags =
-        VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
-    accelerationStructureBuildGeometryInfo.mode =
-        VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
-    accelerationStructureBuildGeometryInfo.dstAccelerationStructure =
-        this->TLAS.accelerationStructureKHR;
-    accelerationStructureBuildGeometryInfo.geometryCount = 1;
-    accelerationStructureBuildGeometryInfo.pGeometries =
-        &accelerationStructureGeometry;
-    accelerationStructureBuildGeometryInfo.scratchData.deviceAddress =
-        buffers.tlas_scratch.bufferData.bufferDeviceAddress.deviceAddress;
+      // Get size info
+      VkAccelerationStructureBuildGeometryInfoKHR
+          accelerationStructureBuildGeometryInfo{};
+      accelerationStructureBuildGeometryInfo.sType =
+          VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+      accelerationStructureBuildGeometryInfo.type =
+          VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+      accelerationStructureBuildGeometryInfo.flags =
+          VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+      accelerationStructureBuildGeometryInfo.mode =
+          VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+      accelerationStructureBuildGeometryInfo.dstAccelerationStructure =
+          this->TLAS.accelerationStructureKHR;
+      accelerationStructureBuildGeometryInfo.geometryCount = 1;
+      accelerationStructureBuildGeometryInfo.pGeometries =
+          &accelerationStructureGeometry;
+      accelerationStructureBuildGeometryInfo.scratchData.deviceAddress =
+          buffers.tlas_scratch.bufferData.bufferDeviceAddress.deviceAddress;
 
-    // uint32_t primitive_count = buffers.tlas_instancesBuffer.;
+      // uint32_t primitive_count = buffers.tlas_instancesBuffer.;
 
-    VkAccelerationStructureBuildSizesInfoKHR
-        accelerationStructureBuildSizesInfo{};
-    accelerationStructureBuildSizesInfo.sType =
-        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
+      VkAccelerationStructureBuildSizesInfoKHR
+          accelerationStructureBuildSizesInfo{};
+      accelerationStructureBuildSizesInfo.sType =
+          VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 
-    pEngineCore->coreExtensions->vkGetAccelerationStructureBuildSizesKHR(
-        pEngineCore->devices.logical,
-        VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
-        &accelerationStructureBuildGeometryInfo, &tlasData.primitive_count,
-        &accelerationStructureBuildSizesInfo);
+      pEngineCore->coreExtensions->vkGetAccelerationStructureBuildSizesKHR(
+          pEngineCore->devices.logical,
+          VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+          &accelerationStructureBuildGeometryInfo, &tlasData.primitive_count,
+          &accelerationStructureBuildSizesInfo);
 
-    VkAccelerationStructureBuildRangeInfoKHR
-        accelerationStructureBuildRangeInfo{};
-    accelerationStructureBuildRangeInfo.primitiveCount =
-        tlasData.primitive_count;
-    accelerationStructureBuildRangeInfo.primitiveOffset = 0;
-    accelerationStructureBuildRangeInfo.firstVertex = 0;
-    accelerationStructureBuildRangeInfo.transformOffset = 0;
+      VkAccelerationStructureBuildRangeInfoKHR
+          accelerationStructureBuildRangeInfo{};
+      accelerationStructureBuildRangeInfo.primitiveCount =
+          tlasData.primitive_count;
+      accelerationStructureBuildRangeInfo.primitiveOffset = 0;
+      accelerationStructureBuildRangeInfo.firstVertex = 0;
+      accelerationStructureBuildRangeInfo.transformOffset = 0;
 
-    std::vector<VkAccelerationStructureBuildRangeInfoKHR *>
-        accelerationBuildStructureRangeInfos = {
-            &accelerationStructureBuildRangeInfo};
+      std::vector<VkAccelerationStructureBuildRangeInfoKHR *>
+          accelerationBuildStructureRangeInfos = {
+              &accelerationStructureBuildRangeInfo};
 
-    // build the acceleration structure on the device via a one-time command
-    // buffer submission some implementations may support acceleration structure
-    // building on the host
-    //(VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands),
-    // but we prefer device builds create command buffer
-    VkCommandBuffer commandBuffer =
-        pEngineCore->objCreate.VKCreateCommandBuffer(
-            VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+      // build the acceleration structure on the device via a one-time command
+      // buffer submission some implementations may support acceleration
+      // structure building on the host
+      //(VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands),
+      // but we prefer device builds create command buffer
+      VkCommandBuffer commandBuffer =
+          pEngineCore->objCreate.VKCreateCommandBuffer(
+              VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-    // this is where i start next
-    // build acceleration structures
-    pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
-        commandBuffer, 1, &accelerationStructureBuildGeometryInfo,
-        accelerationBuildStructureRangeInfos.data());
+      // this is where i start next
+      // build acceleration structures
+      pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
+          commandBuffer, 1, &accelerationStructureBuildGeometryInfo,
+          accelerationBuildStructureRangeInfos.data());
 
-    // flush command buffer
-    pEngineCore->FlushCommandBuffer(commandBuffer, pEngineCore->queue.graphics,
-                                    pEngineCore->commandPools.graphics, true);
+      // flush command buffer
+      pEngineCore->FlushCommandBuffer(commandBuffer,
+                                      pEngineCore->queue.graphics,
+                                      pEngineCore->commandPools.graphics, true);
 
-    // std::cout << " test" << std::endl;
+      // std::cout << " test" << std::endl;
 
-    // get acceleration structure device address
-    VkAccelerationStructureDeviceAddressInfoKHR accelerationDeviceAddressInfo{};
-    accelerationDeviceAddressInfo.sType =
-        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
-    accelerationDeviceAddressInfo.accelerationStructure =
-        this->TLAS.accelerationStructureKHR;
+      // get acceleration structure device address
+      VkAccelerationStructureDeviceAddressInfoKHR
+          accelerationDeviceAddressInfo{};
+      accelerationDeviceAddressInfo.sType =
+          VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
+      accelerationDeviceAddressInfo.accelerationStructure =
+          this->TLAS.accelerationStructureKHR;
 
-    this->TLAS.deviceAddress =
-        pEngineCore->coreExtensions->vkGetAccelerationStructureDeviceAddressKHR(
-            pEngineCore->devices.logical, &accelerationDeviceAddressInfo);
+      this->TLAS.deviceAddress =
+          pEngineCore->coreExtensions
+              ->vkGetAccelerationStructureDeviceAddressKHR(
+                  pEngineCore->devices.logical, &accelerationDeviceAddressInfo);
+    }
   }
 }
 
@@ -2499,6 +2522,10 @@ void MainRenderer::HandleResize() {
 void MainRenderer::SetModelData(Utilities_UI::ModelData *pModelData) {
   this->assets.modelData = *pModelData;
 }
+
+// -- public destroy func
+// -- call class destroy function for garbage collection
+void MainRenderer::Destroy() { this->Destroy_MainRenderer(); }
 
 void MainRenderer::Destroy_MainRenderer() {
 
