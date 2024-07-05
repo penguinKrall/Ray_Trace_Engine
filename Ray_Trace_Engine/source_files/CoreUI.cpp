@@ -2,13 +2,13 @@
 
 CoreUI::CoreUI() {}
 
-CoreUI::CoreUI(EngineCore *coreBase) {
-  shader = gtp::Shader(coreBase);
+CoreUI::CoreUI(EngineCore *pEngineCore) {
+  shader = gtp::Shader(pEngineCore);
   // this->buffers.vertex.resize(frame_draws);
   // this->buffers.index.resize(frame_draws);
   InitContext();
   InitStyle();
-  InitCoreUI(coreBase);
+  InitCoreUI(pEngineCore);
   CreateResources();
 
   // check version
@@ -106,8 +106,8 @@ void CoreUI::InitStyle() {
   backends.io->FontGlobalScale = properties.scale;
 }
 
-void CoreUI::InitCoreUI(EngineCore *coreBase) {
-  this->pEngineCore = coreBase;
+void CoreUI::InitCoreUI(EngineCore *pEngineCore) {
+  this->pEngineCore = pEngineCore;
   std::cout << "\ninitializing UI\n'''''''''''''''\n" << std::endl;
 }
 
@@ -1121,6 +1121,11 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
     }
   }
 
+  /* Light Controls */
+  if (ImGui::CollapsingHeader("Lighting Controls")) {
+    ImGui::SliderFloat4("Light Position", (float *)&rendererData.lightPosition,
+                        -20.0f, 20.0f);
+  }
   // -- Debug Controls
   if (ImGui::CollapsingHeader("Render/Debug Controls")) {
 

@@ -53,10 +53,10 @@ public:
   ComputeVertex();
 
   // -- init constructor
-  ComputeVertex(EngineCore *coreBase, gtp::Model *modelPtr);
+  ComputeVertex(EngineCore *pEngineCore, gtp::Model *modelPtr);
 
   // -- init func
-  void Init_ComputeVertex(EngineCore *coreBase, gtp::Model *modelPtr);
+  void Init_ComputeVertex(EngineCore *pEngineCore, gtp::Model *modelPtr);
 
   // -- create transforms buffer
   void CreateTransformsBuffer();

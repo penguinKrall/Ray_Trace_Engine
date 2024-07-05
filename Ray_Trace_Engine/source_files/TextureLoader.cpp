@@ -8,15 +8,15 @@ namespace gtp {
 
 TextureLoader::TextureLoader() {}
 
-TextureLoader::TextureLoader(EngineCore *coreBase) {
-  InitTextureLoader(coreBase);
+TextureLoader::TextureLoader(EngineCore *pEngineCore) {
+  InitTextureLoader(pEngineCore);
   // loadFromFile("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/textures/gratefloor_rgba.ktx",
   //	VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT,
   // VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
-void TextureLoader::InitTextureLoader(EngineCore *coreBase) {
-  this->pEngineCore = coreBase;
+void TextureLoader::InitTextureLoader(EngineCore *pEngineCore) {
+  this->pEngineCore = pEngineCore;
 }
 
 void TextureLoader::updateDescriptor() {
@@ -483,7 +483,7 @@ void TextureLoader::DestroyTextureLoader() {
 }
 
 void TextureLoader::fromglTfImage(tinygltf::Image &gltfimage, std::string path,
-                                  EngineCore *coreBase, VkQueue copyQueue) {
+                                  EngineCore *pEngineCore, VkQueue copyQueue) {
 
   bool isKtx = false;
 

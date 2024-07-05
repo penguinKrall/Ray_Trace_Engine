@@ -47,7 +47,7 @@ void Utilities_AS::createScratchBuffer(EngineCore *pEngineCore,
 }
 
 void Utilities_AS::createAccelerationStructureBuffer(
-    EngineCore *coreBase, VkDeviceMemory *memory, VkBuffer *buffer,
+    EngineCore *pEngineCore, VkDeviceMemory *memory, VkBuffer *buffer,
     VkAccelerationStructureBuildSizesInfoKHR *buildSizeInfo,
     std::string bufferName) {
 
@@ -60,16 +60,16 @@ void Utilities_AS::createAccelerationStructureBuffer(
       VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
   // create buffer
-  coreBase->add(
-      [coreBase, &bufferCreateInfo, buffer]() {
-        return coreBase->objCreate.VKCreateBuffer(&bufferCreateInfo, nullptr,
+  pEngineCore->add(
+      [pEngineCore, &bufferCreateInfo, buffer]() {
+        return pEngineCore->objCreate.VKCreateBuffer(&bufferCreateInfo, nullptr,
                                                   buffer);
       },
       bufferName);
 
   // memory requirements
   VkMemoryRequirements memoryRequirements{};
-  vkGetBufferMemoryRequirements(coreBase->devices.logical, *buffer,
+  vkGetBufferMemoryRequirements(pEngineCore->devices.logical, *buffer,
                                 &memoryRequirements);
 
   // allocate flags
@@ -82,21 +82,21 @@ void Utilities_AS::createAccelerationStructureBuffer(
   memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   memoryAllocateInfo.pNext = &memoryAllocateFlagsInfo;
   memoryAllocateInfo.allocationSize = memoryRequirements.size;
-  memoryAllocateInfo.memoryTypeIndex = coreBase->getMemoryType(
+  memoryAllocateInfo.memoryTypeIndex = pEngineCore->getMemoryType(
       memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   std::string bufferNameWithSuffix = bufferName + "Memory";
 
   // create object/map handle
-  coreBase->add(
-      [coreBase, &memoryAllocateInfo, memory]() {
-        return coreBase->objCreate.VKAllocateMemory(&memoryAllocateInfo,
+  pEngineCore->add(
+      [pEngineCore, &memoryAllocateInfo, memory]() {
+        return pEngineCore->objCreate.VKAllocateMemory(&memoryAllocateInfo,
                                                     nullptr, memory);
       },
       bufferNameWithSuffix);
 
   // bind memory to buffer
-  if (vkBindBufferMemory(coreBase->devices.logical, *buffer, *memory, 0) !=
+  if (vkBindBufferMemory(pEngineCore->devices.logical, *buffer, *memory, 0) !=
       VK_SUCCESS) {
     throw std::invalid_argument(
         "failed to bind acceleration structure buffer memory ");

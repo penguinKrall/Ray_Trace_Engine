@@ -52,7 +52,7 @@ struct TextureSampler {
 };
 
 struct Texture {
-  EngineCore *coreBase;
+  EngineCore *pEngineCore;
   VkImage image{};
   VkImageLayout imageLayout;
   VkDeviceMemory deviceMemory;
@@ -65,10 +65,8 @@ struct Texture {
   uint32_t index;
   void updateDescriptor();
   void destroy();
-  // Load a texture from a glTF image (stored as vector of chars loaded via
-  // stb_image) and generate a full mip chaing for it
   void fromglTfImage(tinygltf::Image &gltfimage, TextureSampler textureSampler,
-                     EngineCore *coreBase, VkQueue copyQueue);
+                     EngineCore *pEngineCore, VkQueue copyQueue);
 };
 
 struct Material {
@@ -123,7 +121,7 @@ struct Primitive {
 };
 
 struct Mesh {
-  EngineCore *coreBase;
+  EngineCore *pEngineCore;
   std::vector<Primitive *> primitives;
   BoundingBox bb;
   BoundingBox aabb;
@@ -139,7 +137,7 @@ struct Mesh {
     std::vector<glm::mat4> jointMatrix{};
     float jointcount{0};
   } uniformBlock;
-  Mesh(EngineCore *coreBase, glm::mat4 matrix);
+  Mesh(EngineCore *pEngineCore, glm::mat4 matrix);
   ~Mesh();
   void setBoundingBox(glm::vec3 min, glm::vec3 max);
 };
@@ -196,7 +194,7 @@ struct Animation {
 
 struct Model {
 
-  EngineCore *coreBase;
+  EngineCore *pEngineCore;
 
   std::string modelName;
 
@@ -265,14 +263,14 @@ struct Model {
   void getNodeProps(const tinygltf::Node &node, const tinygltf::Model &model,
                     size_t &vertexCount, size_t &indexCount);
   void loadSkins(tinygltf::Model &gltfModel);
-  void loadTextures(tinygltf::Model &gltfModel, EngineCore *coreBase,
+  void loadTextures(tinygltf::Model &gltfModel, EngineCore *pEngineCore,
                     VkQueue transferQueue);
   VkSamplerAddressMode getVkWrapMode(int32_t wrapMode);
   VkFilter getVkFilterMode(int32_t filterMode);
   void loadTextureSamplers(tinygltf::Model &gltfModel);
   void loadMaterials(tinygltf::Model &gltfModel);
   void loadAnimations(tinygltf::Model &gltfModel);
-  void loadFromFile(std::string filename, EngineCore *coreBase,
+  void loadFromFile(std::string filename, EngineCore *pEngineCore,
                     VkQueue transferQueue,
                     uint32_t fileLoadingFlags = FileLoadingFlags::None,
                     float scale = 1.0f);

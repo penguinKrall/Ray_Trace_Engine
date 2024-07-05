@@ -80,7 +80,7 @@ public:
                                   VkDeviceSize size, std::string name);
 
   static void createAccelerationStructureBuffer(
-      EngineCore *coreBase, VkDeviceMemory *memory, VkBuffer *buffer,
+      EngineCore *pEngineCore, VkDeviceMemory *memory, VkBuffer *buffer,
       VkAccelerationStructureBuildSizesInfoKHR *buildSizeInfo,
       std::string bufferName);
 

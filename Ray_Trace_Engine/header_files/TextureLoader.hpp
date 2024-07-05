@@ -37,10 +37,10 @@ public:
   TextureLoader();
 
   // -- init ctor
-  TextureLoader(EngineCore *coreBase);
+  TextureLoader(EngineCore *pEngineCore);
 
   // -- init func
-  void InitTextureLoader(EngineCore *coreBase);
+  void InitTextureLoader(EngineCore *pEngineCore);
 
   // -- update descriptor
   void updateDescriptor();
@@ -58,7 +58,7 @@ public:
   void DestroyTextureLoader();
 
   void fromglTfImage(tinygltf::Image &gltfimage, std::string path,
-                     EngineCore *coreBase, VkQueue copyQueue);
+                     EngineCore *pEngineCore, VkQueue copyQueue);
 
 // -- load texture file
 // -- for loading non ktx textures

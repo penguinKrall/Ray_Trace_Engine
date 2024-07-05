@@ -121,13 +121,44 @@ void main() {
     rayPayload.index = float(gl_InstanceCustomIndexEXT);
 
     // Basic lighting
-    vec3 lightVector = normalize(ubo.lightPos.xyz);
-    float dot_product = max(dot(lightVector, rayPayload.normal.xyz), 0.95);
-    rayPayload.color *= dot_product;
-
-    //add sky color
+    //vec3 lightVector = normalize(ubo.lightPos.xyz);
+    //float dot_product = max(dot(lightVector, rayPayload.normal.xyz), 0.95);
+    //rayPayload.color *= dot_product;
+   
+   //add sky color
     // Sample the cubemap texture using the normalized ray direction
     vec3 skyColor = texture(cubemapTexture, rayPayload.normal.xyz).rgb;
+
+    const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5);
+		const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeEXT.xy);
+		vec2 d = inUV * 2.0 - 1.0;
+
+    // Calculate world position
+    vec3 worldPos = (ubo.viewInverse * vec4(0, 0, 0, 1)).xyz + (ubo.viewInverse * vec4(normalize((ubo.projInverse * vec4(d.x, d.y, 1, 1)).xyz), 0) * gl_HitTEXT).xyz;
+
+
+     // Static shininess value
+    const float shininess = 32.0;
+
+    // Basic lighting
+    vec3 lightVector = normalize(ubo.lightPos.xyz - worldPos); // Light direction
+
+    // Diffuse lighting
+    float diffuseFactor = max(dot(rayPayload.normal, lightVector), 0.0); // Lambertian reflectance
+
+    // Specular lighting
+    vec3 viewVector = normalize(vec4(ubo.viewInverse * vec4(0,0,0,1)).xyz - worldPos); // View direction
+    vec3 reflectVector = reflect(-lightVector, rayPayload.normal); // Reflection vector
+    float specularFactor = pow(max(dot(viewVector, reflectVector), 0.0), shininess); // Blinn-Phong or Phong reflection model
+
+    // Light intensity and color
+    vec3 lightColor = vec3(1.0f);
+    vec3 diffuseColor = diffuseFactor * rayPayload.color * lightColor; // Diffuse component
+    vec3 specularColor = specularFactor * skyColor.rgb * lightColor; // Specular component
+
+    // Combine both diffuse and specular lighting
+    rayPayload.color = diffuseColor + specularColor;
+
 
     rayPayload.color = mix(rayPayload.color, skyColor, 0.1);
 

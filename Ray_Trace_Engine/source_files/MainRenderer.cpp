@@ -19,20 +19,20 @@ glm::vec3 generateRandomTorusPosition(float outerRadius, float innerRadius) {
 
 MainRenderer::MainRenderer() {}
 
-MainRenderer::MainRenderer(EngineCore *coreBase) {
-  Init_MainRenderer(coreBase);
+MainRenderer::MainRenderer(EngineCore *pEngineCore) {
+  Init_MainRenderer(pEngineCore);
 }
 
-void MainRenderer::Init_MainRenderer(EngineCore *coreBase) {
+void MainRenderer::Init_MainRenderer(EngineCore *pEngineCore) {
 
   // init core pointer
-  this->pEngineCore = coreBase;
+  this->pEngineCore = pEngineCore;
 
   // shader
   shader = gtp::Shader(pEngineCore);
 
   // particle
-  // this->assets.particle = new gtp::Particle(coreBase);
+  // this->assets.particle = new gtp::Particle(pEngineCore);
 
   // load assets
   this->LoadAssets();
@@ -148,13 +148,15 @@ void MainRenderer::LoadModel(
   // add model to model list
   this->assets.models.push_back(tempModel);
 
-  // init modelData struct
+  // add model name to model data's model name list
   this->assets.modelData.modelName.push_back(tempModel->modelName);
 
-  // matrices
+  // transform matrices
   Utilities_UI::TransformMatrices transformMatrices{};
 
-  // vectors of xyzw values
+  // transform values
+  // related to UI slider floats that will be used to manipulate transform
+  // matrices
   Utilities_UI::TransformValues transformValues{};
 
   // assign transform matrices if passed in on load
@@ -385,7 +387,7 @@ void MainRenderer::LoadAssets() {
   // -- load water surface
   this->LoadModel(
       "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/assets/models/"
-      "test_scene/pool_water_surface/pool_water_surface.gltf",
+      "desert_scene/pool_water_surface/pool_water_surface.gltf",
       gtp::FileLoadingFlags::None,
       Utilities_Renderer::ModelLoadingFlags::SemiTransparent, nullptr);
 
@@ -413,59 +415,60 @@ void MainRenderer::LoadGltfCompute(gtp::Model *pModel) {
 
 void MainRenderer::CreateBLAS(gtp::Model *pModel) {
 
+  // new blas instance
   Utilities_AS::BLASData *tempBLAS = new Utilities_AS::BLASData();
 
-  std::cout << "before this->assets.textureOffset: "
-            << this->assets.textureOffset << std::endl;
-
-  Utilities_AS::createBLAS(
-
-      this->pEngineCore, &this->geometryNodeBuf, &this->geometryIndexBuf,
-      tempBLAS, &tempBLAS->accelerationStructure, pModel,
-      this->assets.textureOffset);
+  // create blas
+  Utilities_AS::createBLAS(this->pEngineCore, &this->geometryNodeBuf,
+                           &this->geometryIndexBuf, tempBLAS,
+                           &tempBLAS->accelerationStructure, pModel,
+                           this->assets.textureOffset);
 
   // increment offset by size of models texture array
   this->assets.textureOffset += static_cast<uint32_t>(pModel->textures.size());
 
-  std::cout << "after this->assets.textureOffset: "
-            << this->assets.textureOffset << std::endl;
-
+  // add blas to renderer's blas 'buffer'
   this->bottomLevelAccelerationStructures.push_back(tempBLAS);
 }
 
 void MainRenderer::CreateTLAS() {
 
-  // -- instances transform matrix
-  // VkTransformMatrixKHR transformMatrix = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-  //                                        0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
-
-  // -- array of instances
-  // std::vector<VkAccelerationStructureInstanceKHR> blasInstances;
+  // blas instances buffer size decl.
   VkDeviceSize blasInstancesBufSize = 0;
+
+  // void pointer for blas instances data
   void *blasInstancesData = nullptr;
 
-  // resize array
+  // resize renderer's blas instances 'buffer'
   blasInstances.resize(this->bottomLevelAccelerationStructures.size());
 
-  // initialize instances array
+  // if blas instances 'buffer' contains at least one element
   if (blasInstances.size() != 0) {
+
+    // iterate through the models list
     for (int i = 0; i < this->assets.models.size(); i++) {
 
+      // handle the instances for particles if the model was loaded for use as a
+      // particle
       if (i > 0 && this->assets.models[i]->isParticle) {
         this->HandleParticleInstancesTLAS(i);
       }
 
+      // otherwise handle each instance
       else {
 
-        // Assuming you have separate rotation, translation, and scale for each
-        // instance
-        glm::mat4 rotationMatrix = this->assets.modelData.transformMatrices[i]
-                                       .rotate; // Example rotation matrix
+        /* transform matrices */
+        // rotation matrix
+        glm::mat4 rotationMatrix =
+            this->assets.modelData.transformMatrices[i].rotate;
+
+        // translation matrix
         glm::mat4 translationMatrix =
-            this->assets.modelData.transformMatrices[i]
-                .translate; // Example translation matrix
-        glm::mat4 scaleMatrix = this->assets.modelData.transformMatrices[i]
-                                    .scale; // Example scale matrix
+            this->assets.modelData.transformMatrices[i].translate;
+
+        // scale matrix
+        glm::mat4 scaleMatrix =
+            this->assets.modelData.transformMatrices[i].scale;
 
         // Combine rotation, translation, and scale into a single 4x4 matrix
         glm::mat4 transformMatrix =
@@ -481,7 +484,8 @@ void MainRenderer::CreateTLAS() {
           }
         }
 
-        // Assign this VkTransformMatrixKHR to your instance
+        // assign VkTransformMatrixKHR to instance and initialize instance
+        // struct data
         blasInstances[i].transform = vkTransformMatrix;
         blasInstances[i].instanceCustomIndex = i;
         blasInstances[i].mask = 0xFF;
@@ -497,20 +501,31 @@ void MainRenderer::CreateTLAS() {
     }
   }
 
-  // -- create instances buffer
+  /* instances buffer */
+  // name buffer for debug hashmap
   buffers.tlas_instancesBuffer.bufferData.bufferName =
       "MainRenderer_TLASInstancesBuffer";
   buffers.tlas_instancesBuffer.bufferData.bufferMemoryName =
       "MainRenderer_TLASInstancesBufferMemory";
 
+  // if blas instances 'buffer' has any elements
   if (blasInstances.size() != 0) {
+
+    // size of instance struct * number of instances in the 'buffer'
     blasInstancesBufSize = sizeof(VkAccelerationStructureInstanceKHR) *
                            static_cast<uint32_t>(blasInstances.size());
+
+    // void pointer now points to instances 'buffer' data
     blasInstancesData = blasInstances.data();
-  } else {
+  }
+
+  // if instances 'buffer' is empty, assign a single uninitialized AS instance
+  // struct so buffer size is not zero and can be read/written to
+  else {
     blasInstancesBufSize = sizeof(VkAccelerationStructureInstanceKHR);
   }
 
+  // create instances buffer
   if (pEngineCore->CreateBuffer(
           VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
               VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
@@ -522,12 +537,12 @@ void MainRenderer::CreateTLAS() {
         "failed to create MainRenderer instances buffer");
   }
 
-  // -- instance buffer device address
+  // get instance buffer device address
   tlasData.instanceDataDeviceAddress.deviceAddress =
       Utilities_AS::getBufferDeviceAddress(
           this->pEngineCore, buffers.tlas_instancesBuffer.bufferData.buffer);
 
-  // -- acceleration Structure Geometry{};
+  // initialize top level acceleration structure geometry struct
   tlasData.accelerationStructureGeometry.sType =
       VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
   tlasData.accelerationStructureGeometry.geometryType =
@@ -540,7 +555,7 @@ void MainRenderer::CreateTLAS() {
   tlasData.accelerationStructureGeometry.geometry.instances.data =
       tlasData.instanceDataDeviceAddress;
 
-  //  -- Get size info -- //
+  /* get tlas size information */
   // Acceleration Structure Build Geometry Info
   tlasData.accelerationStructureBuildGeometryInfo.sType =
       VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
@@ -839,10 +854,10 @@ void MainRenderer::CreateUniformBuffer() {
     throw std::invalid_argument("failed to create  uniform buffer!");
   }
 
-  UpdateUniformBuffer(0.0f);
+  UpdateUniformBuffer(0.0f, glm::vec4(0.0f));
 }
 
-void MainRenderer::UpdateUniformBuffer(float deltaTime) {
+void MainRenderer::UpdateUniformBuffer(float deltaTime, glm::vec4 lightPosition) {
   float rotationTime = deltaTime * 0.10f;
 
   // projection matrix
@@ -864,7 +879,7 @@ void MainRenderer::UpdateUniformBuffer(float deltaTime) {
   //		25.0f + sin(glm::radians(rotationTime * 360.0f)) * 5.0f,
   //		0.0f);
 
-  uniformData.lightPos = glm::vec4(20.0f, 10.0f, -10.0f, 0.0f);
+  uniformData.lightPos = lightPosition;
 
   memcpy(buffers.ubo.bufferData.mapped, &uniformData,
          sizeof(Utilities_Renderer::UniformData));
@@ -2165,7 +2180,7 @@ void MainRenderer::DeleteModel(gtp::Model *pModel) {
       this->geometryIndexBuf.data(),
       static_cast<uint32_t>(geometryIndexBuf.size()) * sizeof(int));
 
-  // erase models modelData assignments
+  // erase models / modelData assignments
 
   if (this->assets.modelData.modelIndex <
       this->assets.modelData.activeAnimation.size()) {

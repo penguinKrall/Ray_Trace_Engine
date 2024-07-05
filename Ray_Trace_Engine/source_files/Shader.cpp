@@ -4,9 +4,9 @@ namespace gtp {
 
 Shader::Shader() {}
 
-Shader::Shader(EngineCore *coreBase) { InitShader(coreBase); }
+Shader::Shader(EngineCore *pEngineCore) { InitShader(pEngineCore); }
 
-void Shader::InitShader(EngineCore *coreBase) { this->pEngineCore = coreBase; }
+void Shader::InitShader(EngineCore *pEngineCore) { this->pEngineCore = pEngineCore; }
 
 VkShaderModule Shader::loadShaderModule(const char *fileName, VkDevice device,
                                         std::string moduleName) {

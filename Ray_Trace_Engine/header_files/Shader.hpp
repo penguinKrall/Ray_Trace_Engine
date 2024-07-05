@@ -16,10 +16,10 @@ public:
 
   // -- constructor
   Shader();
-  Shader(EngineCore *coreBase);
+  Shader(EngineCore *pEngineCore);
 
   // -- init function
-  void InitShader(EngineCore *coreBase);
+  void InitShader(EngineCore *pEngineCore);
 
   // -- load shader
   //@return VkShaderModule

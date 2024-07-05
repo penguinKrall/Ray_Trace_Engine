@@ -73,16 +73,16 @@ void Texture::updateDescriptor() {
 }
 
 void Texture::destroy() {
-  vkDestroyImageView(coreBase->devices.logical, view, nullptr);
-  vkDestroyImage(coreBase->devices.logical, image, nullptr);
-  vkFreeMemory(coreBase->devices.logical, deviceMemory, nullptr);
-  vkDestroySampler(coreBase->devices.logical, sampler, nullptr);
+  vkDestroyImageView(pEngineCore->devices.logical, view, nullptr);
+  vkDestroyImage(pEngineCore->devices.logical, image, nullptr);
+  vkFreeMemory(pEngineCore->devices.logical, deviceMemory, nullptr);
+  vkDestroySampler(pEngineCore->devices.logical, sampler, nullptr);
 }
 
 void Texture::fromglTfImage(tinygltf::Image &gltfimage,
-                            TextureSampler textureSampler, EngineCore *coreBase,
+                            TextureSampler textureSampler, EngineCore *pEngineCore,
                             VkQueue copyQueue) {
-  this->coreBase = coreBase;
+  this->pEngineCore = pEngineCore;
 
   unsigned char *buffer = nullptr;
   VkDeviceSize bufferSize = 0;
@@ -115,7 +115,7 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
   height = gltfimage.height;
   mipLevels = static_cast<uint32_t>(floor(log2(std::max(width, height))) + 1.0);
 
-  vkGetPhysicalDeviceFormatProperties(coreBase->devices.physical, format,
+  vkGetPhysicalDeviceFormatProperties(pEngineCore->devices.physical, format,
                                       &formatProperties);
   assert(formatProperties.optimalTilingFeatures &
          VK_FORMAT_FEATURE_BLIT_SRC_BIT);
@@ -136,25 +136,25 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
   bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
   // create buffer
-  this->coreBase->add(
-      [coreBase, &bufferCreateInfo, &stagingBuffer]() {
-        return coreBase->objCreate.VKCreateBuffer(&bufferCreateInfo, nullptr,
+  this->pEngineCore->add(
+      [pEngineCore, &bufferCreateInfo, &stagingBuffer]() {
+        return pEngineCore->objCreate.VKCreateBuffer(&bufferCreateInfo, nullptr,
                                                   &stagingBuffer);
       },
       "temporary staging buffer - glTFModel.cpp - fromglTFImage() " +
           gltfimage.name);
 
-  vkGetBufferMemoryRequirements(coreBase->devices.logical, stagingBuffer,
+  vkGetBufferMemoryRequirements(pEngineCore->devices.logical, stagingBuffer,
                                 &memReqs);
   memAllocInfo.allocationSize = memReqs.size;
-  memAllocInfo.memoryTypeIndex = coreBase->getMemoryType(
+  memAllocInfo.memoryTypeIndex = pEngineCore->getMemoryType(
       memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
   // allocate buffer memory
-  this->coreBase->add(
-      [coreBase, &memAllocInfo, &stagingMemory]() {
-        return coreBase->objCreate.VKAllocateMemory(&memAllocInfo, nullptr,
+  this->pEngineCore->add(
+      [pEngineCore, &memAllocInfo, &stagingMemory]() {
+        return pEngineCore->objCreate.VKAllocateMemory(&memAllocInfo, nullptr,
                                                     &stagingMemory);
       },
       "allocated temporary staging buffer memory - glTFModel.cpp - "
@@ -162,15 +162,15 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
           gltfimage.name);
 
   // bind buffer memory
-  validate_vk_result(vkBindBufferMemory(coreBase->devices.logical,
+  validate_vk_result(vkBindBufferMemory(pEngineCore->devices.logical,
                                         stagingBuffer, stagingMemory, 0));
 
   // copy image data to staging buffer
   uint8_t *data;
-  validate_vk_result(vkMapMemory(coreBase->devices.logical, stagingMemory, 0,
+  validate_vk_result(vkMapMemory(pEngineCore->devices.logical, stagingMemory, 0,
                                  memReqs.size, 0, (void **)&data));
   memcpy(data, buffer, bufferSize);
-  vkUnmapMemory(coreBase->devices.logical, stagingMemory);
+  vkUnmapMemory(pEngineCore->devices.logical, stagingMemory);
 
   // image create info
   VkImageCreateInfo imageCreateInfo{};
@@ -190,37 +190,37 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
                           VK_IMAGE_USAGE_SAMPLED_BIT;
 
   // create image
-  this->coreBase->add(
-      [coreBase, &imageCreateInfo, this]() {
-        return coreBase->objCreate.VKCreateImage(&imageCreateInfo, nullptr,
+  this->pEngineCore->add(
+      [pEngineCore, &imageCreateInfo, this]() {
+        return pEngineCore->objCreate.VKCreateImage(&imageCreateInfo, nullptr,
                                                  &this->image);
       },
       "glTFModel_image_" + gltfimage.name);
 
   // get image memory requirements
-  vkGetImageMemoryRequirements(coreBase->devices.logical, image, &memReqs);
+  vkGetImageMemoryRequirements(pEngineCore->devices.logical, image, &memReqs);
 
   // allocation info
   memAllocInfo.allocationSize = memReqs.size;
-  memAllocInfo.memoryTypeIndex = coreBase->getMemoryType(
+  memAllocInfo.memoryTypeIndex = pEngineCore->getMemoryType(
       memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   // allocate memory for image
-  this->coreBase->add(
-      [coreBase, &memAllocInfo, this]() {
-        return coreBase->objCreate.VKAllocateMemory(&memAllocInfo, nullptr,
+  this->pEngineCore->add(
+      [pEngineCore, &memAllocInfo, this]() {
+        return pEngineCore->objCreate.VKAllocateMemory(&memAllocInfo, nullptr,
                                                     &this->deviceMemory);
       },
       "glTFModel_image_memory_" + gltfimage.name);
 
   validate_vk_result(
-      vkBindImageMemory(coreBase->devices.logical, image, deviceMemory, 0));
+      vkBindImageMemory(pEngineCore->devices.logical, image, deviceMemory, 0));
 
   VkCommandBuffer copyCmd;
 
-  this->coreBase->add(
-      [coreBase, &copyCmd]() {
-        return copyCmd = coreBase->objCreate.VKCreateCommandBuffer(
+  this->pEngineCore->add(
+      [pEngineCore, &copyCmd]() {
+        return copyCmd = pEngineCore->objCreate.VKCreateCommandBuffer(
                    VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
       },
       "temporary gltfModel image_copy_cmd_buffer");
@@ -274,16 +274,16 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
   }
 
   // flush command buffer - make image data available to gpu
-  coreBase->FlushCommandBuffer(copyCmd, copyQueue,
-                               coreBase->commandPools.graphics, true);
+  pEngineCore->FlushCommandBuffer(copyCmd, copyQueue,
+                               pEngineCore->commandPools.graphics, true);
 
   // clean up staging buffer and memory
-  vkFreeMemory(coreBase->devices.logical, stagingMemory, nullptr);
-  vkDestroyBuffer(coreBase->devices.logical, stagingBuffer, nullptr);
+  vkFreeMemory(pEngineCore->devices.logical, stagingMemory, nullptr);
+  vkDestroyBuffer(pEngineCore->devices.logical, stagingBuffer, nullptr);
 
   // Generate the mip chain (glTF uses jpg and png, so we need to create this
   // manually)
-  VkCommandBuffer blitCmd = coreBase->objCreate.VKCreateCommandBuffer(
+  VkCommandBuffer blitCmd = pEngineCore->objCreate.VKCreateCommandBuffer(
       VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
   for (uint32_t i = 1; i < mipLevels; i++) {
     VkImageBlit imageBlit{};
@@ -358,8 +358,8 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
                          nullptr, 1, &imageMemoryBarrier);
   }
 
-  coreBase->FlushCommandBuffer(blitCmd, copyQueue,
-                               coreBase->commandPools.graphics, true);
+  pEngineCore->FlushCommandBuffer(blitCmd, copyQueue,
+                               pEngineCore->commandPools.graphics, true);
 
   VkSamplerCreateInfo samplerInfo{};
   samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -376,12 +376,12 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
   samplerInfo.maxLod = (float)mipLevels;
   samplerInfo.maxAnisotropy = 8.0f;
   samplerInfo.anisotropyEnable = VK_TRUE;
-  // vkCreateSampler(coreBase->devices.logical, &samplerInfo, nullptr,
+  // vkCreateSampler(pEngineCore->devices.logical, &samplerInfo, nullptr,
   // &sampler);
 
-  this->coreBase->add(
-      [coreBase, &samplerInfo, this]() {
-        return coreBase->objCreate.VKCreateSampler(&samplerInfo, nullptr,
+  this->pEngineCore->add(
+      [pEngineCore, &samplerInfo, this]() {
+        return pEngineCore->objCreate.VKCreateSampler(&samplerInfo, nullptr,
                                                    &sampler);
       },
       "gltfModel_sampler_" + gltfimage.name);
@@ -397,9 +397,9 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
   viewInfo.subresourceRange.layerCount = 1;
   viewInfo.subresourceRange.levelCount = mipLevels;
 
-  this->coreBase->add(
-      [coreBase, &viewInfo, this]() {
-        return coreBase->objCreate.VKCreateImageView(&viewInfo, nullptr, &view);
+  this->pEngineCore->add(
+      [pEngineCore, &viewInfo, this]() {
+        return pEngineCore->objCreate.VKCreateImageView(&viewInfo, nullptr, &view);
       },
       "gltfModel_image_view_" + gltfimage.name);
 
@@ -426,22 +426,22 @@ void Primitive::setBoundingBox(glm::vec3 min, glm::vec3 max) {
 }
 
 // Mesh
-Mesh::Mesh(EngineCore *coreBase, glm::mat4 matrix) {
-  this->coreBase = coreBase;
+Mesh::Mesh(EngineCore *pEngineCore, glm::mat4 matrix) {
+  this->pEngineCore = pEngineCore;
   this->uniformBlock.matrix = matrix;
-  coreBase->CreateBuffer2(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+  pEngineCore->CreateBuffer2(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                               VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                           sizeof(uniformBlock), &uniformBuffer.buffer,
                           &uniformBuffer.memory, &uniformBlock);
-  vkMapMemory(coreBase->devices.logical, uniformBuffer.memory, 0,
+  vkMapMemory(pEngineCore->devices.logical, uniformBuffer.memory, 0,
               sizeof(uniformBlock), 0, &uniformBuffer.mapped);
   uniformBuffer.descriptor = {uniformBuffer.buffer, 0, sizeof(uniformBlock)};
 };
 
 Mesh::~Mesh() {
-  vkDestroyBuffer(coreBase->devices.logical, uniformBuffer.buffer, nullptr);
-  vkFreeMemory(coreBase->devices.logical, uniformBuffer.memory, nullptr);
+  vkDestroyBuffer(pEngineCore->devices.logical, uniformBuffer.buffer, nullptr);
+  vkFreeMemory(pEngineCore->devices.logical, uniformBuffer.memory, nullptr);
   for (Primitive *p : primitives)
     delete p;
 }
@@ -586,7 +586,7 @@ void Model::loadNode(gtp::Node *parent, const tinygltf::Node &node,
   // Node contains mesh data
   if (node.mesh > -1) {
     const tinygltf::Mesh mesh = model.meshes[node.mesh];
-    Mesh *newMesh = new Mesh(coreBase, newNode->matrix);
+    Mesh *newMesh = new Mesh(pEngineCore, newNode->matrix);
     for (size_t j = 0; j < mesh.primitives.size(); j++) {
       const tinygltf::Primitive &primitive = mesh.primitives[j];
       uint32_t vertexStart = static_cast<uint32_t>(loaderInfo.vertexPos);
@@ -922,7 +922,7 @@ void Model::loadSkins(tinygltf::Model &gltfModel) {
   }
 }
 
-void Model::loadTextures(tinygltf::Model &gltfModel, EngineCore *coreBase,
+void Model::loadTextures(tinygltf::Model &gltfModel, EngineCore *pEngineCore,
                          VkQueue transferQueue) {
   for (tinygltf::Texture &tex : gltfModel.textures) {
     tinygltf::Image image = gltfModel.images[tex.source];
@@ -938,7 +938,7 @@ void Model::loadTextures(tinygltf::Model &gltfModel, EngineCore *coreBase,
       textureSampler = textureSamplers[tex.sampler];
     }
     gtp::Texture texture;
-    texture.fromglTfImage(image, textureSampler, coreBase, transferQueue);
+    texture.fromglTfImage(image, textureSampler, pEngineCore, transferQueue);
     texture.index = static_cast<uint32_t>(textures.size());
     textures.push_back(texture);
   }
@@ -1239,7 +1239,7 @@ void Model::loadAnimations(tinygltf::Model &gltfModel) {
   }
 }
 
-void Model::loadFromFile(std::string filename, EngineCore *coreBase,
+void Model::loadFromFile(std::string filename, EngineCore *pEngineCore,
                          VkQueue transferQueue, uint32_t fileLoadingFlags,
                          float scale) {
   tinygltf::Model gltfModel;
@@ -1248,7 +1248,7 @@ void Model::loadFromFile(std::string filename, EngineCore *coreBase,
   std::string error;
   std::string warning;
 
-  this->coreBase = coreBase;
+  this->pEngineCore = pEngineCore;
 
   bool binary = false;
   size_t extpos = filename.rfind('.', filename.length());
@@ -1276,7 +1276,7 @@ void Model::loadFromFile(std::string filename, EngineCore *coreBase,
 
   if (fileLoaded) {
     loadTextureSamplers(gltfModel);
-    loadTextures(gltfModel, coreBase, transferQueue);
+    loadTextures(gltfModel, pEngineCore, transferQueue);
     loadMaterials(gltfModel);
 
     const tinygltf::Scene &scene =
@@ -1370,7 +1370,7 @@ void Model::loadFromFile(std::string filename, EngineCore *coreBase,
 
   // Create staging buffers
   // Vertex data
-  coreBase->CreateBuffer2(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+  pEngineCore->CreateBuffer2(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                               VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                           vertexBufferSize, &vertexStaging.buffer,
@@ -1378,7 +1378,7 @@ void Model::loadFromFile(std::string filename, EngineCore *coreBase,
 
   // Index data
   if (indexBufferSize > 0) {
-    coreBase->CreateBuffer2(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+    pEngineCore->CreateBuffer2(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                             indexBufferSize, &indexStaging.buffer,
@@ -1389,7 +1389,7 @@ void Model::loadFromFile(std::string filename, EngineCore *coreBase,
   // Vertex buffer
   std::cout << " creating vertex buffer" << std::endl;
 
-  coreBase->CreateBuffer2(
+  pEngineCore->CreateBuffer2(
       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
           VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT |
           VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
@@ -1400,7 +1400,7 @@ void Model::loadFromFile(std::string filename, EngineCore *coreBase,
   // Index buffer
   std::cout << " creating index buffer" << std::endl;
   if (indexBufferSize > 0) {
-    coreBase->CreateBuffer2(
+    pEngineCore->CreateBuffer2(
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
             VK_BUFFER_USAGE_TRANSFER_DST_BIT |
@@ -1412,7 +1412,7 @@ void Model::loadFromFile(std::string filename, EngineCore *coreBase,
   }
 
   // Copy from staging buffers
-  VkCommandBuffer copyCmd = coreBase->objCreate.VKCreateCommandBuffer(
+  VkCommandBuffer copyCmd = pEngineCore->objCreate.VKCreateCommandBuffer(
       VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
   VkBufferCopy copyRegion = {};
@@ -1427,14 +1427,14 @@ void Model::loadFromFile(std::string filename, EngineCore *coreBase,
                     &copyRegion);
   }
 
-  coreBase->FlushCommandBuffer(copyCmd, transferQueue,
-                               coreBase->commandPools.graphics, true);
+  pEngineCore->FlushCommandBuffer(copyCmd, transferQueue,
+                               pEngineCore->commandPools.graphics, true);
 
-  vkDestroyBuffer(coreBase->devices.logical, vertexStaging.buffer, nullptr);
-  vkFreeMemory(coreBase->devices.logical, vertexStaging.memory, nullptr);
+  vkDestroyBuffer(pEngineCore->devices.logical, vertexStaging.buffer, nullptr);
+  vkFreeMemory(pEngineCore->devices.logical, vertexStaging.memory, nullptr);
   if (indexBufferSize > 0) {
-    vkDestroyBuffer(coreBase->devices.logical, indexStaging.buffer, nullptr);
-    vkFreeMemory(coreBase->devices.logical, indexStaging.memory, nullptr);
+    vkDestroyBuffer(pEngineCore->devices.logical, indexStaging.buffer, nullptr);
+    vkFreeMemory(pEngineCore->devices.logical, indexStaging.memory, nullptr);
   }
 
   // delete[] loaderInfo.vertexBuffer;

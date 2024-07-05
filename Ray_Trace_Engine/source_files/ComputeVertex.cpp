@@ -2,9 +2,9 @@
 
 ComputeVertex::ComputeVertex() {}
 
-ComputeVertex::ComputeVertex(EngineCore *coreBase, gtp::Model *modelPtr) {
+ComputeVertex::ComputeVertex(EngineCore *pEngineCore, gtp::Model *modelPtr) {
 
-  Init_ComputeVertex(coreBase, modelPtr);
+  Init_ComputeVertex(pEngineCore, modelPtr);
 
   CreateComputeBuffers();
 
@@ -19,12 +19,12 @@ ComputeVertex::ComputeVertex(EngineCore *coreBase, gtp::Model *modelPtr) {
   // UpdateTransformsBuffer(&this->transformMatrices);
 }
 
-void ComputeVertex::Init_ComputeVertex(EngineCore *coreBase,
+void ComputeVertex::Init_ComputeVertex(EngineCore *pEngineCore,
                                        gtp::Model *modelPtr) {
 
-  this->pEngineCore = coreBase;
+  this->pEngineCore = pEngineCore;
   this->model = modelPtr;
-  this->shader = gtp::Shader(coreBase);
+  this->shader = gtp::Shader(pEngineCore);
 }
 
 void ComputeVertex::CreateTransformsBuffer() {

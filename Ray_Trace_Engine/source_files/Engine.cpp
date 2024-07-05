@@ -390,8 +390,9 @@ void Engine::Draw() {
     for (int i = 0; i > this->renderers.mainRenderer.assets.particle.size();
          i++) {
       if (this->renderers.mainRenderer.assets.particle[i] != nullptr) {
-      computeCommands.push_back(this->renderers.mainRenderer.assets.particle[i]
-                                    ->RecordComputeCommands(currentFrame));
+        computeCommands.push_back(
+            this->renderers.mainRenderer.assets.particle[i]
+                ->RecordComputeCommands(currentFrame));
       }
     }
 
@@ -477,7 +478,8 @@ void Engine::Draw() {
     //  }
     //}
 
-    this->renderers.mainRenderer.UpdateUniformBuffer(timer);
+    this->renderers.mainRenderer.UpdateUniformBuffer(
+        timer, this->UI.rendererData.lightPosition);
 
     this->renderers.mainRenderer.UpdateBLAS();
 

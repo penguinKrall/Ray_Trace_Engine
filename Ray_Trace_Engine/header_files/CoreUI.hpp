@@ -99,7 +99,7 @@ public:
 
   // -- ctors
   CoreUI();
-  CoreUI(EngineCore *coreBase);
+  CoreUI(EngineCore *pEngineCore);
 
   // -- initializers
   // -- init context
@@ -112,7 +112,7 @@ public:
 
   // -- init core ui
   //@brief sets core pointer and calls initializer funcs
-  void InitCoreUI(EngineCore *coreBase);
+  void InitCoreUI(EngineCore *pEngineCore);
 
   // -- create funcs
   // -- create font image

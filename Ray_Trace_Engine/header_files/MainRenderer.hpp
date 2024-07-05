@@ -100,10 +100,10 @@ public:
   MainRenderer();
 
   // -- init constructor
-  MainRenderer(EngineCore *coreBase);
+  MainRenderer(EngineCore *pEngineCore);
 
   // -- init class function
-  void Init_MainRenderer(EngineCore *coreBase);
+  void Init_MainRenderer(EngineCore *pEngineCore);
 
   // -- load model
   void LoadModel(std::string filename, uint32_t fileLoadingFlags = 0,
@@ -146,7 +146,7 @@ public:
   void CreateUniformBuffer();
 
   // -- update uniform buffer
-  void UpdateUniformBuffer(float deltaTime);
+  void UpdateUniformBuffer(float deltaTime, glm::vec4 lightPosition);
 
   // -- create ray tracing pipeline
   void CreateRayTracingPipeline();
