@@ -14,8 +14,7 @@
 
 class MainRenderer {
 private:
-
-  //tlas particle update refactor later
+  // tlas particle update refactor later
   bool updateTLAS = false;
 
   std::vector<VkAccelerationStructureInstanceKHR> blasInstances;
@@ -38,7 +37,7 @@ private:
     gtp::Buffer ubo{};
     gtp::Buffer colorIDImageBuffer{};
   };
- 
+
   // -- shader binding table data
   Utilities_Renderer::ShaderBindingTableData shaderBindingTableData{};
 
@@ -46,7 +45,7 @@ private:
   Utilities_AS::AccelerationStructure TLAS{};
 
   // -- core pointer
-  EngineCore* pEngineCore = nullptr;
+  EngineCore *pEngineCore = nullptr;
 
   // -- storage image
   Utilities_AS::StorageImage storageImage{};
@@ -58,14 +57,13 @@ private:
   Utilities_Renderer::UniformData uniformData{};
 
   // -- bottom level acceleration structures
-  std::vector<Utilities_AS::BLASData*> bottomLevelAccelerationStructures;
+  std::vector<Utilities_AS::BLASData *> bottomLevelAccelerationStructures;
 
   // -- TLAS data
   Utilities_AS::TLASData tlasData{};
 
   // -- Buffers
   Buffers buffers;
-
 
   // -- pipeline data
   Utilities_Renderer::PipelineData pipelineData{};
@@ -74,20 +72,22 @@ private:
   gtp::Shader shader;
 
   // -- compute
-  std::vector<ComputeVertex*> gltfCompute;
+  std::vector<ComputeVertex *> gltfCompute;
+
+  // -- init class function
+  void Init_MainRenderer(EngineCore *pEngineCore);
 
   // -- destroy class objects
   void Destroy_MainRenderer();
 
 public:
-
   // -- assets data struct
   struct Assets {
     uint32_t textureOffset = 0;
     std::vector<gtp::TextureLoader> defaultTextures;
 
     // models
-    std::vector<gtp::Model*> models;
+    std::vector<gtp::Model *> models;
     Utilities_UI::ModelData modelData;
     Utilities_UI::LoadModelFlags loadModelFlags;
 
@@ -98,7 +98,7 @@ public:
     gtp::TextureLoader cubemap;
 
     // particle
-    std::vector<gtp::Particle*> particle;
+    std::vector<gtp::Particle *> particle;
   };
 
   // -- assets
@@ -110,14 +110,15 @@ public:
   // -- init constructor
   MainRenderer(EngineCore *pEngineCore);
 
-  // -- init class function
-  void Init_MainRenderer(EngineCore *pEngineCore);
+  //// -- init class function
+  // void Init_MainRenderer(EngineCore *pEngineCore);
 
   // -- get main renderer compute instances
-  std::vector<ComputeVertex*> GetComputeInstances();
+  std::vector<ComputeVertex *> GetComputeInstances();
 
   // -- Setup Model Transforms
-  void SetupModelDataTransforms(Utilities_UI::TransformMatrices* pTransformMatrices);
+  void
+  SetupModelDataTransforms(Utilities_UI::TransformMatrices *pTransformMatrices);
 
   // -- load model
   void LoadModel(std::string filename, uint32_t fileLoadingFlags = 0,
@@ -126,10 +127,9 @@ public:
                  Utilities_UI::TransformMatrices *pTransformMatrices = nullptr);
 
   // -- load particle
-  void LoadParticle(
-    std::string filename, uint32_t fileLoadingFlags,
-    Utilities_Renderer::ModelLoadingFlags modelLoadingFlags,
-    Utilities_UI::TransformMatrices* pTransformMatrices);
+  void LoadParticle(std::string filename, uint32_t fileLoadingFlags,
+                    Utilities_Renderer::ModelLoadingFlags modelLoadingFlags,
+                    Utilities_UI::TransformMatrices *pTransformMatrices);
 
   // -- load assets
   void LoadAssets();
@@ -196,7 +196,7 @@ public:
   void UpdateGeometryNodesBuffer(gtp::Model *pModel);
 
   // -- delete model
-  void DeleteModel(gtp::Model *pModel);
+  void DeleteModel();
 
   // -- update descriptor set
   void UpdateDescriptorSet();
@@ -204,10 +204,15 @@ public:
   // -- handle window resize
   void HandleResize();
 
-  // -- set model data from ui
+  // -- handle load model
+  void HandleLoadModel(gtp::FileLoadingFlags loadingFlags);
+
+  // -- get asset model data pointer from renderer
+  Utilities_UI::ModelData *GetModelData();
+
+  // -- set renderer asset model data
   void SetModelData(Utilities_UI::ModelData *pModelData);
 
   // -- Destroy
   void Destroy();
-
 };

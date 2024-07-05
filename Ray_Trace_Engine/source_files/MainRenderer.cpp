@@ -89,8 +89,7 @@ void MainRenderer::Init_MainRenderer(EngineCore *pEngineCore) {
   std::cout << "\nfinished building command buffers" << std::endl;
 }
 
-std::vector<ComputeVertex*> MainRenderer::GetComputeInstances()
-{
+std::vector<ComputeVertex *> MainRenderer::GetComputeInstances() {
   return this->gltfCompute;
 }
 
@@ -172,7 +171,7 @@ void MainRenderer::LoadModel(
 
   // Set "isAnimated" flag and add to list
   // referenced by blas/tlas/compute vertex
-  const bool isAnimated = !tempModel->animations.empty() ? true : false;
+  const bool isAnimated = tempModel->animations.empty() ? false : true;
 
   this->assets.modelData.animatedModelIndex.push_back(
       static_cast<int>(isAnimated));
@@ -413,6 +412,8 @@ void MainRenderer::LoadAssets() {
               << "]: " << this->assets.modelData.animatedModelIndex[i]
               << std::endl;
   }
+  std::cout << "this->assets.modelData.animatedModelIndex.size(): "
+            << this->assets.modelData.animatedModelIndex.size() << std::endl;
 }
 
 void MainRenderer::LoadGltfCompute(gtp::Model *pModel) {
@@ -837,7 +838,7 @@ void MainRenderer::RetrieveObjectIDFromImage() {
       // Identify the object using the color
       float objectID = red;
 
-      std::cout << "Selected Object ID: " << objectID << std::endl;
+      // std::cout << "Selected Object ID: " << objectID << std::endl;
 
       // set color ID image layout to transfer src optimal
       gtp::Utilities_EngCore::setImageLayout(
@@ -2116,10 +2117,15 @@ void MainRenderer::UpdateGeometryNodesBuffer(gtp::Model *pModel) {
   // UpdateDescriptorSet();
 }
 
-void MainRenderer::DeleteModel(gtp::Model *pModel) {
+void MainRenderer::DeleteModel() {
+
+  // model idx
+  int modelIdx = this->assets.modelData.modelIndex;
+
   std::cout << " deleting model" << std::endl;
 
-  std::cout << "\tname: " << pModel->modelName << std::endl;
+  std::cout << "\tname: " << this->assets.models[modelIdx]->modelName
+            << std::endl;
   std::cout << "\tindex: " << this->assets.modelData.modelIndex << std::endl;
 
   // wait for device idle
@@ -2212,12 +2218,24 @@ void MainRenderer::DeleteModel(gtp::Model *pModel) {
         this->assets.modelData.modelIndex);
   }
 
+  std::cout << "this->assets.modelData.animatedModelIndex.size(): "
+            << this->assets.modelData.animatedModelIndex.size() << std::endl;
+
+  std::cout << "this->assets.modelData.modelIndex: "
+            << this->assets.modelData.modelIndex << std::endl;
+
   if (this->assets.modelData.modelIndex <
       this->assets.modelData.animatedModelIndex.size()) {
     this->assets.modelData.animatedModelIndex.erase(
         this->assets.modelData.animatedModelIndex.begin() +
         this->assets.modelData.modelIndex);
   }
+
+  std::cout << "post resize\nthis->assets.modelData.animatedModelIndex.size(): "
+            << this->assets.modelData.animatedModelIndex.size() << std::endl;
+
+  std::cout << "this->assets.modelData.modelIndex: "
+            << this->assets.modelData.modelIndex << std::endl;
 
   if (this->assets.modelData.modelIndex <
       this->assets.modelData.animationNames.size()) {
@@ -2271,6 +2289,8 @@ void MainRenderer::DeleteModel(gtp::Model *pModel) {
   if (this->gltfCompute[this->assets.modelData.modelIndex] != nullptr) {
     this->gltfCompute[this->assets.modelData.modelIndex]
         ->Destroy_ComputeVertex();
+  }
+  if (this->assets.modelData.modelIndex < this->gltfCompute.size()) {
     this->gltfCompute.erase(this->gltfCompute.begin() +
                             this->assets.modelData.modelIndex);
   }
@@ -2302,6 +2322,8 @@ void MainRenderer::DeleteModel(gtp::Model *pModel) {
   UpdateDescriptorSet();
 
   vkDeviceWaitIdle(this->pEngineCore->devices.logical);
+
+  this->assets.modelData.deleteModel = false;
 
   std::cout << "model successfully deleted!" << std::endl;
 }
@@ -2517,6 +2539,30 @@ void MainRenderer::HandleResize() {
 
   // Update descriptor
   this->UpdateDescriptorSet();
+}
+
+void MainRenderer::HandleLoadModel(gtp::FileLoadingFlags loadingFlags) {
+  // call main renderer load model function
+  this->LoadModel(this->assets.modelData.loadModelFilepath, loadingFlags);
+
+  // update main renderer geometry nodes buffer
+  this->UpdateGeometryNodesBuffer(
+      this->assets.models[this->assets.models.size() - 1]);
+
+  // output loaded model name
+  std::cout << "loaded model name from engine: "
+            << this->assets.models[this->assets.models.size() - 1]->modelName
+            << std::endl;
+
+  // set main renderer model data load model flag to false
+  this->assets.modelData.loadModel = false;
+
+  // set main renderer model data load model file path to " "
+  this->assets.modelData.loadModelFilepath = " ";
+}
+
+Utilities_UI::ModelData *MainRenderer::GetModelData() {
+  return &this->assets.modelData;
 }
 
 void MainRenderer::SetModelData(Utilities_UI::ModelData *pModelData) {

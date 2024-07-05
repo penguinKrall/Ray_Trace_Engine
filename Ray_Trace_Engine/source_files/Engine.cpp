@@ -103,7 +103,7 @@ void Engine::UpdateAnimationTimer() { this->timer += deltaTime; }
 
 void Engine::UpdateUI() {
   if (this->isUIUpdated) {
-    this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
+    this->UI.SetModelData(this->renderers.mainRenderer.GetModelData());
     this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
     this->isUIUpdated = false;
   }
@@ -148,49 +148,50 @@ void Engine::LoadModel() {
             ? gtp::FileLoadingFlags::PreTransformVertices
             : gtp::FileLoadingFlags::None;
 
-    // call main renderer load model function
-    this->renderers.mainRenderer.LoadModel(
-        this->renderers.mainRenderer.assets.modelData.loadModelFilepath,
-        loadingFlags);
+    //// call main renderer load model function
+    // this->renderers.mainRenderer.LoadModel(
+    //     this->renderers.mainRenderer.assets.modelData.loadModelFilepath,
+    //     loadingFlags);
 
-    // update main renderer geometry nodes buffer
-    this->renderers.mainRenderer.UpdateGeometryNodesBuffer(
-        this->renderers.mainRenderer.assets
-            .models[this->renderers.mainRenderer.assets.models.size() - 1]);
+    //// update main renderer geometry nodes buffer
+    // this->renderers.mainRenderer.UpdateGeometryNodesBuffer(
+    //     this->renderers.mainRenderer.assets
+    //         .models[this->renderers.mainRenderer.assets.models.size() - 1]);
 
-    // output loaded model name
-    std::cout
-        << "loaded model name from engine: "
-        << this->renderers.mainRenderer.assets
-               .models[this->renderers.mainRenderer.assets.models.size() - 1]
-               ->modelName
-        << std::endl;
+    //// output loaded model name
+    // std::cout
+    //     << "loaded model name from engine: "
+    //     << this->renderers.mainRenderer.assets
+    //            .models[this->renderers.mainRenderer.assets.models.size() - 1]
+    //            ->modelName
+    //     << std::endl;
+
+    //// set main renderer model data load model flag to false
+    // this->renderers.mainRenderer.assets.modelData.loadModel = false;
+
+    //// set main renderer model data load model file path to " "
+    // this->renderers.mainRenderer.assets.modelData.loadModelFilepath = " ";
+
+    // handle renderer part of load model
+    this->renderers.mainRenderer.HandleLoadModel(loadingFlags);
 
     this->UI.loadModelFlags.flipY = false;
     this->UI.loadModelFlags.preMultiplyColors = false;
     this->UI.loadModelFlags.preTransform = false;
     this->UI.loadModelFlags.loadModelName = "none";
 
-    // set main renderer model data load model flag to false
-    this->renderers.mainRenderer.assets.modelData.loadModel = false;
-
-    // set main renderer model data load model file path to " "
-    this->renderers.mainRenderer.assets.modelData.loadModelFilepath = " ";
-
     // set ui model data to main renderer model data
-    this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
+    this->UI.SetModelData(this->renderers.mainRenderer.GetModelData());
   }
 }
 
 void Engine::DeleteModel() {
   if (this->UI.modelData.deleteModel) {
     this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
-    this->renderers.mainRenderer.DeleteModel(
-        this->renderers.mainRenderer.assets
-            .models[this->UI.modelData.modelIndex]);
+    this->renderers.mainRenderer.DeleteModel();
 
-    this->renderers.mainRenderer.assets.modelData.deleteModel = false;
-    this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
+    // this->renderers.mainRenderer.assets.modelData.deleteModel = false;
+    this->UI.SetModelData(this->renderers.mainRenderer.GetModelData());
     this->UI.modelData.isUpdated = true;
   }
 }
@@ -342,16 +343,17 @@ void Engine::Draw() {
     VkCommandBufferBeginInfo computeBeginInfo{};
     computeBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
+    /* record compute commands section */
     // compute command buffer vector
     std::vector<VkCommandBuffer> computeCommands;
 
-    // -- multi blas compute
-    // std::cout << "compute record test 1" << std::endl;
-
+    // iterate through renderer compute instances
     for (int i = 0;
          i < this->renderers.mainRenderer.GetComputeInstances().size(); i++) {
+      // if one element is initialized...
+      //   begin process of reset/begin/record commands from that one
+      //   instance/submit
       if (this->renderers.mainRenderer.GetComputeInstances()[i] != nullptr) {
-        // std::cout << "compute record test 2" << std::endl;
         validate_vk_result(vkResetCommandBuffer(
             this->renderers.mainRenderer.GetComputeInstances()[i]
                 ->commandBuffers[currentFrame],
@@ -364,17 +366,20 @@ void Engine::Draw() {
             &computeBeginInfo));
 
         //  record compute commands
-        for (size_t i = 0;
-             i < this->renderers.mainRenderer.assets.models.size(); ++i) {
-          // check animated index to check against model list for animated
-          // models
-          if (this->renderers.mainRenderer.assets.modelData
-                  .animatedModelIndex[i] == 1) {
-            if (this->renderers.mainRenderer.assets.modelData.isAnimated[i]) {
-              // verify current model is being animated
-              this->renderers.mainRenderer.GetComputeInstances()[i]
-                  ->RecordComputeCommands(currentFrame);
-            }
+        // check that the model is one with animations and selected to be
+        // animated
+
+        // std::cout
+        //     << "this->renderers.mainRenderer.GetComputeInstances().size(): "
+        //     << this->renderers.mainRenderer.GetComputeInstances().size()
+        //     << std::endl;
+
+        if (this->renderers.mainRenderer.assets.modelData
+                .animatedModelIndex[i] == 1) {
+          if (this->renderers.mainRenderer.assets.modelData.isAnimated[i]) {
+            // verify current model is being animated
+            this->renderers.mainRenderer.GetComputeInstances()[i]
+                ->RecordComputeCommands(currentFrame);
           }
         }
 
