@@ -200,9 +200,9 @@ void Engine::UpdateRenderer() {
   if (this->UI.modelData.isUpdated) {
     // -- update renderer model data struct with ui
     this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
-    this->renderers.mainRenderer.assets.modelData.isUpdated = false;
-    // -- update ui data to updated renderer model data with updated flags
-    this->UI.SetModelData(&this->renderers.mainRenderer.assets.modelData);
+    // this->renderers.mainRenderer.assets.modelData.isUpdated = false;
+    //  -- update ui data to updated renderer model data with updated flags
+    this->UI.SetModelData(this->renderers.mainRenderer.GetModelData());
   }
 }
 
@@ -369,14 +369,9 @@ void Engine::Draw() {
         // check that the model is one with animations and selected to be
         // animated
 
-        // std::cout
-        //     << "this->renderers.mainRenderer.GetComputeInstances().size(): "
-        //     << this->renderers.mainRenderer.GetComputeInstances().size()
-        //     << std::endl;
-
-        if (this->renderers.mainRenderer.assets.modelData
-                .animatedModelIndex[i] == 1) {
-          if (this->renderers.mainRenderer.assets.modelData.isAnimated[i]) {
+        if (this->renderers.mainRenderer.GetModelData()
+                ->animatedModelIndex[i] == 1) {
+          if (this->renderers.mainRenderer.GetModelData()->isAnimated[i]) {
             // verify current model is being animated
             this->renderers.mainRenderer.GetComputeInstances()[i]
                 ->RecordComputeCommands(currentFrame);
@@ -394,14 +389,19 @@ void Engine::Draw() {
     }
 
     // particle commands
-    for (int i = 0; i > this->renderers.mainRenderer.assets.particle.size();
+    /*for (int i = 0; i > this->renderers.mainRenderer.assets.particle.size();
          i++) {
       if (this->renderers.mainRenderer.assets.particle[i] != nullptr) {
         computeCommands.push_back(
             this->renderers.mainRenderer.assets.particle[i]
                 ->RecordComputeCommands(currentFrame));
       }
-    }
+    }*/
+
+    // update compute commands to be waited on
+    computeCommands =
+        this->renderers.mainRenderer.RecordParticleComputeCommands(
+            currentFrame, computeCommands);
 
     // compute pipeline wait stages
     std::vector<VkPipelineStageFlags> computeWaitStages = {
@@ -460,23 +460,26 @@ void Engine::Draw() {
 
     bool isBLASUpdated = false;
 
-    for (size_t i = 0; i < this->renderers.mainRenderer.assets.models.size();
-         ++i) {
-      // check animated index to check against model list for animated models
-      if (this->renderers.mainRenderer.assets.modelData.animatedModelIndex[i] ==
-          1) {
-        // get current model animation
-        int activeAnimation =
-            this->renderers.mainRenderer.assets.modelData.activeAnimation[i][0];
-        // verify current model is being animated
-        if (this->renderers.mainRenderer.assets.modelData.isAnimated[i]) {
-          this->renderers.mainRenderer.assets.models[i]->updateAnimation(
-              activeAnimation, deltaTime,
-              &this->renderers.mainRenderer.GetComputeInstances()[i]
-                   ->jointBuffer);
-        }
-      }
-    }
+    this->renderers.mainRenderer.UpdateAnimations(deltaTime);
+
+    // for (size_t i = 0; i < this->renderers.mainRenderer.assets.models.size();
+    //      ++i) {
+    //   // check animated index to check against model list for animated models
+    //   if (this->renderers.mainRenderer.assets.modelData.animatedModelIndex[i]
+    //   ==
+    //       1) {
+    //     // get current model animation
+    //     int activeAnimation =
+    //         this->renderers.mainRenderer.assets.modelData.activeAnimation[i][0];
+    //     // verify current model is being animated
+    //     if (this->renderers.mainRenderer.assets.modelData.isAnimated[i]) {
+    //       this->renderers.mainRenderer.assets.models[i]->updateAnimation(
+    //           activeAnimation, deltaTime,
+    //           &this->renderers.mainRenderer.GetComputeInstances()[i]
+    //                ->jointBuffer);
+    //     }
+    //   }
+    // }
 
     this->renderers.mainRenderer.UpdateUniformBuffer(
         timer, this->UI.rendererData.lightPosition);

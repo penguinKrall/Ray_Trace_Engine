@@ -980,7 +980,8 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
       ImGuiFileDialog::Instance()->Close();
     }
 
-    if (ImGui::CollapsingHeader("Delete")) {
+    if (ImGui::CollapsingHeader("Delete") &&
+        !this->modelData.modelName.empty()) {
       // delete model
       if (ImGui::Button("Delete Model")) {
         this->modelData.deleteModel = true;

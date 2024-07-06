@@ -80,7 +80,6 @@ private:
   // -- destroy class objects
   void Destroy_MainRenderer();
 
-public:
   // -- assets data struct
   struct Assets {
     uint32_t textureOffset = 0;
@@ -103,6 +102,8 @@ public:
 
   // -- assets
   Assets assets{};
+
+public:
 
   // -- constructor
   MainRenderer();
@@ -200,6 +201,12 @@ public:
 
   // -- update descriptor set
   void UpdateDescriptorSet();
+
+  // -- update animations
+  void UpdateAnimations(float deltaTime);
+
+  // -- record particle compute commands
+  std::vector<VkCommandBuffer> RecordParticleComputeCommands(int currentFrame, std::vector<VkCommandBuffer> computeCommandBuffer);
 
   // -- handle window resize
   void HandleResize();
