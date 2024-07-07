@@ -465,7 +465,7 @@ void MainRenderer::CreateTLAS() {
       // handle the instances for particles if the model was loaded for use as a
       // particle
       if (i > 0 && this->assets.models[i]->isParticle) {
-        this->HandleParticleInstancesTLAS(i);
+        this->InitializeParticleBLASInstances(i);
       }
 
       // otherwise handle each instance
@@ -687,7 +687,7 @@ void MainRenderer::CreateTLAS() {
           pEngineCore->devices.logical, &accelerationDeviceAddressInfo);
 }
 
-void MainRenderer::HandleParticleInstancesTLAS(int particleIdx) {
+void MainRenderer::InitializeParticleBLASInstances(int particleIdx) {
   for (int i = 0; i < PARTICLE_COUNT; i++) {
 
     VkAccelerationStructureInstanceKHR particleInstance;
@@ -2513,44 +2513,35 @@ void MainRenderer::UpdateDescriptorSet() {
                          writeDescriptorSets.data(), 0, VK_NULL_HANDLE);
 }
 
-void MainRenderer::UpdateAnimations(float deltaTime)
-{
-  for (size_t i = 0; i < this->assets.models.size();
-    ++i) {
+void MainRenderer::UpdateAnimations(float deltaTime) {
+  for (size_t i = 0; i < this->assets.models.size(); ++i) {
     // check animated index to check against model list for animated models
-    if (this->assets.modelData.animatedModelIndex[i] ==
-      1) {
+    if (this->assets.modelData.animatedModelIndex[i] == 1) {
       // get current model animation
-      int activeAnimation =
-        this->assets.modelData.activeAnimation[i][0];
+      int activeAnimation = this->assets.modelData.activeAnimation[i][0];
       // verify current model is being animated
       if (this->assets.modelData.isAnimated[i]) {
         this->assets.models[i]->updateAnimation(
-          activeAnimation, deltaTime,
-          &this->gltfCompute[i]
-          ->jointBuffer);
+            activeAnimation, deltaTime, &this->gltfCompute[i]->jointBuffer);
       }
     }
   }
 }
 
-std::vector<VkCommandBuffer> MainRenderer::RecordParticleComputeCommands(int currentFrame, std::vector<VkCommandBuffer> computeCommandBuffer)
-{
+std::vector<VkCommandBuffer> MainRenderer::RecordParticleComputeCommands(
+    int currentFrame, std::vector<VkCommandBuffer> computeCommandBuffer) {
 
-  auto& tempCmdBuf = computeCommandBuffer;
+  auto &tempCmdBuf = computeCommandBuffer;
 
   // particle commands
-  for (int i = 0; i > this->assets.particle.size();
-    i++) {
+  for (int i = 0; i > this->assets.particle.size(); i++) {
     if (this->assets.particle[i] != nullptr) {
       tempCmdBuf.push_back(
-        this->assets.particle[i]
-        ->RecordComputeCommands(currentFrame));
+          this->assets.particle[i]->RecordComputeCommands(currentFrame));
     }
   }
 
   return tempCmdBuf;
-
 }
 
 void MainRenderer::HandleResize() {

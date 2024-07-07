@@ -103,24 +103,6 @@ private:
   // -- assets
   Assets assets{};
 
-public:
-
-  // -- constructor
-  MainRenderer();
-
-  // -- init constructor
-  MainRenderer(EngineCore *pEngineCore);
-
-  //// -- init class function
-  // void Init_MainRenderer(EngineCore *pEngineCore);
-
-  // -- get main renderer compute instances
-  std::vector<ComputeVertex *> GetComputeInstances();
-
-  // -- Setup Model Transforms
-  void
-  SetupModelDataTransforms(Utilities_UI::TransformMatrices *pTransformMatrices);
-
   // -- load model
   void LoadModel(std::string filename, uint32_t fileLoadingFlags = 0,
                  Utilities_Renderer::ModelLoadingFlags modelLoadingFlags =
@@ -132,11 +114,12 @@ public:
                     Utilities_Renderer::ModelLoadingFlags modelLoadingFlags,
                     Utilities_UI::TransformMatrices *pTransformMatrices);
 
+  // -- Setup Model Transforms
+  void
+  SetupModelDataTransforms(Utilities_UI::TransformMatrices *pTransformMatrices);
+
   // -- load assets
   void LoadAssets();
-
-  // -- load gltf compute
-  void LoadGltfCompute(gtp::Model *pModel);
 
   // -- create BLAS
   void CreateBLAS(gtp::Model *pModel);
@@ -144,8 +127,11 @@ public:
   // -- create top level acceleration structure
   void CreateTLAS();
 
+  // -- load gltf compute
+  void LoadGltfCompute(gtp::Model *pModel);
+
   // -- handle particle tlas instances
-  void HandleParticleInstancesTLAS(int particleIdx);
+  void InitializeParticleBLASInstances(int particleIdx);
 
   // -- create storage image
   void CreateStorageImages();
@@ -153,21 +139,11 @@ public:
   // -- create color id image buffer
   void CreateColorIDImageBuffer();
 
-  // -- retrieve object id from image
-  // -- copy object id image to buffer
-  void RetrieveObjectIDFromImage();
-
   // -- create uniform buffer
   void CreateUniformBuffer();
 
-  // -- update uniform buffer
-  void UpdateUniformBuffer(float deltaTime, glm::vec4 lightPosition);
-
   // -- create ray tracing pipeline
   void CreateRayTracingPipeline();
-
-  // -- update ray tracing pipeline
-  void UpdateRayTracingPipeline();
 
   // -- create shader binding tables
   void CreateShaderBindingTable();
@@ -181,6 +157,29 @@ public:
   // -- build command buffers
   void BuildCommandBuffers();
 
+  // -- create geometry nodes buffer
+  void CreateGeometryNodesBuffer();
+
+public:
+  // -- constructor
+  MainRenderer();
+
+  // -- init constructor
+  MainRenderer(EngineCore *pEngineCore);
+
+  // -- get main renderer compute instances
+  std::vector<ComputeVertex *> GetComputeInstances();
+
+  // -- retrieve object id from image
+  // -- copy object id image to buffer
+  void RetrieveObjectIDFromImage();
+
+  // -- update uniform buffer
+  void UpdateUniformBuffer(float deltaTime, glm::vec4 lightPosition);
+
+  // -- update ray tracing pipeline
+  void UpdateRayTracingPipeline();
+
   // -- rebuild command buffers
   void RebuildCommandBuffers(int frame, bool showObjectColorID);
 
@@ -190,8 +189,8 @@ public:
   // -- update TLAS
   void UpdateTLAS();
 
-  // -- create geometry nodes buffer
-  void CreateGeometryNodesBuffer();
+  //// -- create geometry nodes buffer
+  // void CreateGeometryNodesBuffer();
 
   // -- update geometry nodes buffer
   void UpdateGeometryNodesBuffer(gtp::Model *pModel);
@@ -206,7 +205,8 @@ public:
   void UpdateAnimations(float deltaTime);
 
   // -- record particle compute commands
-  std::vector<VkCommandBuffer> RecordParticleComputeCommands(int currentFrame, std::vector<VkCommandBuffer> computeCommandBuffer);
+  std::vector<VkCommandBuffer> RecordParticleComputeCommands(
+      int currentFrame, std::vector<VkCommandBuffer> computeCommandBuffer);
 
   // -- handle window resize
   void HandleResize();
