@@ -27,6 +27,7 @@ layout(binding = 3, set = 0) uniform CameraProperties  {
     mat4 viewInverse;
     mat4 projInverse;
     vec4 lightPos;
+		vec4 viewPos;
 } cam;
 
 // Max. number of recursion is passed via a specialization constant

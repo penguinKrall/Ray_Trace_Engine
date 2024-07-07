@@ -38,6 +38,7 @@ public:
     glm::mat4 viewInverse = glm::mat4(1.0f);
     glm::mat4 projInverse = glm::mat4(1.0f);
     glm::vec4 lightPos = glm::vec4(0.0f);
+    glm::vec4 viewPos = glm::vec4(0.0f);
   };
 
   // -- model loading flags

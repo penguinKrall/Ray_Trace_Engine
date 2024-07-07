@@ -896,6 +896,8 @@ void MainRenderer::UpdateUniformBuffer(float deltaTime,
 
   uniformData.lightPos = lightPosition;
 
+  uniformData.viewPos = glm::vec4(this->pEngineCore->camera->Position, 1.0f);
+
   memcpy(buffers.ubo.bufferData.mapped, &uniformData,
          sizeof(Utilities_Renderer::UniformData));
 }
