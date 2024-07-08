@@ -129,17 +129,41 @@ void main() {
     vec3 diffuseLightVector = normalize(ubo.lightPos.xyz - tri.position.xyz);
 
     //view direction
-    vec3 viewDir = normalize(tri.position.xyz - ubo.viewPos.xyz).xyz;
+    vec3 viewDir = normalize(ubo.viewPos.xyz - tri.position.xyz).xyz;
+
+    //base color
+    vec3 baseColor = rayPayload.color.rgb;
 
     //ambient lighting
     float dot_product = max(dot(rayPayload.normal.xyz, diffuseLightVector), 0.95);
-    rayPayload.color *= dot_product;
+    vec3 ambientColor = baseColor *= dot_product;
+
+    //baseColor *= dot_product;
    
+    const float constantAttenuation = 1.0f; // Replace with your static value
+    const float linearAttenuation = 0.22f;  // Replace with your static value
+    const float quadraticAttenuation = 0.20f; // Replace with your static value
+    
+    // Calculate the distance
+    float distance = length(normalize(ubo.lightPos.xyz) - normalize(tri.position.xyz));
+    
+    // Calculate the attenuation
+    float attenuation = 1.0f / (constantAttenuation + linearAttenuation * distance + quadraticAttenuation * pow(distance, 2));
+        
     //specular lighting
     vec3 reflectDir = reflect(vec3(-diffuseLightVector), rayPayload.normal.xyz);
-    float spec = pow(max(dot(vec3(viewDir), reflectDir), 0.0f), 0.05f);
+    float spec = pow(max(dot(vec3(viewDir), reflectDir), 0.0f), 32.0f);
 
-    rayPayload.color  = rayPayload.color * spec;
+    vec3 specular = baseColor * spec * skyColor;
+
+    //diffuse lighting
+    float diff = max(dot(rayPayload.normal.xyz, diffuseLightVector), 0.0f);
+    vec3 diffuse = diff * baseColor;
+
+    diffuse *= attenuation;
+    specular *= attenuation;
+
+    rayPayload.color  = ambientColor + diffuse + specular;
 
     //rayPayload.color = mix(rayPayload.color, skyColor, 0.1);
 
