@@ -125,7 +125,7 @@ void main() {
 
     
     //normal
-    v.normal = normalize(boneTransform * v.normal);
+    v.normal = normalize(boneTransform * rotationMatrix * scaleMatrix * v.normal);
     
     //tangent
     float w = v.tangent.w;
