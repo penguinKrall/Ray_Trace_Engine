@@ -60,112 +60,106 @@ layout(binding = 8, set = 0) uniform sampler2D textures[];
 #include "main_renderer_geometrytypes.glsl"
 
 void main() {
-
-    //get geometry node index
+    // Get geometry node index
     uint instanceCustomIndex = gl_InstanceCustomIndexEXT;
 
-    //unpack triangles
+    // Unpack triangles
     Triangle tri = unpackTriangle2(gl_PrimitiveID, 112);
 
-    //get geometry node data from buffer
+    // Get geometry node data from buffer
     GeometryNode geometryNode = g_nodes_buffer.nodes[gl_GeometryIndexEXT + g_nodes_indices.indices[instanceCustomIndex].offset];
 
-    //set ray payload semi transparent flag
+    // Set ray payload semi-transparent flag
     rayPayload.semiTransparentFlag = geometryNode.semiTransparentFlag;
 
-    //set ray payload color ID data
+    // Set ray payload color ID data
     rayPayload.colorID = vec4(vec3(geometryNode.objectColorID), 1.0f);
 
-    //default color
+    // Default color
     vec4 color = vec4(1.0f);
 
-    //assign texture color if geometry node has texture
+    // Assign texture color if geometry node has texture
     if (geometryNode.textureIndexBaseColor > -1) {
-
         color = texture(textures[nonuniformEXT(geometryNode.textureIndexBaseColor)], tri.uv);
-
-        //set semi transparency flag according to base color alpha
-        if(color.a < 1.0f){
+        // Set semi-transparency flag according to base color alpha
+        if (color.a < 1.0f) {
             rayPayload.semiTransparentFlag = 1;
         }
-    } 
-    
-    //assign vertex color to color if no texture
-    else {
-        color = vec4(tri.color.rgb, 1.0f); // Use vertex color if no texture
+    } else {
+        // Assign vertex color to color if no texture
+        color = vec4(tri.color.rgb, 1.0f);
     }
 
-    //assign occlusion color map if model has one -- currently unused?
+    // Assign occlusion color map if model has one -- currently unused?
     if (geometryNode.textureIndexOcclusion > -1) {
         float occlusion = texture(textures[nonuniformEXT(geometryNode.textureIndexOcclusion)], tri.uv).r;
         color *= occlusion;
     }
 
-    //distance used by reflection
+    // Distance used by reflection
     rayPayload.distance = gl_RayTmaxEXT;
 
-    //use normal map texture if available
+    // Use normal map texture if available
     if (geometryNode.textureIndexNormal > -1) {
         vec3 normalSample = texture(textures[nonuniformEXT(geometryNode.textureIndexNormal)], tri.uv).rgb;
         // Convert from [0, 1] to [-1, 1]
         rayPayload.normal = normalize(normalSample * 2.0 - 1.0);
+    } else {
+        // Assign ray payload normal from tri
+        rayPayload.normal = normalize(tri.normal.xyz);
     }
 
-    //assign ray payload normal from tri
-    else{
-    rayPayload.normal = normalize(tri.normal.xyz);
-    }
-    //assign ray payload color
+    // Assign ray payload color
     rayPayload.color = color.rgb;
 
-    //assign ray payload index - referred to in ray gen?
+    // Assign ray payload index - referred to in ray gen?
     rayPayload.index = float(gl_InstanceCustomIndexEXT);
 
     /* LIGHTING */
-    //sky color
+    // World position (equivalent to fragPos in fragment shaders)
+    vec3 worldPos = gl_WorldRayOriginEXT + gl_WorldRayDirectionEXT * gl_HitTEXT;
+
+    // Sky color
     vec3 skyColor = texture(cubemapTexture, rayPayload.normal.xyz).rgb;
 
-    //diffuse light vector
-    vec3 diffuseLightVector = normalize(ubo.lightPos.xyz - tri.position.xyz);
+    // Diffuse light vector
+    vec3 diffuseLightVector = normalize(ubo.lightPos.xyz - worldPos);
 
-    //view direction
-    vec3 viewDir = normalize(ubo.viewPos.xyz - tri.position.xyz).xyz;
+    // View direction
+    vec3 viewDir = normalize(normalize(ubo.viewPos.xyz) - worldPos).xyz;
 
-    //base color
+    // Base color
     vec3 baseColor = rayPayload.color.rgb;
 
-    //ambient lighting
-    float dot_product = max(dot(rayPayload.normal.xyz, diffuseLightVector), 0.95);
-    vec3 ambientColor = baseColor *= dot_product;
+    // Ambient lighting
+    float dot_product = max(dot(rayPayload.normal.xyz, diffuseLightVector), 0.0);
+    vec3 ambientColor = baseColor * dot_product;
 
-    //baseColor *= dot_product;
-   
     const float constantAttenuation = 1.0f; // Replace with your static value
     const float linearAttenuation = 0.22f;  // Replace with your static value
     const float quadraticAttenuation = 0.20f; // Replace with your static value
-    
+
     // Calculate the distance
-    float distance = length(normalize(ubo.lightPos.xyz) - normalize(tri.position.xyz));
-    
+    float distance = length(ubo.lightPos.xyz - worldPos);
+
     // Calculate the attenuation
     float attenuation = 1.0f / (constantAttenuation + linearAttenuation * distance + quadraticAttenuation * pow(distance, 2));
-        
-    //specular lighting
-    vec3 reflectDir = reflect(vec3(-diffuseLightVector), rayPayload.normal.xyz);
-    float spec = pow(max(dot(vec3(viewDir), reflectDir), 0.0f), 32.0f);
 
+    // Specular lighting
+    vec3 reflectDir = reflect(-diffuseLightVector, rayPayload.normal.xyz);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0f), 32.0f);
     vec3 specular = baseColor * spec * skyColor;
 
-    //diffuse lighting
-    float diff = max(dot(rayPayload.normal.xyz, diffuseLightVector), 0.0f);
-    vec3 diffuse = diff * baseColor;
+    // Diffuse lighting
+    float diff = max(dot(diffuseLightVector, rayPayload.normal.xyz), 0.0f);
+    vec3 diffuse = diff * baseColor * skyColor;
 
-    diffuse *= attenuation;
+    // Apply attenuation to lighting
+    //diffuse *= attenuation;
     specular *= attenuation;
 
-    rayPayload.color  = ambientColor + diffuse + specular;
-
-    //rayPayload.color = mix(rayPayload.color, skyColor, 0.1);
+    // Final color computation
+    rayPayload.color = diffuse + specular;
 
     /* SHADOW CASTING */
     float tmin = 0.001;
@@ -177,19 +171,19 @@ void main() {
     // Objects with full white vertex color are treated as reflectors
     rayPayload.reflector = ((color.r == 1.0f) && (color.g == 1.0f) && (color.b == 1.0f)) ? 1.0f : 0.0f;
 
-    //shadow trace rays light vector
+    // Shadow trace rays light vector
     vec3 shadowLightVector = normalize(ubo.lightPos.xyz);
 
     // Trace shadow ray and offset indices to match shadow hit/miss shader group indices
     traceRayEXT(topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT | gl_RayFlagsSkipClosestHitShaderEXT,
         0xFF, 0, 0, 1, origin, tmin, shadowLightVector, tmax, 2);
-    
-    //blend shadow
+
+    // Blend shadow
     if (shadowed) {
         rayPayload.color *= 0.7;
     }
-
 }
+
 
 //#version 460
 //
