@@ -59,6 +59,19 @@ layout(binding = 8, set = 0) uniform sampler2D textures[];
 #include "main_renderer_bufferreferences.glsl"
 #include "main_renderer_geometrytypes.glsl"
 
+vec3 blinnPhong(vec3 normal, vec3 lightDir, vec3 viewDir, vec3 diffuseColor, vec3 ambientColor, vec3 specularColor) {
+    vec3 halfDir = normalize(lightDir + viewDir);
+    float specAngle = max(dot(normal, halfDir), 0.0);
+    float specular = pow(specAngle, 16.0);
+
+    float diff = max(dot(normal, lightDir), 0.0);
+    vec3 diffuse = diff * diffuseColor;
+    vec3 ambient = ambientColor;
+    vec3 spec = specular * specularColor;
+
+    return ambient + diffuse + spec;
+}
+
 void main() {
     // Get geometry node index
     uint instanceCustomIndex = gl_InstanceCustomIndexEXT;
@@ -103,7 +116,7 @@ void main() {
     if (geometryNode.textureIndexNormal > -1) {
         vec3 normalSample = texture(textures[nonuniformEXT(geometryNode.textureIndexNormal)], tri.uv).rgb;
         // Convert from [0, 1] to [-1, 1]
-        rayPayload.normal = normalize(normalSample) * tri.normal.xyz;
+        rayPayload.normal = normalize(normalSample * 2.0f - 1.0f);
     } else {
         // Assign ray payload normal from tri
         rayPayload.normal = tri.normal.xyz;
@@ -116,49 +129,17 @@ void main() {
     rayPayload.index = float(gl_InstanceCustomIndexEXT);
 
     /* LIGHTING */
-    // World position (equivalent to fragPos in fragment shaders)
-    vec3 worldPos = gl_WorldRayOriginEXT + gl_WorldRayDirectionEXT * gl_HitTEXT * rayPayload.normal.xyz;
-
     // Sky color
     vec3 skyColor = texture(cubemapTexture, rayPayload.normal.xyz).rgb;
+    vec3 tempSpecColor = mix(rayPayload.color.rgb, skyColor, 0.5f);
 
-    // Diffuse light vector
-    vec3 diffuseLightVector = normalize(ubo.lightPos.xyz);
+    vec3 lightingNormal = normalize(gl_WorldRayDirectionEXT);
+    vec3 hitPoint = gl_WorldRayOriginEXT + gl_HitTEXT * gl_WorldRayDirectionEXT;
 
-    // View direction
-    vec3 viewDir = normalize(normalize(ubo.viewPos.xyz) - worldPos).xyz;
+    vec3 lightDir = normalize(ubo.lightPos.xyz - hitPoint);
+    vec3 viewDir = normalize(-gl_WorldRayDirectionEXT);
 
-    // Base color
-    //vec3 baseColor = rayPayload.color.rgb;
-
-    // Ambient lighting
-    float dot_product = max(dot(rayPayload.normal.xyz, diffuseLightVector), 1.0);
-    //vec3 ambientColor = baseColor * dot_product;
-
-
-    //skip the below shit w this littel mf
-    rayPayload.color *= dot_product;
-
-    const float constantAttenuation = 1.0f; // Replace with your static value
-    const float linearAttenuation = 0.22f;  // Replace with your static value
-    const float quadraticAttenuation = 0.20f; // Replace with your static value
-    
-    // Calculate the distance
-    float distance = length(ubo.lightPos.xyz - worldPos);
-    
-    // Calculate the attenuation
-    float attenuation = 1.0f / (constantAttenuation + linearAttenuation * distance + quadraticAttenuation * pow(distance, 2));
-    
-    // Specular lighting
-    vec3 reflectDir = reflect(rayPayload.normal.xyz, -diffuseLightVector);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0f), 32.0f);
-    vec3 specColor = rayPayload.color * spec;
-    
-    // Apply attenuation to lighting
-    specColor *= attenuation;
-    
-    // Final color computation
-    rayPayload.color += specColor;
+    rayPayload.color = blinnPhong(lightingNormal, lightDir, viewDir, rayPayload.color.rgb, rayPayload.color.rgb, tempSpecColor);
 
     /* SHADOW CASTING */
     float tmin = 0.001;

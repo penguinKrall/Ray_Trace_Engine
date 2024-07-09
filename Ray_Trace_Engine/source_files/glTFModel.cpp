@@ -80,8 +80,8 @@ void Texture::destroy() {
 }
 
 void Texture::fromglTfImage(tinygltf::Image &gltfimage,
-                            TextureSampler textureSampler, EngineCore *pEngineCore,
-                            VkQueue copyQueue) {
+                            TextureSampler textureSampler,
+                            EngineCore *pEngineCore, VkQueue copyQueue) {
   this->pEngineCore = pEngineCore;
 
   unsigned char *buffer = nullptr;
@@ -139,7 +139,7 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
   this->pEngineCore->add(
       [pEngineCore, &bufferCreateInfo, &stagingBuffer]() {
         return pEngineCore->objCreate.VKCreateBuffer(&bufferCreateInfo, nullptr,
-                                                  &stagingBuffer);
+                                                     &stagingBuffer);
       },
       "temporary staging buffer - glTFModel.cpp - fromglTFImage() " +
           gltfimage.name);
@@ -155,7 +155,7 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
   this->pEngineCore->add(
       [pEngineCore, &memAllocInfo, &stagingMemory]() {
         return pEngineCore->objCreate.VKAllocateMemory(&memAllocInfo, nullptr,
-                                                    &stagingMemory);
+                                                       &stagingMemory);
       },
       "allocated temporary staging buffer memory - glTFModel.cpp - "
       "fromglTFImage() " +
@@ -193,7 +193,7 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
   this->pEngineCore->add(
       [pEngineCore, &imageCreateInfo, this]() {
         return pEngineCore->objCreate.VKCreateImage(&imageCreateInfo, nullptr,
-                                                 &this->image);
+                                                    &this->image);
       },
       "glTFModel_image_" + gltfimage.name);
 
@@ -209,7 +209,7 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
   this->pEngineCore->add(
       [pEngineCore, &memAllocInfo, this]() {
         return pEngineCore->objCreate.VKAllocateMemory(&memAllocInfo, nullptr,
-                                                    &this->deviceMemory);
+                                                       &this->deviceMemory);
       },
       "glTFModel_image_memory_" + gltfimage.name);
 
@@ -275,7 +275,7 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
 
   // flush command buffer - make image data available to gpu
   pEngineCore->FlushCommandBuffer(copyCmd, copyQueue,
-                               pEngineCore->commandPools.graphics, true);
+                                  pEngineCore->commandPools.graphics, true);
 
   // clean up staging buffer and memory
   vkFreeMemory(pEngineCore->devices.logical, stagingMemory, nullptr);
@@ -359,7 +359,7 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
   }
 
   pEngineCore->FlushCommandBuffer(blitCmd, copyQueue,
-                               pEngineCore->commandPools.graphics, true);
+                                  pEngineCore->commandPools.graphics, true);
 
   VkSamplerCreateInfo samplerInfo{};
   samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -382,7 +382,7 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
   this->pEngineCore->add(
       [pEngineCore, &samplerInfo, this]() {
         return pEngineCore->objCreate.VKCreateSampler(&samplerInfo, nullptr,
-                                                   &sampler);
+                                                      &sampler);
       },
       "gltfModel_sampler_" + gltfimage.name);
 
@@ -399,7 +399,8 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
 
   this->pEngineCore->add(
       [pEngineCore, &viewInfo, this]() {
-        return pEngineCore->objCreate.VKCreateImageView(&viewInfo, nullptr, &view);
+        return pEngineCore->objCreate.VKCreateImageView(&viewInfo, nullptr,
+                                                        &view);
       },
       "gltfModel_image_view_" + gltfimage.name);
 
@@ -430,10 +431,10 @@ Mesh::Mesh(EngineCore *pEngineCore, glm::mat4 matrix) {
   this->pEngineCore = pEngineCore;
   this->uniformBlock.matrix = matrix;
   pEngineCore->CreateBuffer2(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                              VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                          sizeof(uniformBlock), &uniformBuffer.buffer,
-                          &uniformBuffer.memory, &uniformBlock);
+                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                             sizeof(uniformBlock), &uniformBuffer.buffer,
+                             &uniformBuffer.memory, &uniformBlock);
   vkMapMemory(pEngineCore->devices.logical, uniformBuffer.memory, 0,
               sizeof(uniformBlock), 0, &uniformBuffer.mapped);
   uniformBuffer.descriptor = {uniformBuffer.buffer, 0, sizeof(uniformBlock)};
@@ -1042,6 +1043,7 @@ void Model::loadMaterials(tinygltf::Model &gltfModel) {
       material.texCoordSets.occlusion =
           mat.additionalValues["occlusionTexture"].TextureTexCoord();
     }
+
     if (mat.additionalValues.find("alphaMode") != mat.additionalValues.end()) {
       tinygltf::Parameter param = mat.additionalValues["alphaMode"];
       if (param.string_value == "BLEND") {
@@ -1065,11 +1067,16 @@ void Model::loadMaterials(tinygltf::Model &gltfModel) {
           1.0);
     }
 
+    // std::cout << "  \n\n************************* PRE EXTENSION TEST"
+    //           << std::endl;
+
     // Extensions
     // @TODO: Find out if there is a nicer way of reading these properties with
     // recent tinygltf headers
     if (mat.extensions.find("KHR_materials_pbrSpecularGlossiness") !=
         mat.extensions.end()) {
+      //std::cout << "*************************SPECULAR EXTENSION FOUND"
+      //          << std::endl;
       auto ext = mat.extensions.find("KHR_materials_pbrSpecularGlossiness");
       if (ext->second.Has("specularGlossinessTexture")) {
         auto index = ext->second.Get("specularGlossinessTexture").Get("index");
@@ -1371,18 +1378,18 @@ void Model::loadFromFile(std::string filename, EngineCore *pEngineCore,
   // Create staging buffers
   // Vertex data
   pEngineCore->CreateBuffer2(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                              VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                          vertexBufferSize, &vertexStaging.buffer,
-                          &vertexStaging.memory, loaderInfo.vertexBuffer);
+                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                             vertexBufferSize, &vertexStaging.buffer,
+                             &vertexStaging.memory, loaderInfo.vertexBuffer);
 
   // Index data
   if (indexBufferSize > 0) {
     pEngineCore->CreateBuffer2(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                            indexBufferSize, &indexStaging.buffer,
-                            &indexStaging.memory, loaderInfo.indexBuffer);
+                               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                               indexBufferSize, &indexStaging.buffer,
+                               &indexStaging.memory, loaderInfo.indexBuffer);
   }
 
   // Create device local buffers
@@ -1428,7 +1435,7 @@ void Model::loadFromFile(std::string filename, EngineCore *pEngineCore,
   }
 
   pEngineCore->FlushCommandBuffer(copyCmd, transferQueue,
-                               pEngineCore->commandPools.graphics, true);
+                                  pEngineCore->commandPools.graphics, true);
 
   vkDestroyBuffer(pEngineCore->devices.logical, vertexStaging.buffer, nullptr);
   vkFreeMemory(pEngineCore->devices.logical, vertexStaging.memory, nullptr);
