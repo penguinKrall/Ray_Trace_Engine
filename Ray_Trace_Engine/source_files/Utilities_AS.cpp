@@ -63,7 +63,7 @@ void Utilities_AS::createAccelerationStructureBuffer(
   pEngineCore->add(
       [pEngineCore, &bufferCreateInfo, buffer]() {
         return pEngineCore->objCreate.VKCreateBuffer(&bufferCreateInfo, nullptr,
-                                                  buffer);
+                                                     buffer);
       },
       bufferName);
 
@@ -91,7 +91,7 @@ void Utilities_AS::createAccelerationStructureBuffer(
   pEngineCore->add(
       [pEngineCore, &memoryAllocateInfo, memory]() {
         return pEngineCore->objCreate.VKAllocateMemory(&memoryAllocateInfo,
-                                                    nullptr, memory);
+                                                       nullptr, memory);
       },
       bufferNameWithSuffix);
 
@@ -410,4 +410,10 @@ Utilities_AS::GetVerticesFromBuffer(VkDevice device, gtp::Model *model) {
   vkUnmapMemory(device, model->vertices.memory);
 
   return tempVertexBuffer;
+}
+
+void Utilities_AS::StorageImage::Destroy(EngineCore *engineCorePtr) {
+  vkDestroyImageView(engineCorePtr->GetLogicalDevice(), this->view, nullptr);
+  vkDestroyImage(engineCorePtr->GetLogicalDevice(), this->image, nullptr);
+  vkFreeMemory(engineCorePtr->GetLogicalDevice(), this->memory, nullptr);
 }

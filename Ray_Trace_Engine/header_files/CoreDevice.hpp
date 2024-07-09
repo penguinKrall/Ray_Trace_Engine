@@ -12,7 +12,7 @@ public:
   //--ctor
   CoreDevice();
 
-  //--phys. and log. references
+  // -- devices
   struct Devices {
     VkPhysicalDevice physical;
     VkDevice logical;
@@ -57,6 +57,10 @@ public:
 
   // -- GET PHYSICAL DEVICE
   VkResult getPhysicalDevice(VkInstance instance);
+
+  //return logical device
+  VkDevice GetLogicalDevice();
+
   bool checkExtensionSupport(const char *extensionName) const;
   uint32_t getMemoryType(uint32_t typeBits, VkMemoryPropertyFlags properties,
                          VkBool32 *memTypeFound = nullptr) const;

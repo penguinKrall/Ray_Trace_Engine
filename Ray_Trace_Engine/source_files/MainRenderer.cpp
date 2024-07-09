@@ -28,6 +28,9 @@ void MainRenderer::Init_MainRenderer(EngineCore *pEngineCore) {
   // init core pointer
   this->pEngineCore = pEngineCore;
 
+  // object mouse select
+  this->tools.objectMouseSelect = gtp::ObjectMouseSelect(this->pEngineCore);
+
   // shader
   shader = gtp::Shader(pEngineCore);
 
@@ -2638,21 +2641,26 @@ void MainRenderer::Destroy_MainRenderer() {
   // -- uniform buffer
   buffers.ubo.destroy(this->pEngineCore->devices.logical);
 
-  // -- storage image
-  vkDestroyImageView(pEngineCore->devices.logical, this->storageImage.view,
-                     nullptr);
-  vkDestroyImage(pEngineCore->devices.logical, this->storageImage.image,
-                 nullptr);
-  vkFreeMemory(pEngineCore->devices.logical, this->storageImage.memory,
-               nullptr);
+  // -- storage images
+  this->storageImage.Destroy(this->pEngineCore);
+  this->colorIDStorageImage.Destroy(this->pEngineCore);
 
-  // -- color id storage image
-  vkDestroyImageView(pEngineCore->devices.logical,
-                     this->colorIDStorageImage.view, nullptr);
-  vkDestroyImage(pEngineCore->devices.logical, this->colorIDStorageImage.image,
-                 nullptr);
-  vkFreeMemory(pEngineCore->devices.logical, this->colorIDStorageImage.memory,
-               nullptr);
+  // vkDestroyImageView(pEngineCore->devices.logical, this->storageImage.view,
+  //                    nullptr);
+  // vkDestroyImage(pEngineCore->devices.logical, this->storageImage.image,
+  //                nullptr);
+  // vkFreeMemory(pEngineCore->devices.logical, this->storageImage.memory,
+  //              nullptr);
+
+  //// -- color id storage image
+  // vkDestroyImageView(pEngineCore->devices.logical,
+  //                    this->colorIDStorageImage.view, nullptr);
+  // vkDestroyImage(pEngineCore->devices.logical,
+  // this->colorIDStorageImage.image,
+  //                nullptr);
+  // vkFreeMemory(pEngineCore->devices.logical,
+  // this->colorIDStorageImage.memory,
+  //              nullptr);
 
   // g node buffer
   this->buffers.g_nodes_buffer.destroy(this->pEngineCore->devices.logical);
@@ -2732,4 +2740,8 @@ void MainRenderer::Destroy_MainRenderer() {
       particles->DestroyParticle();
     }
   }
+
+  /* tools */
+  // object mouse select
+  this->tools.objectMouseSelect.DestroyObjectMouseSelect();
 }

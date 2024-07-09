@@ -71,6 +71,7 @@ public:
     VkImage image;
     VkImageView view;
     VkFormat format;
+    void Destroy(EngineCore* engineCorePtr);
   };
 
   static uint64_t getBufferDeviceAddress(EngineCore *pEngineCore,

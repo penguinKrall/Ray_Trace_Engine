@@ -411,6 +411,8 @@ VkResult CoreDevice::getPhysicalDevice(VkInstance instance) {
 //
 //}
 
+VkDevice CoreDevice::GetLogicalDevice() { return this->devices.logical; }
+
 // -- check device extension support
 bool CoreDevice::checkExtensionSupport(const char *extensionName) const {
   for (const auto &extension : coreExtensions->deviceExtensions.properties) {

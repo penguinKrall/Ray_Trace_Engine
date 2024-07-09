@@ -9,6 +9,7 @@
 #include <Utilities_Renderer.hpp>
 #include <Utilities_UI.hpp>
 #include <glTFModel.hpp>
+#include <ObjectMouseSelect.hpp>
 
 #define VK_GLTF_MATERIAL_IDS
 
@@ -99,6 +100,13 @@ private:
     // particle
     std::vector<gtp::Particle *> particle;
   };
+
+  /* tools */
+  struct Tools {
+    gtp::ObjectMouseSelect objectMouseSelect;
+  };
+
+  Tools tools{};
 
   // -- assets
   Assets assets{};
