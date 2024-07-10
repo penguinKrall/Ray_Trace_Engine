@@ -69,6 +69,20 @@ public:
     int transfer = -1;
   };
 
+  struct ImageData {
+    VkImage image;
+    VkImageView view;
+    VkDeviceMemory memory;
+    VkSampler sampler;
+    std::string name;
+  };
+
+  // -- get working directory
+  static std::string BuildPath(const std::string& fileName);
+
+  // -- create image
+  //static gtp::Utilities_EngCore::ImageData CreateImage(const std::string& fileName);
+
   // -- get queue family indices
   static QueueFamilyIndices
   getQueueFamilyIndices(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
@@ -115,5 +129,9 @@ public:
         uint32_t descriptorCount, VkShaderStageFlags stageFlags,
         const VkSampler *pImmutableSamplers);
   };
+
+  static void FlushCommandBuffer(VkDevice logicalDevice, VkCommandBuffer commandBuffer,
+    VkQueue queue, VkCommandPool pool,
+    bool free);
 };
 } // namespace gtp

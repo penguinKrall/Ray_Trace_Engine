@@ -5,13 +5,16 @@
 #include <CoreSwapchain.hpp>
 #include <CoreWindow.hpp>
 #include <Utilities_CreateObject.hpp>
-#include <iostream>
 #include <stb_image.h>
-#include <stdio.h>
+//#include <LoadingScreen.hpp>
+
 class EngineCore : public CoreDebug,
                    public CoreWindow,
                    public CoreDevice,
                    public CoreSwapchain {
+private:
+  //gtp::LoadingScreen loadingScreen;
+
 public:
   // instance pointer
   EngineCore *pEngineCore = this;
@@ -40,7 +43,7 @@ public:
   // settings that can be changed
   struct BaseSettings {
     // activates validation layers (and message output) when set to true
-    bool validation = false;
+    bool validation = true;
     // set to true if fullscreen mode has been requested via command line
     bool fullscreen = false;
     // set to true if v-sync will be forced for the swapchain
@@ -99,9 +102,9 @@ public:
   // -- recreate sync objects
   void RecreateSyncObjects();
 
-  void CreateLoadingScreenImage(const std::string &fileName);
+  //void CreateLoadingScreenImage(const std::string &fileName);
 
-  void LoadingScreen();
+  //void LoadingScreen();
 
   // -- destroy core
   // destroys core related objects

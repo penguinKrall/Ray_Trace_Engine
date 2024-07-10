@@ -9,16 +9,25 @@ Engine Engine::engine() { return Engine(); }
 VkResult Engine::InitEngine() {
 
   // init core
-  InitCore();
+  this->InitCore();
 
   // init xy pos
   this->InitXYPos();
 
   // init ui
-  InitUI();
+  this->InitUI();
+
+  // -- loading screen
+  this->loadingScreen = gtp::LoadingScreen(this->pEngineCore);
+  this->loadingScreen.Draw(this->UI);
 
   // init renderers
-  InitRenderers();
+  this->InitRenderers();
+
+  glfwSetWindowAttrib(this->camera->window, GLFW_DECORATED, GLFW_TRUE);
+
+  this->camera->framebufferResized = true;
+  this->HandleResize();
 
   return VK_SUCCESS;
 }
@@ -124,7 +133,7 @@ void Engine::RetrieveColorID() {
 
   if (this->pEngineCore->camera->mouseOnWindow) {
     if (this->isLMBPressed) {
-      this->renderers.mainRenderer.RetrieveObjectIDFromImage();
+      this->renderers.mainRenderer.tools.objectMouseSelect.RetrieveObjectID();
       this->isLMBPressed = false;
     }
   }
@@ -203,6 +212,28 @@ void Engine::UpdateRenderer() {
     // this->renderers.mainRenderer.assets.modelData.isUpdated = false;
     //  -- update ui data to updated renderer model data with updated flags
     this->UI.SetModelData(this->renderers.mainRenderer.GetModelData());
+  }
+}
+
+void Engine::HandleResize() {
+
+  if (camera->activeWindow) {
+    if (camera->framebufferResized) {
+      // wait idle
+      vkDeviceWaitIdle(devices.logical);
+      // recreate semaphores, fences
+      RecreateSyncObjects();
+      // recreate swapchain, swapchain images/views
+      RecreateCoreSwapchain();
+      // recreate god knows what
+      renderers.mainRenderer.HandleResize();
+      // recreate ui framebuffers
+      UI.RecreateFramebuffers();
+      // Flaggy McFlaggerson
+      camera->framebufferResized = false;
+      // ret
+      return;
+    }
   }
 }
 
@@ -390,12 +421,12 @@ void Engine::Draw() {
 
     // particle commands
     /*for (int i = 0; i > this->renderers.mainRenderer.assets.particle.size();
-         i++) {
-      if (this->renderers.mainRenderer.assets.particle[i] != nullptr) {
-        computeCommands.push_back(
-            this->renderers.mainRenderer.assets.particle[i]
-                ->RecordComputeCommands(currentFrame));
-      }
+                     i++) {
+            if (this->renderers.mainRenderer.assets.particle[i] != nullptr) {
+                    computeCommands.push_back(
+                                    this->renderers.mainRenderer.assets.particle[i]
+                                                    ->RecordComputeCommands(currentFrame));
+            }
     }*/
 
     // update compute commands to be waited on

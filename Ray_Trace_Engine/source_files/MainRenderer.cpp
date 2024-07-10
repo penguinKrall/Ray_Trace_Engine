@@ -59,7 +59,7 @@ void MainRenderer::Init_MainRenderer(EngineCore *pEngineCore) {
   std::cout << "\nfinished creating storage image" << std::endl;
 
   // create color id image buffer
-  this->CreateColorIDImageBuffer();
+  // this->CreateColorIDImageBuffer();
 
   // create uniform buffer
   this->CreateUniformBuffer();
@@ -744,118 +744,122 @@ void MainRenderer::CreateStorageImages() {
   Utilities_AS::createStorageImage(this->pEngineCore, &this->storageImage,
                                    "mainRenderer_storageImage");
 
-  // color id storage image
-  Utilities_AS::createStorageImage(this->pEngineCore,
-                                   &this->colorIDStorageImage,
-                                   "mainRenderer_colorIDStorageImage");
+  //// color id storage image
+  // Utilities_AS::createStorageImage(this->pEngineCore,
+  //                                  &this->colorIDStorageImage,
+  //                                  "mainRenderer_colorIDStorageImage");
 }
 
-void MainRenderer::CreateColorIDImageBuffer() {
-  // name color image id buffer
-  buffers.colorIDImageBuffer.bufferData.bufferName = "Color_Image_ID_Buffer";
-  buffers.colorIDImageBuffer.bufferData.bufferMemoryName =
-      "Color_Image_ID_BufferMemory";
+// void MainRenderer::CreateColorIDImageBuffer() {
+//   // name color image id buffer
+//   buffers.colorIDImageBuffer.bufferData.bufferName = "Color_Image_ID_Buffer";
+//   buffers.colorIDImageBuffer.bufferData.bufferMemoryName =
+//       "Color_Image_ID_BufferMemory";
+//
+//   // buffer size
+//   VkDeviceSize bufferSize =
+//       pEngineCore->swapchainData.swapchainExtent2D.width *
+//       pEngineCore->swapchainData.swapchainExtent2D.height * 4;
+//
+//   // create color id image buffer
+//   validate_vk_result(pEngineCore->CreateBuffer(
+//       VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+//       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+//           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+//       &buffers.colorIDImageBuffer, bufferSize, nullptr));
+// }
 
-  // buffer size
-  VkDeviceSize bufferSize =
-      pEngineCore->swapchainData.swapchainExtent2D.width *
-      pEngineCore->swapchainData.swapchainExtent2D.height * 4;
-
-  // create color id image buffer
-  validate_vk_result(pEngineCore->CreateBuffer(
-      VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-      &buffers.colorIDImageBuffer, bufferSize, nullptr));
-}
-
-void MainRenderer::RetrieveObjectIDFromImage() {
-
-  if (this->pEngineCore->posX <
-          this->pEngineCore->swapchainData.swapchainExtent2D.width &&
-      this->pEngineCore->posX > 0) {
-    if (this->pEngineCore->posY <
-            this->pEngineCore->swapchainData.swapchainExtent2D.height &&
-        this->pEngineCore->posY > 0) {
-
-      VkCommandBuffer commandBuffer =
-          pEngineCore->objCreate.VKCreateCommandBuffer(
-              VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-
-      // subresource range
-      VkImageSubresourceRange subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0,
-                                                  1, 0, 1};
-
-      // set color ID image layout to transfer src optimal
-      gtp::Utilities_EngCore::setImageLayout(
-          commandBuffer, colorIDStorageImage.image, VK_IMAGE_LAYOUT_GENERAL,
-          VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresourceRange);
-
-      // copy region
-      VkBufferImageCopy region{};
-      region.bufferOffset = 0;
-      region.bufferRowLength = 0;
-      region.bufferImageHeight = 0;
-      region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-      region.imageSubresource.mipLevel = 0;
-      region.imageSubresource.baseArrayLayer = 0;
-      region.imageSubresource.layerCount = 1;
-      region.imageOffset = {0, 0, 0};
-      region.imageExtent = {pEngineCore->swapchainData.swapchainExtent2D.width,
-                            pEngineCore->swapchainData.swapchainExtent2D.height,
-                            1};
-
-      vkCmdCopyImageToBuffer(commandBuffer, colorIDStorageImage.image,
-                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                             this->buffers.colorIDImageBuffer.bufferData.buffer,
-                             1, &region);
-
-      // Map the buffer memory
-      void *data;
-      vkMapMemory(pEngineCore->devices.logical,
-                  this->buffers.colorIDImageBuffer.bufferData.memory, 0,
-                  VK_WHOLE_SIZE, 0, &data);
-
-      // Adjust mouse coordinates if necessary
-      auto adjustedY =
-          static_cast<int>(pEngineCore->swapchainData.swapchainExtent2D.height -
-                           1 - this->pEngineCore->posY);
-
-      // Calculate the index
-      int index = static_cast<int>(
-          (adjustedY * pEngineCore->swapchainData.swapchainExtent2D.width +
-           this->pEngineCore->posX) *
-          4);
-
-      // Retrieve the color at the mouse position
-      uint8_t *pixel = static_cast<uint8_t *>(data) + index;
-      uint8_t red = pixel[0];
-      uint8_t green = pixel[1];
-      uint8_t blue = pixel[2];
-      uint8_t alpha = pixel[3];
-
-      // Unmap the buffer memory
-      vkUnmapMemory(pEngineCore->devices.logical,
-                    this->buffers.colorIDImageBuffer.bufferData.memory);
-
-      // Identify the object using the color
-      float objectID = red;
-
-      // std::cout << "Selected Object ID: " << objectID << std::endl;
-
-      // set color ID image layout to transfer src optimal
-      gtp::Utilities_EngCore::setImageLayout(
-          commandBuffer, colorIDStorageImage.image,
-          VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
-          subresourceRange);
-
-      // end and submit and destroy command buffer
-      pEngineCore->FlushCommandBuffer(commandBuffer,
-                                      pEngineCore->queue.graphics,
-                                      pEngineCore->commandPools.graphics, true);
-    }
-  }
-}
+// void MainRenderer::RetrieveObjectIDFromImage() {
+//
+//   if (this->pEngineCore->posX <
+//           this->pEngineCore->swapchainData.swapchainExtent2D.width &&
+//       this->pEngineCore->posX > 0) {
+//     if (this->pEngineCore->posY <
+//             this->pEngineCore->swapchainData.swapchainExtent2D.height &&
+//         this->pEngineCore->posY > 0) {
+//
+//       VkCommandBuffer commandBuffer =
+//           pEngineCore->objCreate.VKCreateCommandBuffer(
+//               VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+//
+//       // subresource range
+//       VkImageSubresourceRange subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT,
+//       0,
+//                                                   1, 0, 1};
+//
+//       // set color ID image layout to transfer src optimal
+//       gtp::Utilities_EngCore::setImageLayout(
+//           commandBuffer, colorIDStorageImage.image, VK_IMAGE_LAYOUT_GENERAL,
+//           VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresourceRange);
+//
+//       // copy region
+//       VkBufferImageCopy region{};
+//       region.bufferOffset = 0;
+//       region.bufferRowLength = 0;
+//       region.bufferImageHeight = 0;
+//       region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+//       region.imageSubresource.mipLevel = 0;
+//       region.imageSubresource.baseArrayLayer = 0;
+//       region.imageSubresource.layerCount = 1;
+//       region.imageOffset = {0, 0, 0};
+//       region.imageExtent =
+//       {pEngineCore->swapchainData.swapchainExtent2D.width,
+//                             pEngineCore->swapchainData.swapchainExtent2D.height,
+//                             1};
+//
+//       vkCmdCopyImageToBuffer(commandBuffer, colorIDStorageImage.image,
+//                              VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+//                              this->buffers.colorIDImageBuffer.bufferData.buffer,
+//                              1, &region);
+//
+//       // Map the buffer memory
+//       void *data;
+//       vkMapMemory(pEngineCore->devices.logical,
+//                   this->buffers.colorIDImageBuffer.bufferData.memory, 0,
+//                   VK_WHOLE_SIZE, 0, &data);
+//
+//       // Adjust mouse coordinates if necessary
+//       auto adjustedY =
+//           static_cast<int>(pEngineCore->swapchainData.swapchainExtent2D.height
+//           -
+//                            1 - this->pEngineCore->posY);
+//
+//       // Calculate the index
+//       int index = static_cast<int>(
+//           (adjustedY * pEngineCore->swapchainData.swapchainExtent2D.width +
+//            this->pEngineCore->posX) *
+//           4);
+//
+//       // Retrieve the color at the mouse position
+//       uint8_t *pixel = static_cast<uint8_t *>(data) + index;
+//       uint8_t red = pixel[0];
+//       uint8_t green = pixel[1];
+//       uint8_t blue = pixel[2];
+//       uint8_t alpha = pixel[3];
+//
+//       // Unmap the buffer memory
+//       vkUnmapMemory(pEngineCore->devices.logical,
+//                     this->buffers.colorIDImageBuffer.bufferData.memory);
+//
+//       // Identify the object using the color
+//       float objectID = red;
+//
+//       // std::cout << "Selected Object ID: " << objectID << std::endl;
+//
+//       // set color ID image layout to transfer src optimal
+//       gtp::Utilities_EngCore::setImageLayout(
+//           commandBuffer, colorIDStorageImage.image,
+//           VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
+//           subresourceRange);
+//
+//       // end and submit and destroy command buffer
+//       pEngineCore->FlushCommandBuffer(commandBuffer,
+//                                       pEngineCore->queue.graphics,
+//                                       pEngineCore->commandPools.graphics,
+//                                       true);
+//     }
+//   }
+// }
 
 void MainRenderer::CreateUniformBuffer() {
 
@@ -1069,8 +1073,8 @@ void MainRenderer::CreateRayTracingPipeline() {
   // Ray generation group
   {
     shaderStages.push_back(shader.loadShader(
-        projDirectory.string() +
-            "/shaders/compiled/main_renderer_raygen.rgen.spv",
+        gtp::Utilities_EngCore::BuildPath(
+            "shaders/compiled/main_renderer_raygen.rgen.spv"),
         VK_SHADER_STAGE_RAYGEN_BIT_KHR, "main_renderer_raygen"));
     shaderStages.back().pSpecializationInfo = &specializationInfo;
     VkRayTracingShaderGroupCreateInfoKHR shaderGroup{};
@@ -1379,7 +1383,8 @@ void MainRenderer::CreateDescriptorSet() {
   storageImageWrite.descriptorCount = 1;
 
   VkDescriptorImageInfo colorIDStorageImageDescriptor{
-      VK_NULL_HANDLE, colorIDStorageImage.view, VK_IMAGE_LAYOUT_GENERAL};
+      VK_NULL_HANDLE, tools.objectMouseSelect.GetIDImage().view,
+      VK_IMAGE_LAYOUT_GENERAL};
 
   // storage/result image write
   VkWriteDescriptorSet colorIDStorageImageWrite{};
@@ -1722,9 +1727,9 @@ void MainRenderer::RebuildCommandBuffers(int frame, bool showObjectColorID) {
 
   else {
     gtp::Utilities_EngCore::setImageLayout(
-        pEngineCore->commandBuffers.graphics[frame], colorIDStorageImage.image,
-        VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-        subresourceRange);
+        pEngineCore->commandBuffers.graphics[frame],
+        tools.objectMouseSelect.GetIDImage().image, VK_IMAGE_LAYOUT_GENERAL,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresourceRange);
 
     VkImageCopy copyRegion{};
     copyRegion.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
@@ -1736,7 +1741,7 @@ void MainRenderer::RebuildCommandBuffers(int frame, bool showObjectColorID) {
                          1};
 
     vkCmdCopyImage(pEngineCore->commandBuffers.graphics[frame],
-                   colorIDStorageImage.image,
+                   tools.objectMouseSelect.GetIDImage().image,
                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                    pEngineCore->swapchainData.swapchainImages.image[frame],
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
@@ -1750,7 +1755,8 @@ void MainRenderer::RebuildCommandBuffers(int frame, bool showObjectColorID) {
 
     // transition ray tracing output image back to general layout
     gtp::Utilities_EngCore::setImageLayout(
-        pEngineCore->commandBuffers.graphics[frame], colorIDStorageImage.image,
+        pEngineCore->commandBuffers.graphics[frame],
+        tools.objectMouseSelect.GetIDImage().image,
         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
         subresourceRange);
   }
@@ -2379,7 +2385,8 @@ void MainRenderer::UpdateDescriptorSet() {
   storageImageWrite.descriptorCount = 1;
 
   VkDescriptorImageInfo colorIDStorageImageDescriptor{
-      VK_NULL_HANDLE, colorIDStorageImage.view, VK_IMAGE_LAYOUT_GENERAL};
+      VK_NULL_HANDLE, tools.objectMouseSelect.GetIDImage().view,
+      VK_IMAGE_LAYOUT_GENERAL};
 
   // storage/result image write
   VkWriteDescriptorSet colorIDStorageImageWrite{};
@@ -2556,22 +2563,11 @@ void MainRenderer::HandleResize() {
   vkDestroyImage(pEngineCore->devices.logical, storageImage.image, nullptr);
   vkFreeMemory(pEngineCore->devices.logical, storageImage.memory, nullptr);
 
-  // Delete allocated resources
-  vkDestroyImageView(pEngineCore->devices.logical, colorIDStorageImage.view,
-                     nullptr);
-  vkDestroyImage(pEngineCore->devices.logical, colorIDStorageImage.image,
-                 nullptr);
-  vkFreeMemory(pEngineCore->devices.logical, colorIDStorageImage.memory,
-               nullptr);
+  // recreate object id resources
+  this->tools.objectMouseSelect.HandleResize();
 
-  // -- destroy color id image buffer
-  this->buffers.colorIDImageBuffer.destroy(this->pEngineCore->devices.logical);
-
-  // Recreate image
+  // recreate renderer storage image
   this->CreateStorageImages();
-
-  // re create color id image buffer
-  this->CreateColorIDImageBuffer();
 
   // Update descriptor
   this->UpdateDescriptorSet();
@@ -2643,24 +2639,6 @@ void MainRenderer::Destroy_MainRenderer() {
 
   // -- storage images
   this->storageImage.Destroy(this->pEngineCore);
-  this->colorIDStorageImage.Destroy(this->pEngineCore);
-
-  // vkDestroyImageView(pEngineCore->devices.logical, this->storageImage.view,
-  //                    nullptr);
-  // vkDestroyImage(pEngineCore->devices.logical, this->storageImage.image,
-  //                nullptr);
-  // vkFreeMemory(pEngineCore->devices.logical, this->storageImage.memory,
-  //              nullptr);
-
-  //// -- color id storage image
-  // vkDestroyImageView(pEngineCore->devices.logical,
-  //                    this->colorIDStorageImage.view, nullptr);
-  // vkDestroyImage(pEngineCore->devices.logical,
-  // this->colorIDStorageImage.image,
-  //                nullptr);
-  // vkFreeMemory(pEngineCore->devices.logical,
-  // this->colorIDStorageImage.memory,
-  //              nullptr);
 
   // g node buffer
   this->buffers.g_nodes_buffer.destroy(this->pEngineCore->devices.logical);
@@ -2715,7 +2693,7 @@ void MainRenderer::Destroy_MainRenderer() {
   this->buffers.transformBuffer.destroy(this->pEngineCore->devices.logical);
 
   // color id image buffer
-  this->buffers.colorIDImageBuffer.destroy(this->pEngineCore->devices.logical);
+  // this->buffers.colorIDImageBuffer.destroy(this->pEngineCore->devices.logical);
 
   // -- compute class
   for (int i = 0; i < this->gltfCompute.size(); i++) {

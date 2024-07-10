@@ -127,7 +127,7 @@ void CoreUI::CreateFontImage() {
 
   // add font file
   backends.io->Fonts->AddFontFromFileTTF(fontFilename.c_str(),
-                                         16.0f * properties.scale);
+                                         20.0f * properties.scale);
 
   // get texture data as rgba32
   backends.io->Fonts->GetTexDataAsRGBA32(&fontData, &fontImage.texWidth,
@@ -754,6 +754,7 @@ void CoreUI::UpdateBuffers() {
 
   // return if data is NULL
   if (!backends.drawData) {
+    std::cout << "ui update buffers draw data is null" << std::endl;
     return;
   }
 
@@ -1190,8 +1191,8 @@ void CoreUI::DrawUI(const VkCommandBuffer commandBuffer, int currentFrame) {
   };
 
   // get draw data
-  // backends.drawData = ImGui::GetDrawData();
-  // backends.io = &ImGui::GetIO();
+  //backends.drawData = ImGui::GetDrawData();
+  //backends.io = &ImGui::GetIO();
 
   // vertex and index offset
   int32_t vertexOffset = 0;
@@ -1199,6 +1200,12 @@ void CoreUI::DrawUI(const VkCommandBuffer commandBuffer, int currentFrame) {
 
   // return if draw data is NULL
   if ((!backends.drawData) || (backends.drawData->CmdListsCount == 0)) {
+    if (backends.drawData->CmdListsCount == 0) {
+      std::cout << "backends.drawData->CmdListsCount == 0" << std::endl;
+    }
+    if (!backends.drawData) {
+      std::cout << "!backends.drawData" << std::endl;
+    }
     return;
   }
 

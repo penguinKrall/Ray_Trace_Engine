@@ -2,6 +2,7 @@
 
 #include <ComputeVertex.hpp>
 #include <EngineCore.hpp>
+#include <ObjectMouseSelect.hpp>
 #include <Particle.hpp>
 #include <Shader.hpp>
 #include <TextureLoader.hpp>
@@ -9,7 +10,6 @@
 #include <Utilities_Renderer.hpp>
 #include <Utilities_UI.hpp>
 #include <glTFModel.hpp>
-#include <ObjectMouseSelect.hpp>
 
 #define VK_GLTF_MATERIAL_IDS
 
@@ -36,7 +36,6 @@ private:
     gtp::Buffer tlas_scratch{};
     gtp::Buffer tlas_instancesBuffer{};
     gtp::Buffer ubo{};
-    gtp::Buffer colorIDImageBuffer{};
   };
 
   // -- shader binding table data
@@ -52,7 +51,7 @@ private:
   Utilities_AS::StorageImage storageImage{};
 
   // -- storage image
-  Utilities_AS::StorageImage colorIDStorageImage{};
+  // Utilities_AS::StorageImage colorIDStorageImage{};
 
   // -- uniform data
   Utilities_Renderer::UniformData uniformData{};
@@ -101,13 +100,6 @@ private:
     std::vector<gtp::Particle *> particle;
   };
 
-  /* tools */
-  struct Tools {
-    gtp::ObjectMouseSelect objectMouseSelect;
-  };
-
-  Tools tools{};
-
   // -- assets
   Assets assets{};
 
@@ -145,7 +137,7 @@ private:
   void CreateStorageImages();
 
   // -- create color id image buffer
-  void CreateColorIDImageBuffer();
+  // void CreateColorIDImageBuffer();
 
   // -- create uniform buffer
   void CreateUniformBuffer();
@@ -169,6 +161,13 @@ private:
   void CreateGeometryNodesBuffer();
 
 public:
+  /* tools */
+  struct Tools {
+    gtp::ObjectMouseSelect objectMouseSelect;
+  };
+
+  Tools tools{};
+
   // -- constructor
   MainRenderer();
 
@@ -180,7 +179,7 @@ public:
 
   // -- retrieve object id from image
   // -- copy object id image to buffer
-  void RetrieveObjectIDFromImage();
+  // void RetrieveObjectIDFromImage();
 
   // -- update uniform buffer
   void UpdateUniformBuffer(float deltaTime, glm::vec4 lightPosition);

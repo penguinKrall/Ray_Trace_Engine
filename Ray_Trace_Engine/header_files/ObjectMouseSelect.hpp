@@ -49,6 +49,14 @@ public:
   // -- init ctor
   ObjectMouseSelect(EngineCore *engineCorePtr);
 
+  Utilities_AS::StorageImage GetIDImage();
+
+  gtp::Buffer GetIDBuffer();
+
+  void HandleResize();
+
+  void RetrieveObjectID();
+
   // -- destroy
   void DestroyObjectMouseSelect();
 

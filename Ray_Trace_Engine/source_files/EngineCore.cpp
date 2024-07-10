@@ -86,6 +86,19 @@ VkInstance EngineCore::createInstance(bool enableValidation) {
   //--create instance
   validate_vk_result(vkCreateInstance(&instanceCreateInfo, nullptr, &instance));
 
+  uint32_t layerCount;
+  vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+  std::vector<VkLayerProperties> layers(layerCount);
+  vkEnumerateInstanceLayerProperties(&layerCount, layers.data());
+
+  std::cout << "Available Vulkan Layers:" << std::endl;
+  for (const auto &layer : layers) {
+    std::cout << " - " << layer.layerName << std::endl;
+  }
+
+  std::cout << "\nsuccessfully created instance\n" << std::endl;
+
   return instance;
 }
 
@@ -174,7 +187,9 @@ void EngineCore::InitCore() {
   CreateCoreSwapchain();
 
   // loading screen image
-  LoadingScreen();
+  //this->loadingScreen =
+  //    gtp::LoadingScreen(&this->devices.logical, &this->devices.physical);
+  //LoadingScreen();
 }
 
 VkResult EngineCore::CreateBuffer(VkBufferUsageFlags usageFlags,
@@ -321,39 +336,10 @@ void EngineCore::CreateQueues() {
 void EngineCore::FlushCommandBuffer(VkCommandBuffer commandBuffer,
                                     VkQueue queue, VkCommandPool pool,
                                     bool free) {
-  if (commandBuffer == VK_NULL_HANDLE) {
-    return;
-  }
 
-  validate_vk_result(vkEndCommandBuffer(commandBuffer));
+  gtp::Utilities_EngCore::FlushCommandBuffer(this->devices.logical,
+                                             commandBuffer, queue, pool, free);
 
-  VkSubmitInfo submitInfo{};
-  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &commandBuffer;
-
-  // Create fence to ensure that the command buffer has finished executing
-  VkFenceCreateInfo fenceCreateInfo{};
-  fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-  fenceCreateInfo.flags = VK_FLAGS_NONE;
-
-  VkFence fence;
-  validate_vk_result(vkCreateFence(pEngineCore->devices.logical,
-                                   &fenceCreateInfo, nullptr, &fence));
-
-  // Submit to the queue
-  validate_vk_result(vkQueueSubmit(queue, 1, &submitInfo, fence));
-
-  // Wait for the fence to signal that command buffer has finished executing
-  validate_vk_result(vkWaitForFences(pEngineCore->devices.logical, 1, &fence,
-                                     VK_TRUE,
-                                     std::numeric_limits<uint64_t>::max()));
-
-  // destroy fence
-  vkDestroyFence(pEngineCore->devices.logical, fence, nullptr);
-  if (free) {
-    vkFreeCommandBuffers(pEngineCore->devices.logical, pool, 1, &commandBuffer);
-  }
 }
 
 void EngineCore::CreateCoreSwapchain() {
@@ -480,240 +466,240 @@ void EngineCore::RecreateSyncObjects() {
   CreateSyncObjects();
 }
 
-void EngineCore::CreateLoadingScreenImage(const std::string &fileName) {
-
-  int width;
-  int height;
-  int channels;
-  VkDeviceSize imageSize;
-
-  std::string fileLoc =
-      "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/" + fileName;
-  stbi_uc *image =
-      stbi_load(fileLoc.c_str(), &width, &height, &channels, STBI_rgb_alpha);
-
-  if (!image) {
-    throw std::invalid_argument("Failed to load Texture!(" + fileName + ")");
-  }
-
-  imageSize = static_cast<VkDeviceSize>(width) * height * 4;
-
-  gtp::Buffer stagingBuffer;
-
-  stagingBuffer.bufferData.bufferName = "load_screen_image_staging_buffer";
-  stagingBuffer.bufferData.bufferMemoryName =
-      "load_screen_image_staging_bufferMemory";
-
-  validate_vk_result(
-      pEngineCore->CreateBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                &stagingBuffer, imageSize, image));
-
-  VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
-  VkImage srcImage;
-  VkDeviceMemory srcImageMemory;
-
-  VkMemoryRequirements memReqs{};
-
-  VkMemoryAllocateInfo memAllocInfo{};
-  memAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-
-  VkImageCreateInfo imageCreateInfo{};
-  imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-  imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-  imageCreateInfo.format =
-      this->swapchainData.assignedSwapchainImageFormat.format;
-  imageCreateInfo.mipLevels = 1;
-  imageCreateInfo.arrayLayers = 1;
-  imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-  imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-  imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
-  imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  imageCreateInfo.extent = {static_cast<uint32_t>(width),
-                            static_cast<uint32_t>(height), 1};
-  imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-                          VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-                          VK_IMAGE_USAGE_SAMPLED_BIT;
-
-  validate_vk_result(vkCreateImage(pEngineCore->devices.logical,
-                                   &imageCreateInfo, nullptr, &srcImage));
-
-  vkGetImageMemoryRequirements(pEngineCore->devices.logical, srcImage,
-                               &memReqs);
-  memAllocInfo.allocationSize = memReqs.size;
-  memAllocInfo.memoryTypeIndex = pEngineCore->getMemoryType(
-      memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-  if (vkAllocateMemory(pEngineCore->devices.logical, &memAllocInfo, nullptr,
-                       &srcImageMemory) != VK_SUCCESS) {
-    std::cerr << "\nfailed to allocate image memory in EngineCore";
-  }
-  if (vkBindImageMemory(pEngineCore->devices.logical, srcImage, srcImageMemory,
-                        0) != VK_SUCCESS) {
-    std::cerr << "\nfailed to bind image memory in EngineCore";
-  }
-
-  VkImageSubresourceRange subresourceRange{};
-  subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  subresourceRange.baseMipLevel = 0;
-  subresourceRange.levelCount = 1;
-  subresourceRange.baseArrayLayer = 0;
-  subresourceRange.layerCount = 1;
-
-  // create command buffer
-  VkCommandBuffer commandBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(
-      VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-
-  VkBufferImageCopy imageRegion = {};
-  imageRegion.bufferOffset = 0;
-  imageRegion.bufferRowLength = 0;
-  imageRegion.bufferImageHeight = 0;
-  imageRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  imageRegion.imageSubresource.mipLevel = 0;
-  imageRegion.imageSubresource.baseArrayLayer = 0;
-  imageRegion.imageSubresource.layerCount = 1;
-  imageRegion.imageOffset = {
-      0,
-      0,
-      0,
-  };
-  imageRegion.imageExtent = {static_cast<uint32_t>(width),
-                             static_cast<uint32_t>(height), 1};
-
-  gtp::Utilities_EngCore::setImageLayout(
-      commandBuffer, srcImage, VK_IMAGE_LAYOUT_UNDEFINED,
-      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
-
-  // copy buffer to image
-  vkCmdCopyBufferToImage(commandBuffer, stagingBuffer.bufferData.buffer,
-                         srcImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
-                         &imageRegion);
-
-  gtp::Utilities_EngCore::setImageLayout(
-      commandBuffer, srcImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresourceRange);
-
-  for (int i = 0; i < this->swapchainData.swapchainImages.image.size(); i++) {
-
-    gtp::Utilities_EngCore::setImageLayout(
-        commandBuffer, pEngineCore->swapchainData.swapchainImages.image[i],
-        VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        subresourceRange);
-
-    VkImageCopy copyRegion{};
-    copyRegion.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-    copyRegion.srcOffset = {0, 0, 0};
-    copyRegion.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-    copyRegion.dstOffset = {0, 0, 0};
-    copyRegion.extent = {pEngineCore->swapchainData.swapchainExtent2D.width,
-                         pEngineCore->swapchainData.swapchainExtent2D.height,
-                         1};
-
-    vkCmdCopyImage(commandBuffer, srcImage,
-                   VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                   pEngineCore->swapchainData.swapchainImages.image[i],
-                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
-
-    // for (int i = 0; i < this->swapchainData.swapchainImages.image.size();
-    // i++) {
-    gtp::Utilities_EngCore::setImageLayout(
-        commandBuffer, pEngineCore->swapchainData.swapchainImages.image[i],
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
-        subresourceRange);
-    //}
-
-    // for (int i = 0; i < this->swapchainData.swapchainImages.image.size();
-    // i++) {
-    gtp::Utilities_EngCore::setImageLayout(
-        commandBuffer, pEngineCore->swapchainData.swapchainImages.image[i],
-        VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-        subresourceRange);
-    //}
-  }
-
-  // flush one time submit command buffer
-  this->FlushCommandBuffer(commandBuffer, pEngineCore->queue.graphics,
-                           pEngineCore->commandPools.graphics, true);
-
-  // Destroy staging buffers
-  stagingBuffer.destroy(this->devices.logical);
-  vkDestroyImage(this->devices.logical, srcImage, nullptr);
-  vkFreeMemory(this->devices.logical, srcImageMemory, nullptr);
-}
-
-void EngineCore::LoadingScreen() {
-  // -- -- -- -- LOADING SCREEN  -- -- -- -- //
-
-  CreateLoadingScreenImage("gondola_proj/loading_1920x1080.jpg");
-
-  VkImageSubresourceRange subresourceRange{};
-  subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  subresourceRange.baseMipLevel = 0;
-  subresourceRange.levelCount = 1;
-  subresourceRange.baseArrayLayer = 0;
-  subresourceRange.layerCount = 1;
-
-  // VkClearColorValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-  uint32_t imageIndex = 0;
-
-  // wait for draw fences
-  vkWaitForFences(devices.logical, 1, &sync.drawFences[0], VK_TRUE,
-                  std::numeric_limits<uint64_t>::max());
-
-  vkResetFences(devices.logical, 1, &sync.drawFences[0]);
-
-  // acquire next image
-  VkResult acquireImageResult = vkAcquireNextImageKHR(
-      devices.logical, swapchainData.swapchainKHR, UINT64_MAX,
-      sync.presentFinishedSemaphore[0], VK_NULL_HANDLE, &imageIndex);
-
-  // create command buffer
-  VkCommandBuffer commandBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(
-      VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-
-  // end and submit command buffer
-  vkEndCommandBuffer(commandBuffer);
-
-  // pipeline wait stages
-  std::vector<VkPipelineStageFlags> waitStages = {
-      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-
-  std::vector<VkSemaphore> graphicsSemaphores = {
-      sync.presentFinishedSemaphore[0]};
-
-  VkSubmitInfo submitInfo{};
-  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submitInfo.pWaitDstStageMask = waitStages.data();
-  submitInfo.waitSemaphoreCount =
-      static_cast<uint32_t>(graphicsSemaphores.size());
-  submitInfo.pWaitSemaphores = graphicsSemaphores.data();
-  submitInfo.signalSemaphoreCount = 1;
-  submitInfo.pSignalSemaphores = &sync.renderFinishedSemaphore[0];
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &commandBuffer;
-
-  // Submit command buffers to the graphics queue
-  validate_vk_result(
-      vkQueueSubmit(queue.graphics, 1, &submitInfo, sync.drawFences[0]));
-
-  // Prepare present info for swapchain presentation
-  VkPresentInfoKHR presentInfo = {};
-  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-  presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores = &sync.renderFinishedSemaphore[0];
-  submitInfo.signalSemaphoreCount = 1;
-  submitInfo.pSignalSemaphores = &sync.presentFinishedSemaphore[0];
-  presentInfo.swapchainCount = 1;
-  presentInfo.pSwapchains = &swapchainData.swapchainKHR;
-  presentInfo.pImageIndices = &imageIndex;
-
-  // Present the rendered image to the screen
-  VkResult presentImageResult = vkQueuePresentKHR(queue.graphics, &presentInfo);
-
-  // -- -- -- -- END LOADING SCREEN  -- -- -- -- //
-}
+//void EngineCore::CreateLoadingScreenImage(const std::string &fileName) {
+//
+//  int width;
+//  int height;
+//  int channels;
+//  VkDeviceSize imageSize;
+//
+//  std::string fileLoc =
+//      "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/" + fileName;
+//  stbi_uc *image =
+//      stbi_load(fileLoc.c_str(), &width, &height, &channels, STBI_rgb_alpha);
+//
+//  if (!image) {
+//    throw std::invalid_argument("Failed to load Texture!(" + fileName + ")");
+//  }
+//
+//  imageSize = static_cast<VkDeviceSize>(width) * height * 4;
+//
+//  gtp::Buffer stagingBuffer;
+//
+//  stagingBuffer.bufferData.bufferName = "load_screen_image_staging_buffer";
+//  stagingBuffer.bufferData.bufferMemoryName =
+//      "load_screen_image_staging_bufferMemory";
+//
+//  validate_vk_result(
+//      pEngineCore->CreateBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+//                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+//                                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+//                                &stagingBuffer, imageSize, image));
+//
+//  VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+//  VkImage srcImage;
+//  VkDeviceMemory srcImageMemory;
+//
+//  VkMemoryRequirements memReqs{};
+//
+//  VkMemoryAllocateInfo memAllocInfo{};
+//  memAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+//
+//  VkImageCreateInfo imageCreateInfo{};
+//  imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+//  imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+//  imageCreateInfo.format =
+//      this->swapchainData.assignedSwapchainImageFormat.format;
+//  imageCreateInfo.mipLevels = 1;
+//  imageCreateInfo.arrayLayers = 1;
+//  imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+//  imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+//  imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+//  imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+//  imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+//  imageCreateInfo.extent = {static_cast<uint32_t>(width),
+//                            static_cast<uint32_t>(height), 1};
+//  imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+//                          VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+//                          VK_IMAGE_USAGE_SAMPLED_BIT;
+//
+//  validate_vk_result(vkCreateImage(pEngineCore->devices.logical,
+//                                   &imageCreateInfo, nullptr, &srcImage));
+//
+//  vkGetImageMemoryRequirements(pEngineCore->devices.logical, srcImage,
+//                               &memReqs);
+//  memAllocInfo.allocationSize = memReqs.size;
+//  memAllocInfo.memoryTypeIndex = pEngineCore->getMemoryType(
+//      memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+//  if (vkAllocateMemory(pEngineCore->devices.logical, &memAllocInfo, nullptr,
+//                       &srcImageMemory) != VK_SUCCESS) {
+//    std::cerr << "\nfailed to allocate image memory in EngineCore";
+//  }
+//  if (vkBindImageMemory(pEngineCore->devices.logical, srcImage, srcImageMemory,
+//                        0) != VK_SUCCESS) {
+//    std::cerr << "\nfailed to bind image memory in EngineCore";
+//  }
+//
+//  VkImageSubresourceRange subresourceRange{};
+//  subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+//  subresourceRange.baseMipLevel = 0;
+//  subresourceRange.levelCount = 1;
+//  subresourceRange.baseArrayLayer = 0;
+//  subresourceRange.layerCount = 1;
+//
+//  // create command buffer
+//  VkCommandBuffer commandBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(
+//      VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+//
+//  VkBufferImageCopy imageRegion = {};
+//  imageRegion.bufferOffset = 0;
+//  imageRegion.bufferRowLength = 0;
+//  imageRegion.bufferImageHeight = 0;
+//  imageRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+//  imageRegion.imageSubresource.mipLevel = 0;
+//  imageRegion.imageSubresource.baseArrayLayer = 0;
+//  imageRegion.imageSubresource.layerCount = 1;
+//  imageRegion.imageOffset = {
+//      0,
+//      0,
+//      0,
+//  };
+//  imageRegion.imageExtent = {static_cast<uint32_t>(width),
+//                             static_cast<uint32_t>(height), 1};
+//
+//  gtp::Utilities_EngCore::setImageLayout(
+//      commandBuffer, srcImage, VK_IMAGE_LAYOUT_UNDEFINED,
+//      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
+//
+//  // copy buffer to image
+//  vkCmdCopyBufferToImage(commandBuffer, stagingBuffer.bufferData.buffer,
+//                         srcImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
+//                         &imageRegion);
+//
+//  gtp::Utilities_EngCore::setImageLayout(
+//      commandBuffer, srcImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+//      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresourceRange);
+//
+//  for (int i = 0; i < this->swapchainData.swapchainImages.image.size(); i++) {
+//
+//    gtp::Utilities_EngCore::setImageLayout(
+//        commandBuffer, pEngineCore->swapchainData.swapchainImages.image[i],
+//        VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+//        subresourceRange);
+//
+//    VkImageCopy copyRegion{};
+//    copyRegion.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+//    copyRegion.srcOffset = {0, 0, 0};
+//    copyRegion.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+//    copyRegion.dstOffset = {0, 0, 0};
+//    copyRegion.extent = {pEngineCore->swapchainData.swapchainExtent2D.width,
+//                         pEngineCore->swapchainData.swapchainExtent2D.height,
+//                         1};
+//
+//    vkCmdCopyImage(commandBuffer, srcImage,
+//                   VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+//                   pEngineCore->swapchainData.swapchainImages.image[i],
+//                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+//
+//    // for (int i = 0; i < this->swapchainData.swapchainImages.image.size();
+//    // i++) {
+//    gtp::Utilities_EngCore::setImageLayout(
+//        commandBuffer, pEngineCore->swapchainData.swapchainImages.image[i],
+//        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
+//        subresourceRange);
+//    //}
+//
+//    // for (int i = 0; i < this->swapchainData.swapchainImages.image.size();
+//    // i++) {
+//    gtp::Utilities_EngCore::setImageLayout(
+//        commandBuffer, pEngineCore->swapchainData.swapchainImages.image[i],
+//        VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+//        subresourceRange);
+//    //}
+//  }
+//
+//  // flush one time submit command buffer
+//  this->FlushCommandBuffer(commandBuffer, pEngineCore->queue.graphics,
+//                           pEngineCore->commandPools.graphics, true);
+//
+//  // Destroy staging buffers
+//  stagingBuffer.destroy(this->devices.logical);
+//  vkDestroyImage(this->devices.logical, srcImage, nullptr);
+//  vkFreeMemory(this->devices.logical, srcImageMemory, nullptr);
+//}
+//
+//void EngineCore::LoadingScreen() {
+//  // -- -- -- -- LOADING SCREEN  -- -- -- -- //
+//
+//  CreateLoadingScreenImage("gondola_proj/loading_800x600.png");
+//
+//  VkImageSubresourceRange subresourceRange{};
+//  subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+//  subresourceRange.baseMipLevel = 0;
+//  subresourceRange.levelCount = 1;
+//  subresourceRange.baseArrayLayer = 0;
+//  subresourceRange.layerCount = 1;
+//
+//  // VkClearColorValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+//
+//  uint32_t imageIndex = 0;
+//
+//  // wait for draw fences
+//  vkWaitForFences(devices.logical, 1, &sync.drawFences[0], VK_TRUE,
+//                  std::numeric_limits<uint64_t>::max());
+//
+//  vkResetFences(devices.logical, 1, &sync.drawFences[0]);
+//
+//  // acquire next image
+//  VkResult acquireImageResult = vkAcquireNextImageKHR(
+//      devices.logical, swapchainData.swapchainKHR, UINT64_MAX,
+//      sync.presentFinishedSemaphore[0], VK_NULL_HANDLE, &imageIndex);
+//
+//  // create command buffer
+//  VkCommandBuffer commandBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(
+//      VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+//
+//  // end and submit command buffer
+//  vkEndCommandBuffer(commandBuffer);
+//
+//  // pipeline wait stages
+//  std::vector<VkPipelineStageFlags> waitStages = {
+//      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+//
+//  std::vector<VkSemaphore> graphicsSemaphores = {
+//      sync.presentFinishedSemaphore[0]};
+//
+//  VkSubmitInfo submitInfo{};
+//  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+//  submitInfo.pWaitDstStageMask = waitStages.data();
+//  submitInfo.waitSemaphoreCount =
+//      static_cast<uint32_t>(graphicsSemaphores.size());
+//  submitInfo.pWaitSemaphores = graphicsSemaphores.data();
+//  submitInfo.signalSemaphoreCount = 1;
+//  submitInfo.pSignalSemaphores = &sync.renderFinishedSemaphore[0];
+//  submitInfo.commandBufferCount = 1;
+//  submitInfo.pCommandBuffers = &commandBuffer;
+//
+//  // Submit command buffers to the graphics queue
+//  validate_vk_result(
+//      vkQueueSubmit(queue.graphics, 1, &submitInfo, sync.drawFences[0]));
+//
+//  // Prepare present info for swapchain presentation
+//  VkPresentInfoKHR presentInfo = {};
+//  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+//  presentInfo.waitSemaphoreCount = 1;
+//  presentInfo.pWaitSemaphores = &sync.renderFinishedSemaphore[0];
+//  submitInfo.signalSemaphoreCount = 1;
+//  submitInfo.pSignalSemaphores = &sync.presentFinishedSemaphore[0];
+//  presentInfo.swapchainCount = 1;
+//  presentInfo.pSwapchains = &swapchainData.swapchainKHR;
+//  presentInfo.pImageIndices = &imageIndex;
+//
+//  // Present the rendered image to the screen
+//  VkResult presentImageResult = vkQueuePresentKHR(queue.graphics, &presentInfo);
+//
+//  // -- -- -- -- END LOADING SCREEN  -- -- -- -- //
+//}
 
 // -- destroy
 void EngineCore::DestroyCore() {

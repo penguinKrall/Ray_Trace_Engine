@@ -3,6 +3,7 @@
 #include <CoreUI.hpp>
 #include <EngineCore.hpp>
 #include <MainRenderer.hpp>
+#include <LoadingScreen.hpp>
 
 namespace gtp {
 
@@ -26,6 +27,9 @@ private:
   };
 
   Renderers renderers{};
+
+  // Loading Screen
+  gtp::LoadingScreen loadingScreen;
 
   // UI
   CoreUI UI{};
@@ -98,6 +102,9 @@ public:
 
   // -- update renderer with ui data
   void UpdateRenderer();
+
+  // -- handle resize
+  void HandleResize();
 };
 
 } // namespace gtp

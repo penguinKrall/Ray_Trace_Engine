@@ -142,6 +142,7 @@ file(GLOB SOURCES
     shaders/*.glsl
 )
 
+#
 # Organize source files into folders
 source_group("Source Files\\ImGui" FILES ${IMGUI_SOURCES})
 source_group("Source Files\\ImGuiZMO" FILES ${IMGUI_ZMO_SOURCES})
@@ -153,7 +154,7 @@ source_group("Source Files" FILES ${SOURCE_FILES})
 
 # Create executable target
 add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SOURCES} ${GLTF_SOURCES})
-
+ 
 # Link KTX library
 target_link_libraries(${PROJECT_NAME} ktx)
 

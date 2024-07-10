@@ -1,5 +1,14 @@
 #include "Utilities_EngCore.hpp"
 
+//gtp::Utilities_EngCore::ImageData gtp::Utilities_EngCore::CreateImage(const std::string& fileName) {
+//  return gtp::Utilities_EngCore::ImageData();
+//}
+
+std::string gtp::Utilities_EngCore::BuildPath(const std::string &fileName) {
+  std::string path = std::filesystem::current_path().string() +"/"+ fileName;
+  return path;
+}
+
 gtp::Utilities_EngCore::QueueFamilyIndices
 gtp::Utilities_EngCore::getQueueFamilyIndices(VkPhysicalDevice physicalDevice,
                                               VkSurfaceKHR surface) {
@@ -19,7 +28,7 @@ gtp::Utilities_EngCore::getQueueFamilyIndices(VkPhysicalDevice physicalDevice,
   // output properties of each "count"
   // for (int i = 0; i < queueFamilyCount; i++) {
   //	std::cout << "\nCount[" << i << "]\tQueueFlags: " <<
-  //queueFamilyProperties[i].queueFlags << std::endl;
+  // queueFamilyProperties[i].queueFlags << std::endl;
   // }
 
   // count
@@ -277,6 +286,44 @@ void gtp::Utilities_EngCore::setImageLayout(
 uint32_t gtp::Utilities_EngCore::alignedSize(uint32_t value,
                                              uint32_t alignment) {
   return (value + alignment - 1) & ~(alignment - 1);
+}
+
+void gtp::Utilities_EngCore::FlushCommandBuffer(VkDevice logicalDevice,
+                                                VkCommandBuffer commandBuffer,
+                                                VkQueue queue,
+                                                VkCommandPool pool, bool free) {
+  if (commandBuffer == VK_NULL_HANDLE) {
+    return;
+  }
+
+  validate_vk_result(vkEndCommandBuffer(commandBuffer));
+
+  VkSubmitInfo submitInfo{};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &commandBuffer;
+
+  // Create fence to ensure that the command buffer has finished executing
+  VkFenceCreateInfo fenceCreateInfo{};
+  fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fenceCreateInfo.flags = VK_FLAGS_NONE;
+
+  VkFence fence;
+  validate_vk_result(
+      vkCreateFence(logicalDevice, &fenceCreateInfo, nullptr, &fence));
+
+  // Submit to the queue
+  validate_vk_result(vkQueueSubmit(queue, 1, &submitInfo, fence));
+
+  // Wait for the fence to signal that command buffer has finished executing
+  validate_vk_result(vkWaitForFences(logicalDevice, 1, &fence, VK_TRUE,
+                                     std::numeric_limits<uint64_t>::max()));
+
+  // destroy fence
+  vkDestroyFence(logicalDevice, fence, nullptr);
+  if (free) {
+    vkFreeCommandBuffers(logicalDevice, pool, 1, &commandBuffer);
+  }
 }
 
 size_t alignedSize(size_t value, size_t alignment) {
