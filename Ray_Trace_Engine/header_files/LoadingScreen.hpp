@@ -21,7 +21,7 @@ private:
   void CreateLoadingScreenImage(const std::string& fileName);
 
   // -- draw loading screen
-  void DrawLoadingScreen(CoreUI uiPtr);
+  void DrawLoadingScreen(CoreUI* uiPtr);
 
 
 public:
@@ -38,7 +38,7 @@ public:
   LoadingScreen(EngineCore* engineCorePtr);
 
   //draw
-  void Draw(CoreUI uiPtr);
+  void Draw(CoreUI* uiPtr);
 
 };
 } // namespace gtp

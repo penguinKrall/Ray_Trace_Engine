@@ -5,7 +5,8 @@ void gtp::LoadingScreen::InitLoadingScreen(EngineCore *engineCorePtr) {
   this->pEngineCore = engineCorePtr;
 
   // create loading screen image
-  this->CreateLoadingScreenImage("gondola_proj/loading_800x600.png");
+  this->CreateLoadingScreenImage(
+      "assets/textures/loading_screen/gtp_load_hd.png");
 
   // output success to console
   std::cout << "\nsuccessfully created loading screen class" << std::endl;
@@ -179,133 +180,127 @@ void gtp::LoadingScreen::CreateLoadingScreenImage(const std::string &fileName) {
   vkFreeMemory(this->pEngineCore->GetLogicalDevice(), srcImageMemory, nullptr);
 }
 
-void gtp::LoadingScreen::DrawLoadingScreen(CoreUI uiPtr) {
+void gtp::LoadingScreen::DrawLoadingScreen(CoreUI *uiPtr) {
 
-  VkImageSubresourceRange subresourceRange{};
-  subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  subresourceRange.baseMipLevel = 0;
-  subresourceRange.levelCount = 1;
-  subresourceRange.baseArrayLayer = 0;
-  subresourceRange.layerCount = 1;
+  for (int i = 0; i < frame_draws; i++) {
 
-  // VkClearColorValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+    VkImageSubresourceRange subresourceRange{};
+    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subresourceRange.baseMipLevel = 0;
+    subresourceRange.levelCount = 1;
+    subresourceRange.baseArrayLayer = 0;
+    subresourceRange.layerCount = 1;
 
-  uint32_t imageIndex = 0;
+    uint32_t imageIndex = 0;
 
-  // wait for draw fences
-  vkWaitForFences(this->pEngineCore->GetLogicalDevice(), 1,
-                  &this->pEngineCore->sync.drawFences[0], VK_TRUE,
-                  std::numeric_limits<uint64_t>::max());
+    // wait for draw fences
+    vkWaitForFences(this->pEngineCore->GetLogicalDevice(), 1,
+                    &this->pEngineCore->sync.drawFences[i], VK_TRUE,
+                    std::numeric_limits<uint64_t>::max());
 
-  vkResetFences(this->pEngineCore->GetLogicalDevice(), 1,
-                &this->pEngineCore->sync.drawFences[0]);
+    vkResetFences(this->pEngineCore->GetLogicalDevice(), 1,
+                  &this->pEngineCore->sync.drawFences[i]);
 
-  // acquire next image
-  VkResult acquireImageResult = vkAcquireNextImageKHR(
-      this->pEngineCore->GetLogicalDevice(),
-      this->pEngineCore->swapchainData.swapchainKHR, UINT64_MAX,
-      this->pEngineCore->sync.presentFinishedSemaphore[0], VK_NULL_HANDLE,
-      &imageIndex);
+    // acquire next image
+    VkResult acquireImageResult = vkAcquireNextImageKHR(
+        this->pEngineCore->GetLogicalDevice(),
+        this->pEngineCore->swapchainData.swapchainKHR, UINT64_MAX,
+        this->pEngineCore->sync.presentFinishedSemaphore[i], VK_NULL_HANDLE,
+        &imageIndex);
 
-  // create command buffer
-  VkCommandBuffer commandBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(
-      VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+    // create command buffer
+    VkCommandBuffer commandBuffer =
+        pEngineCore->objCreate.VKCreateCommandBuffer(
+            VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-  ImGui_ImplVulkan_NewFrame();
-  ImGui_ImplGlfw_NewFrame();
-  ImGui::NewFrame();
+    // draw uiPtr
+    // update UI input
+    // uiPtr->Input(&uiPtr->modelData);
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
 
-  uiPtr.backends.io = &ImGui::GetIO();
+    uiPtr->backends.io = &ImGui::GetIO();
 
-  // file/menu on top left corner of window
-  ImGui::Begin("topFrameBar", 0,
-    ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBackground |
-    ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove);
+    // Define the text
+    const char *text = "Loading Renderer...";
 
-  ImGui::SetWindowPos(ImVec2(0, 0)); // set position to top left
-  ImGui::SetWindowSize(ImVec2(
-    static_cast<float>(pEngineCore->swapchainData.swapchainExtent2D.width),
-    100)); // set size of top left window
+    // Get the window and text size
+    ImVec2 windowSize = ImGui::GetIO().DisplaySize;
+    ImVec2 textSize = ImGui::CalcTextSize(text);
 
-  // top left window menu bar
-  // file/close
-  if (ImGui::BeginMenuBar()) {
-    if (ImGui::BeginMenu("File", true)) {
+    // Calculate the center position for the text
+    ImVec2 textPos = ImVec2((windowSize.x - textSize.x) / 2.0f,
+                            ((windowSize.y - textSize.y) / 2.0f) + 50.0f);
 
-      if (ImGui::MenuItem("Exit", "Esc")) {
-        glfwSetWindowShouldClose(pEngineCore->windowGLFW, true);
-      }
+    // Set the window flags for a borderless, movable, resizable window
+    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
+    ImGui::Begin("Center Text", NULL,
+                 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                     ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse |
+                     ImGuiWindowFlags_NoScrollbar |
+                     ImGuiWindowFlags_NoScrollWithMouse);
 
-      ImGui::EndMenu(); // End "File" drop-down menu
-    }
+    ImGui::SetCursorPos(
+        textPos);            // Position the cursor to the calculated center
+    ImGui::Text("%s", text); // Render the text
 
-    // Place this line after rendering the menu bar
-    // ImGui::SameLine(ImGui::GetWindowWidth() - ImGui::CalcTextSize("
-    // framerate: 000.000 ms/frame ( 0.0 FPS )  ").x);
+    ImGui::End();
 
-    // Then render your text
-    ImGui::Text("framerate: %.3f ms/frame (%.1f FPS)",
-      1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    ImGui::Render();
 
-    ImGui::EndMenuBar(); // End main menu bar
+    // update uiPtr vertex/index buffers
+    uiPtr->UpdateBuffers();
+
+    // draw ui
+    uiPtr->DrawUI(commandBuffer, i);
+
+    // end and submit command buffer
+    vkEndCommandBuffer(commandBuffer);
+
+    // pipeline wait stages
+    std::vector<VkPipelineStageFlags> waitStages = {
+        VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+
+    std::vector<VkSemaphore> graphicsSemaphores = {
+        this->pEngineCore->sync.presentFinishedSemaphore[i]};
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.pWaitDstStageMask = waitStages.data();
+    submitInfo.waitSemaphoreCount =
+        static_cast<uint32_t>(graphicsSemaphores.size());
+    submitInfo.pWaitSemaphores = graphicsSemaphores.data();
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores =
+        &this->pEngineCore->sync.renderFinishedSemaphore[i];
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+
+    // Submit command buffers to the graphics queue
+    validate_vk_result(vkQueueSubmit(this->pEngineCore->queue.graphics, 1,
+                                     &submitInfo,
+                                     this->pEngineCore->sync.drawFences[i]));
+
+    // Prepare present info for swapchain presentation
+    VkPresentInfoKHR presentInfo = {};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores =
+        &this->pEngineCore->sync.renderFinishedSemaphore[i];
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores =
+        &this->pEngineCore->sync.presentFinishedSemaphore[i];
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = &this->pEngineCore->swapchainData.swapchainKHR;
+    presentInfo.pImageIndices = &imageIndex;
+
+    // Present the rendered image to the screen
+    VkResult presentImageResult =
+        vkQueuePresentKHR(this->pEngineCore->queue.graphics, &presentInfo);
   }
-
-  ImGui::End();
-
-  ImGui::Render();
-
-  uiPtr.backends.drawData = ImGui::GetDrawData();
-
-  // update UI vertex/index buffers
-  uiPtr.UpdateBuffers();
-
-  // draw UI
-  uiPtr.DrawUI(commandBuffer, 0);
-
-  // end and submit command buffer
-  vkEndCommandBuffer(commandBuffer);
-
-  // pipeline wait stages
-  std::vector<VkPipelineStageFlags> waitStages = {
-      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-
-  std::vector<VkSemaphore> graphicsSemaphores = {
-      this->pEngineCore->sync.presentFinishedSemaphore[0]};
-
-  VkSubmitInfo submitInfo{};
-  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submitInfo.pWaitDstStageMask = waitStages.data();
-  submitInfo.waitSemaphoreCount =
-      static_cast<uint32_t>(graphicsSemaphores.size());
-  submitInfo.pWaitSemaphores = graphicsSemaphores.data();
-  submitInfo.signalSemaphoreCount = 1;
-  submitInfo.pSignalSemaphores =
-      &this->pEngineCore->sync.renderFinishedSemaphore[0];
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &commandBuffer;
-
-  // Submit command buffers to the graphics queue
-  validate_vk_result(vkQueueSubmit(this->pEngineCore->queue.graphics, 1,
-                                   &submitInfo,
-                                   this->pEngineCore->sync.drawFences[0]));
-
-  // Prepare present info for swapchain presentation
-  VkPresentInfoKHR presentInfo = {};
-  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-  presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores =
-      &this->pEngineCore->sync.renderFinishedSemaphore[0];
-  submitInfo.signalSemaphoreCount = 1;
-  submitInfo.pSignalSemaphores =
-      &this->pEngineCore->sync.presentFinishedSemaphore[0];
-  presentInfo.swapchainCount = 1;
-  presentInfo.pSwapchains = &this->pEngineCore->swapchainData.swapchainKHR;
-  presentInfo.pImageIndices = &imageIndex;
-
-  // Present the rendered image to the screen
-  VkResult presentImageResult =
-      vkQueuePresentKHR(this->pEngineCore->queue.graphics, &presentInfo);
-
   // -- -- -- -- END LOADING SCREEN  -- -- -- -- //
 }
 
@@ -316,4 +311,4 @@ gtp::LoadingScreen::LoadingScreen(EngineCore *engineCorePtr) {
   this->InitLoadingScreen(engineCorePtr);
 }
 
-void gtp::LoadingScreen::Draw(CoreUI uiPtr) { this->DrawLoadingScreen(uiPtr); }
+void gtp::LoadingScreen::Draw(CoreUI *uiPtr) { this->DrawLoadingScreen(uiPtr); }

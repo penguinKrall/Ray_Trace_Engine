@@ -47,9 +47,8 @@ void CoreUI::InitStyle() {
   imguiStyle.FrameRounding = 3.0f;
   imguiStyle.Colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
   imguiStyle.Colors[ImGuiCol_TextDisabled] = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
-  imguiStyle.Colors[ImGuiCol_WindowBg] =
-      ImVec4(0.0f, 0.0f, 0.0f, style.bgOpacity);
-  imguiStyle.Colors[ImGuiCol_PopupBg] = ImVec4(0.00f, 0.00f, 0.00f, 1.0f);
+  imguiStyle.Colors[ImGuiCol_WindowBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+  imguiStyle.Colors[ImGuiCol_PopupBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.0f);
   imguiStyle.Colors[ImGuiCol_Border] = ImVec4(0.00f, 0.00f, 0.00f, 0.0f);
   imguiStyle.Colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 1.0f);
   imguiStyle.Colors[ImGuiCol_FrameBg] = ImVec4(1.00f, 1.00f, 1.00f, 0.25f);
@@ -1191,8 +1190,8 @@ void CoreUI::DrawUI(const VkCommandBuffer commandBuffer, int currentFrame) {
   };
 
   // get draw data
-  //backends.drawData = ImGui::GetDrawData();
-  //backends.io = &ImGui::GetIO();
+  // backends.drawData = ImGui::GetDrawData();
+  // backends.io = &ImGui::GetIO();
 
   // vertex and index offset
   int32_t vertexOffset = 0;

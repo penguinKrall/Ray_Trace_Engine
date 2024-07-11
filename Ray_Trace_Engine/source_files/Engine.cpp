@@ -17,9 +17,18 @@ VkResult Engine::InitEngine() {
   // init ui
   this->InitUI();
 
+  // poll events
+  glfwPollEvents();
+  this->UpdateDeltaTime();
+  this->userInput();
+
   // -- loading screen
   this->loadingScreen = gtp::LoadingScreen(this->pEngineCore);
-  this->loadingScreen.Draw(this->UI);
+
+  // main loop
+  if (!glfwWindowShouldClose(windowGLFW)) {
+    this->loadingScreen.Draw(&this->UI);
+  }
 
   // init renderers
   this->InitRenderers();
