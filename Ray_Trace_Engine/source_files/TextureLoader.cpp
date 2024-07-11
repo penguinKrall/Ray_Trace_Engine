@@ -1054,27 +1054,27 @@ void TextureLoader::LoadCubemap() {
   std::vector<stbi_uc *> imageData = {
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/smear_sky_ground/px.png", &width, &height,
+          "/assets/textures/cubemaps/gtp_4_cubemap/px.png", &width, &height,
           &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/smear_sky_ground/nx.png", &width, &height,
+          "/assets/textures/cubemaps/gtp_4_cubemap/nx.png", &width, &height,
           &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/smear_sky_ground/py.png", &width, &height,
+          "/assets/textures/cubemaps/gtp_4_cubemap/py.png", &width, &height,
           &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/smear_sky_ground/ny.png", &width, &height,
+          "/assets/textures/cubemaps/gtp_4_cubemap/ny.png", &width, &height,
           &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/smear_sky_ground/pz.png", &width, &height,
+          "/assets/textures/cubemaps/gtp_4_cubemap/pz.png", &width, &height,
           &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/smear_sky_ground/nz.png", &width, &height,
+          "/assets/textures/cubemaps/gtp_4_cubemap/nz.png", &width, &height,
           &imageSize)}};
 
   // Calculate the image size and the layer size.

@@ -141,6 +141,8 @@ void main() {
 
     rayPayload.color = blinnPhong(lightingNormal, lightDir, viewDir, rayPayload.color.rgb, rayPayload.color.rgb, tempSpecColor);
 
+    //rayPayload.color = mix(rayPayload.color, skyColor, 0.05f);
+
     /* SHADOW CASTING */
     float tmin = 0.001;
     float tmax = 10000.0;
