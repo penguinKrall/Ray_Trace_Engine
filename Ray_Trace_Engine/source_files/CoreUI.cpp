@@ -48,30 +48,30 @@ void CoreUI::InitStyle() {
   imguiStyle.Colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
   imguiStyle.Colors[ImGuiCol_TextDisabled] = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
   imguiStyle.Colors[ImGuiCol_WindowBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
-  imguiStyle.Colors[ImGuiCol_PopupBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.0f);
+  imguiStyle.Colors[ImGuiCol_PopupBg] = ImVec4(0.00f, 0.00f, 0.00f, 1.0f);
   imguiStyle.Colors[ImGuiCol_Border] = ImVec4(0.00f, 0.00f, 0.00f, 0.0f);
   imguiStyle.Colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 1.0f);
-  imguiStyle.Colors[ImGuiCol_FrameBg] = ImVec4(1.00f, 1.00f, 1.00f, 0.25f);
+  imguiStyle.Colors[ImGuiCol_FrameBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.25f);
   imguiStyle.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.5f, 0.5f, 0.5f, 0.50f);
-  imguiStyle.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
-  imguiStyle.Colors[ImGuiCol_TitleBg] = ImVec4(1.0f, 1.0f, 1.0f, 0.5f);
+  imguiStyle.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.0f, 0.2f, 0.0f, 1.00f);
+  imguiStyle.Colors[ImGuiCol_TitleBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.5f);
   imguiStyle.Colors[ImGuiCol_TitleBgCollapsed] =
       ImVec4(1.00f, 1.00f, 1.00f, 0.51f);
-  imguiStyle.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.0f, 0.0f, 0.0f, 0.00f);
-  imguiStyle.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.86f, 0.86f, 0.86f, 0.0f);
+  imguiStyle.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+  imguiStyle.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
   imguiStyle.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
-  imguiStyle.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(1.0f, 1.0f, 1.0f, 0.5f);
+  imguiStyle.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
   imguiStyle.Colors[ImGuiCol_ScrollbarGrabHovered] =
       ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
   imguiStyle.Colors[ImGuiCol_ScrollbarGrabActive] =
-      ImVec4(1.0f, 1.0f, 1.0f, 0.5f);
+      ImVec4(0.0f, 0.2f, 0.0f, 1.00f);
   imguiStyle.Colors[ImGuiCol_CheckMark] = ImVec4(1.0f, 1.0f, 1.0f, 1.00f);
-  imguiStyle.Colors[ImGuiCol_SliderGrab] = ImVec4(1.0f, 1.0f, 1.0f, 1.00f);
+  imguiStyle.Colors[ImGuiCol_SliderGrab] = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
   imguiStyle.Colors[ImGuiCol_SliderGrabActive] =
-      ImVec4(1.0f, 1.0f, 1.0f, 1.00f);
-  imguiStyle.Colors[ImGuiCol_Button] = ImVec4(1.00f, 1.00f, 1.00f, 0.40f);
+      ImVec4(0.0f, 0.2f, 0.0f, 1.00f);
+  imguiStyle.Colors[ImGuiCol_Button] = ImVec4(0.00f, 0.00f, 0.00f, 0.40f);
   imguiStyle.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.5f, 0.5f, 0.5f, 0.5f);
-  imguiStyle.Colors[ImGuiCol_ButtonActive] = ImVec4(1.0f, 1.0f, 1.0f, 1.00f);
+  imguiStyle.Colors[ImGuiCol_ButtonActive] = ImVec4(0.0f, 0.2f, 0.0f, 1.00f);
   imguiStyle.Colors[ImGuiCol_Header] = ImVec4(1.00f, 1.00f, 1.00f, 0.5f);
   imguiStyle.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.5f, 0.5f, 0.5f, 0.5f);
   imguiStyle.Colors[ImGuiCol_HeaderActive] = ImVec4(0.5f, 0.5f, 0.5f, 0.5f);

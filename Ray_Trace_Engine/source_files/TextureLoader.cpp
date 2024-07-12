@@ -1054,28 +1054,28 @@ void TextureLoader::LoadCubemap() {
   std::vector<stbi_uc *> imageData = {
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/gtp_4_cubemap/px.png", &width, &height,
-          &imageSize)},
+          "/assets/textures/cubemaps/industrial_sunset_checker_ground/px.png",
+          &width, &height, &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/gtp_4_cubemap/nx.png", &width, &height,
-          &imageSize)},
+          "/assets/textures/cubemaps/industrial_sunset_checker_ground/nx.png",
+          &width, &height, &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/gtp_4_cubemap/py.png", &width, &height,
-          &imageSize)},
+          "/assets/textures/cubemaps/industrial_sunset_checker_ground/py.png",
+          &width, &height, &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/gtp_4_cubemap/ny.png", &width, &height,
-          &imageSize)},
+          "/assets/textures/cubemaps/industrial_sunset_checker_ground/ny.png",
+          &width, &height, &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/gtp_4_cubemap/pz.png", &width, &height,
-          &imageSize)},
+          "/assets/textures/cubemaps/industrial_sunset_checker_ground/pz.png",
+          &width, &height, &imageSize)},
       {this->LoadTextureFile(
 
-          "/assets/textures/cubemaps/gtp_4_cubemap/nz.png", &width, &height,
-          &imageSize)}};
+          "/assets/textures/cubemaps/industrial_sunset_checker_ground/nz.png",
+          &width, &height, &imageSize)}};
 
   // Calculate the image size and the layer size.
   const VkDeviceSize cubemapImageSize = width * height * 4 * 6;

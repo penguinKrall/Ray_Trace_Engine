@@ -7,7 +7,12 @@ namespace gtp {
   // -- class to handle all the loading screen images/buffers/draws
 class LoadingScreen {
 private:
+
+
   /* private variables */
+  
+  //background texture
+  gtp::Utilities_EngCore::ImageData bgTexture{};
   VkRenderPass renderPass;
 
   //core pointer
@@ -20,8 +25,11 @@ private:
   // -- create loading screen image
   void CreateLoadingScreenImage(const std::string& fileName);
 
+  // -- copy loading screen image to swapchain images
+  void CopyToSwapchainImage(VkImageLayout srcLayout, VkImageLayout dstLayout);
+
   // -- draw loading screen
-  void DrawLoadingScreen(CoreUI* uiPtr);
+  void DrawLoadingScreen(CoreUI* uiPtr, std::string loadingMessage);
 
 
 public:
@@ -37,8 +45,12 @@ public:
   //init ctor
   LoadingScreen(EngineCore* engineCorePtr);
 
-  //draw
-  void Draw(CoreUI* uiPtr);
+  //update
+  void UpdateLoadingScreen();
 
+  //draw
+  void Draw(CoreUI* uiPtr, std::string loadingMessage);
+
+  void DestroyLoadingScreen();
 };
 } // namespace gtp

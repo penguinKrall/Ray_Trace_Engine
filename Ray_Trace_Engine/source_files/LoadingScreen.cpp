@@ -13,10 +13,10 @@ void gtp::LoadingScreen::InitLoadingScreen(EngineCore *engineCorePtr) {
 }
 
 void gtp::LoadingScreen::CreateLoadingScreenImage(const std::string &fileName) {
-  int width;
-  int height;
-  int channels;
-  VkDeviceSize imageSize;
+  // int width;
+  // int height;
+  // int channels;
+  // VkDeviceSize imageSize;
 
   // std::string fileLoc =
   //   "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/" + fileName;
@@ -25,14 +25,16 @@ void gtp::LoadingScreen::CreateLoadingScreenImage(const std::string &fileName) {
             << gtp::Utilities_EngCore::BuildPath(fileName).c_str() << std::endl;
 
   stbi_uc *image =
-      stbi_load(gtp::Utilities_EngCore::BuildPath(fileName).c_str(), &width,
-                &height, &channels, STBI_rgb_alpha);
+      stbi_load(gtp::Utilities_EngCore::BuildPath(fileName).c_str(),
+                &this->bgTexture.width, &this->bgTexture.height,
+                &this->bgTexture.channels, STBI_rgb_alpha);
 
   if (!image) {
     throw std::invalid_argument("Failed to load Texture!(" + fileName + ")");
   }
 
-  imageSize = static_cast<VkDeviceSize>(width) * height * 4;
+  this->bgTexture.imageSize = static_cast<VkDeviceSize>(this->bgTexture.width) *
+                              this->bgTexture.height * 4;
 
   gtp::Buffer stagingBuffer;
 
@@ -40,15 +42,15 @@ void gtp::LoadingScreen::CreateLoadingScreenImage(const std::string &fileName) {
   stagingBuffer.bufferData.bufferMemoryName =
       "load_screen_image_staging_bufferMemory";
 
-  validate_vk_result(
-      pEngineCore->CreateBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                &stagingBuffer, imageSize, image));
+  validate_vk_result(pEngineCore->CreateBuffer(
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+      &stagingBuffer, this->bgTexture.imageSize, image));
 
   VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
-  VkImage srcImage;
-  VkDeviceMemory srcImageMemory;
+  // VkImage srcImage;
+  // VkDeviceMemory srcImageMemory;
 
   VkMemoryRequirements memReqs{};
 
@@ -67,26 +69,27 @@ void gtp::LoadingScreen::CreateLoadingScreenImage(const std::string &fileName) {
   imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
   imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  imageCreateInfo.extent = {static_cast<uint32_t>(width),
-                            static_cast<uint32_t>(height), 1};
+  imageCreateInfo.extent = {static_cast<uint32_t>(this->bgTexture.width),
+                            static_cast<uint32_t>(this->bgTexture.height), 1};
   imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT |
                           VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
                           VK_IMAGE_USAGE_SAMPLED_BIT;
 
   validate_vk_result(vkCreateImage(pEngineCore->devices.logical,
-                                   &imageCreateInfo, nullptr, &srcImage));
+                                   &imageCreateInfo, nullptr,
+                                   &this->bgTexture.image));
 
-  vkGetImageMemoryRequirements(pEngineCore->devices.logical, srcImage,
-                               &memReqs);
+  vkGetImageMemoryRequirements(pEngineCore->devices.logical,
+                               this->bgTexture.image, &memReqs);
   memAllocInfo.allocationSize = memReqs.size;
   memAllocInfo.memoryTypeIndex = pEngineCore->getMemoryType(
       memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   if (vkAllocateMemory(pEngineCore->devices.logical, &memAllocInfo, nullptr,
-                       &srcImageMemory) != VK_SUCCESS) {
+                       &this->bgTexture.memory) != VK_SUCCESS) {
     std::cerr << "\nfailed to allocate image memory in EngineCore";
   }
-  if (vkBindImageMemory(pEngineCore->devices.logical, srcImage, srcImageMemory,
-                        0) != VK_SUCCESS) {
+  if (vkBindImageMemory(pEngineCore->devices.logical, this->bgTexture.image,
+                        this->bgTexture.memory, 0) != VK_SUCCESS) {
     std::cerr << "\nfailed to bind image memory in EngineCore";
   }
 
@@ -114,29 +117,110 @@ void gtp::LoadingScreen::CreateLoadingScreenImage(const std::string &fileName) {
       0,
       0,
   };
-  imageRegion.imageExtent = {static_cast<uint32_t>(width),
-                             static_cast<uint32_t>(height), 1};
+  imageRegion.imageExtent = {static_cast<uint32_t>(this->bgTexture.width),
+                             static_cast<uint32_t>(this->bgTexture.height), 1};
 
   gtp::Utilities_EngCore::setImageLayout(
-      commandBuffer, srcImage, VK_IMAGE_LAYOUT_UNDEFINED,
+      commandBuffer, this->bgTexture.image, VK_IMAGE_LAYOUT_UNDEFINED,
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
 
   // copy buffer to image
   vkCmdCopyBufferToImage(commandBuffer, stagingBuffer.bufferData.buffer,
-                         srcImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
-                         &imageRegion);
+                         this->bgTexture.image,
+                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageRegion);
 
-  gtp::Utilities_EngCore::setImageLayout(
-      commandBuffer, srcImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresourceRange);
+  gtp::Utilities_EngCore::setImageLayout(commandBuffer, this->bgTexture.image,
+                                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                         subresourceRange);
+
+  // for (int i = 0;
+  //      i < this->pEngineCore->swapchainData.swapchainImages.image.size();
+  //      i++) {
+  //   gtp::Utilities_EngCore::setImageLayout(
+  //       commandBuffer, pEngineCore->swapchainData.swapchainImages.image[i],
+  //       VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+  //       subresourceRange);
+
+  //  VkImageCopy copyRegion{};
+  //  copyRegion.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+  //  copyRegion.srcOffset = {0, 0, 0};
+  //  copyRegion.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+  //  copyRegion.dstOffset = {0, 0, 0};
+  //  copyRegion.extent = {pEngineCore->swapchainData.swapchainExtent2D.width,
+  //                       pEngineCore->swapchainData.swapchainExtent2D.height,
+  //                       1};
+
+  //  vkCmdCopyImage(commandBuffer, this->bgTexture.image,
+  //                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+  //                 pEngineCore->swapchainData.swapchainImages.image[i],
+  //                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+
+  //  // for (int i = 0; i < this->swapchainData.swapchainImages.image.size();
+  //  // i++) {
+  //  gtp::Utilities_EngCore::setImageLayout(
+  //      commandBuffer, pEngineCore->swapchainData.swapchainImages.image[i],
+  //      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
+  //      subresourceRange);
+  //  //}
+
+  //  // for (int i = 0; i < this->swapchainData.swapchainImages.image.size();
+  //  // i++) {
+  //  gtp::Utilities_EngCore::setImageLayout(
+  //      commandBuffer, pEngineCore->swapchainData.swapchainImages.image[i],
+  //      VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+  //      subresourceRange);
+  //  //}
+  //}
+
+  // flush one time submit command buffer
+  this->pEngineCore->FlushCommandBuffer(
+      commandBuffer, pEngineCore->queue.graphics,
+      pEngineCore->commandPools.graphics, true);
+
+  // copy bg image to swapchain images
+  this->CopyToSwapchainImage(VK_IMAGE_LAYOUT_UNDEFINED,
+                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+  // Destroy staging buffers
+  stagingBuffer.destroy(this->pEngineCore->GetLogicalDevice());
+}
+
+void gtp::LoadingScreen::CopyToSwapchainImage(VkImageLayout srcLayout,
+                                              VkImageLayout dstLayout) {
+  VkImageSubresourceRange subresourceRange{};
+  subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  subresourceRange.baseMipLevel = 0;
+  subresourceRange.levelCount = 1;
+  subresourceRange.baseArrayLayer = 0;
+  subresourceRange.layerCount = 1;
+
+  // create command buffer
+  VkCommandBuffer commandBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(
+      VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+  VkBufferImageCopy imageRegion = {};
+  imageRegion.bufferOffset = 0;
+  imageRegion.bufferRowLength = 0;
+  imageRegion.bufferImageHeight = 0;
+  imageRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  imageRegion.imageSubresource.mipLevel = 0;
+  imageRegion.imageSubresource.baseArrayLayer = 0;
+  imageRegion.imageSubresource.layerCount = 1;
+  imageRegion.imageOffset = {
+      0,
+      0,
+      0,
+  };
+
+  imageRegion.imageExtent = {static_cast<uint32_t>(this->bgTexture.width),
+                             static_cast<uint32_t>(this->bgTexture.height), 1};
 
   for (int i = 0;
        i < this->pEngineCore->swapchainData.swapchainImages.image.size(); i++) {
-
     gtp::Utilities_EngCore::setImageLayout(
         commandBuffer, pEngineCore->swapchainData.swapchainImages.image[i],
-        VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        subresourceRange);
+        srcLayout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
 
     VkImageCopy copyRegion{};
     copyRegion.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
@@ -147,7 +231,7 @@ void gtp::LoadingScreen::CreateLoadingScreenImage(const std::string &fileName) {
                          pEngineCore->swapchainData.swapchainExtent2D.height,
                          1};
 
-    vkCmdCopyImage(commandBuffer, srcImage,
+    vkCmdCopyImage(commandBuffer, this->bgTexture.image,
                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                    pEngineCore->swapchainData.swapchainImages.image[i],
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
@@ -164,8 +248,7 @@ void gtp::LoadingScreen::CreateLoadingScreenImage(const std::string &fileName) {
     // i++) {
     gtp::Utilities_EngCore::setImageLayout(
         commandBuffer, pEngineCore->swapchainData.swapchainImages.image[i],
-        VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-        subresourceRange);
+        VK_IMAGE_LAYOUT_GENERAL, dstLayout, subresourceRange);
     //}
   }
 
@@ -173,17 +256,13 @@ void gtp::LoadingScreen::CreateLoadingScreenImage(const std::string &fileName) {
   this->pEngineCore->FlushCommandBuffer(
       commandBuffer, pEngineCore->queue.graphics,
       pEngineCore->commandPools.graphics, true);
-
-  // Destroy staging buffers
-  stagingBuffer.destroy(this->pEngineCore->GetLogicalDevice());
-  vkDestroyImage(this->pEngineCore->GetLogicalDevice(), srcImage, nullptr);
-  vkFreeMemory(this->pEngineCore->GetLogicalDevice(), srcImageMemory, nullptr);
 }
 
-void gtp::LoadingScreen::DrawLoadingScreen(CoreUI *uiPtr) {
+void gtp::LoadingScreen::DrawLoadingScreen(CoreUI *uiPtr,
+                                           std::string loadingMessage) {
+  this->UpdateLoadingScreen();
 
   for (int i = 0; i < frame_draws; i++) {
-
     VkImageSubresourceRange subresourceRange{};
     subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     subresourceRange.baseMipLevel = 0;
@@ -223,7 +302,7 @@ void gtp::LoadingScreen::DrawLoadingScreen(CoreUI *uiPtr) {
     uiPtr->backends.io = &ImGui::GetIO();
 
     // Define the text
-    const char *text = "Loading Renderer...";
+    const char *text = loadingMessage.c_str();
 
     // Get the window and text size
     ImVec2 windowSize = ImGui::GetIO().DisplaySize;
@@ -243,8 +322,8 @@ void gtp::LoadingScreen::DrawLoadingScreen(CoreUI *uiPtr) {
                      ImGuiWindowFlags_NoScrollWithMouse);
 
     ImGui::SetCursorPos(
-        textPos);            // Position the cursor to the calculated center
-    ImGui::Text("%s", text); // Render the text
+        textPos);             // Position the cursor to the calculated center
+    ImGui::Text("%s", text);  // Render the text
 
     ImGui::End();
 
@@ -311,4 +390,19 @@ gtp::LoadingScreen::LoadingScreen(EngineCore *engineCorePtr) {
   this->InitLoadingScreen(engineCorePtr);
 }
 
-void gtp::LoadingScreen::Draw(CoreUI *uiPtr) { this->DrawLoadingScreen(uiPtr); }
+void gtp::LoadingScreen::UpdateLoadingScreen() {
+  this->CopyToSwapchainImage(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+}
+
+void gtp::LoadingScreen::Draw(CoreUI *uiPtr, std::string loadingMessage) {
+  this->DrawLoadingScreen(uiPtr, loadingMessage);
+}
+
+void gtp::LoadingScreen::DestroyLoadingScreen() {
+  // bg image and memory
+  vkDestroyImage(this->pEngineCore->GetLogicalDevice(), this->bgTexture.image,
+                 nullptr);
+  vkFreeMemory(this->pEngineCore->GetLogicalDevice(), this->bgTexture.memory,
+               nullptr);
+}

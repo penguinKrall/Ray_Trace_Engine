@@ -7,7 +7,6 @@ Engine Engine::engine() { return Engine(); }
 
 // -- init
 VkResult Engine::InitEngine() {
-
   // init core
   this->InitCore();
 
@@ -25,16 +24,22 @@ VkResult Engine::InitEngine() {
   // -- loading screen
   this->loadingScreen = gtp::LoadingScreen(this->pEngineCore);
 
-  // main loop
   if (!glfwWindowShouldClose(windowGLFW)) {
-    this->loadingScreen.Draw(&this->UI);
+    this->loadingScreen.Draw(&this->UI, "Loading Renderer...");
   }
 
   // init renderers
   this->InitRenderers();
 
-  glfwSetWindowAttrib(this->camera->window, GLFW_DECORATED, GLFW_TRUE);
+  if (!glfwWindowShouldClose(windowGLFW)) {
+    this->loadingScreen.Draw(&this->UI, "Successfully Loaded Renderer!");
+  }
 
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  glfwSetWindowAttrib(this->camera->window, GLFW_DECORATED, GLFW_TRUE);
+  ImGuiStyle &imguiStyle = ImGui::GetStyle();
+  imguiStyle.Colors[ImGuiCol_WindowBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.33f);
   this->camera->framebufferResized = true;
   this->HandleResize();
 
@@ -51,10 +56,8 @@ void Engine::InitXYPos() {
 
 // -- Run
 void Engine::Run() {
-
   // main loop
   while (!glfwWindowShouldClose(windowGLFW)) {
-
     // poll events
     glfwPollEvents();
 
@@ -62,7 +65,6 @@ void Engine::Run() {
     this->UpdateDeltaTime();
 
     if (camera->activeWindow) {
-
       // handle input
       this->userInput();
 
@@ -96,9 +98,11 @@ void Engine::Run() {
 // -- terminate
 //@note destroys objects created related to renderers and core
 void Engine::Terminate() {
-
   // wait idle before destroy
   vkDeviceWaitIdle(devices.logical);
+
+  // loading screen
+  this->loadingScreen.DestroyLoadingScreen();
 
   // ui
   UI.DestroyUI();
@@ -139,7 +143,6 @@ void Engine::HandleUI() {
 }
 
 void Engine::RetrieveColorID() {
-
   if (this->pEngineCore->camera->mouseOnWindow) {
     if (this->isLMBPressed) {
       this->renderers.mainRenderer.tools.objectMouseSelect.RetrieveObjectID();
@@ -149,10 +152,8 @@ void Engine::RetrieveColorID() {
 }
 
 void Engine::LoadModel() {
-
   // continue if ui load model is true
   if (this->UI.modelData.loadModel) {
-
     // set main renderer model data to ui model data
     this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
 
@@ -225,7 +226,6 @@ void Engine::UpdateRenderer() {
 }
 
 void Engine::HandleResize() {
-
   if (camera->activeWindow) {
     if (camera->framebufferResized) {
       // wait idle
@@ -247,7 +247,6 @@ void Engine::HandleResize() {
 }
 
 void Engine::userInput() {
-
   // float deltaTime = deltaTime;
 
   glfwGetCursorPos(windowGLFW, &posX, &posY);
@@ -323,7 +322,6 @@ void Engine::InitUI() {
 }
 
 void Engine::BeginGraphicsCommandBuffer(int currentFrame) {
-
   // command buffer begin info
   VkCommandBufferBeginInfo cmdBufInfo{};
   cmdBufInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -334,12 +332,10 @@ void Engine::BeginGraphicsCommandBuffer(int currentFrame) {
 }
 
 void Engine::EndGraphicsCommandBuffer(int currentFrame) {
-
   validate_vk_result(vkEndCommandBuffer(commandBuffers.graphics[currentFrame]));
 }
 
 void Engine::Draw() {
-
   uint32_t imageIndex = 0;
 
   /*--------------------*/
@@ -347,7 +343,6 @@ void Engine::Draw() {
   /*------------------*/
 
   if (camera->activeWindow) {
-
     if (camera->framebufferResized) {
       // wait idle
       vkDeviceWaitIdle(devices.logical);
@@ -373,7 +368,6 @@ void Engine::Draw() {
     if (vkWaitForFences(devices.logical, 1, &sync.computeFences[currentFrame],
                         VK_TRUE,
                         std::numeric_limits<uint64_t>::max()) != VK_SUCCESS) {
-
       throw std::invalid_argument("failed to wait for compute fences");
     }
 
@@ -602,4 +596,4 @@ void Engine::Draw() {
   }
 }
 
-} // namespace gtp
+}  // namespace gtp

@@ -12,8 +12,8 @@ glm::vec3 generateRandomTorusPosition(float outerRadius, float innerRadius) {
   float u = randomFloat(0.0f, 2.0f * glm::pi<float>());
   float v = randomFloat(0.0f, 2.0f * glm::pi<float>());
   float x = (outerRadius + innerRadius * cos(v)) * cos(u);
-  float z = (outerRadius + innerRadius * cos(v)) * sin(u); // swapped y with z
-  float y = innerRadius * sin(v) / 4;                      // swapped z with y
+  float z = (outerRadius + innerRadius * cos(v)) * sin(u);  // swapped y with z
+  float y = innerRadius * sin(v) / 4;                       // swapped z with y
   return glm::vec3(x, y, z);
 }
 
@@ -24,7 +24,6 @@ MainRenderer::MainRenderer(EngineCore *pEngineCore) {
 }
 
 void MainRenderer::Init_MainRenderer(EngineCore *pEngineCore) {
-
   // init core pointer
   this->pEngineCore = pEngineCore;
 
@@ -109,7 +108,6 @@ void MainRenderer::SetupModelDataTransforms(
   // assign transform matrices if passed in on load
   // pre transforms
   if (pTransformMatrices != nullptr) {
-
     transformMatrices.rotate = pTransformMatrices->rotate;
 
     transformMatrices.translate = pTransformMatrices->translate;
@@ -152,7 +150,6 @@ void MainRenderer::LoadModel(
     std::string filename, uint32_t fileLoadingFlags,
     Utilities_Renderer::ModelLoadingFlags modelLoadingFlags,
     Utilities_UI::TransformMatrices *pTransformMatrices) {
-
   // model instance pointer to initialize and add to list
   auto *tempModel = new gtp::Model();
 
@@ -229,7 +226,6 @@ void MainRenderer::LoadParticle(
     std::string filename, uint32_t fileLoadingFlags,
     Utilities_Renderer::ModelLoadingFlags modelLoadingFlags,
     Utilities_UI::TransformMatrices *pTransformMatrices) {
-
   // model index
   auto modelIdx = static_cast<int>(this->assets.models.size());
 
@@ -299,7 +295,6 @@ void MainRenderer::LoadParticle(
   // assign transform matrices if passed in on load
   // pre transforms
   if (pTransformMatrices != nullptr) {
-
     transformMatrices.rotate = pTransformMatrices->rotate;
 
     transformMatrices.translate = pTransformMatrices->translate;
@@ -349,7 +344,6 @@ void MainRenderer::LoadParticle(
 }
 
 void MainRenderer::LoadAssets() {
-
   // cubemap and default textures
   this->assets.cubemap = gtp::TextureLoader(this->pEngineCore);
   this->assets.cubemap.LoadCubemap();
@@ -381,16 +375,17 @@ void MainRenderer::LoadAssets() {
       glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
   animatedTransformMatrices.translate =
-      glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 0.0f, 0.0f));
+      glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 0.0f, 0.0f));
 
   animatedTransformMatrices.scale =
       glm::scale(glm::mat4(1.0f), glm::vec3(0.05f));
 
-  this->LoadModel("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/"
-                  "assets/models/Fox2/Fox2.gltf",
-                  gtp::FileLoadingFlags::None,
-                  Utilities_Renderer::ModelLoadingFlags::Animated,
-                  &animatedTransformMatrices);
+  this->LoadModel(
+      "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/"
+      "assets/models/Fox2/Fox2.gltf",
+      gtp::FileLoadingFlags::None,
+      Utilities_Renderer::ModelLoadingFlags::Animated,
+      &animatedTransformMatrices);
 
   // -- load scene
   this->LoadModel(
@@ -406,9 +401,9 @@ void MainRenderer::LoadAssets() {
       gtp::FileLoadingFlags::None,
       Utilities_Renderer::ModelLoadingFlags::SemiTransparent, nullptr);
 
-  // -- load particle
-  this->LoadParticle("", gtp::FileLoadingFlags::None,
-                     Utilities_Renderer::ModelLoadingFlags::None, nullptr);
+  //// -- load particle
+  // this->LoadParticle("", gtp::FileLoadingFlags::None,
+  //                    Utilities_Renderer::ModelLoadingFlags::None, nullptr);
 
   for (int i = 0; i < this->assets.modelData.animatedModelIndex.size(); i++) {
     std::cout << "\nanimated model index[" << i
@@ -420,7 +415,6 @@ void MainRenderer::LoadAssets() {
 }
 
 void MainRenderer::LoadGltfCompute(gtp::Model *pModel) {
-
   ComputeVertex *computeVtx = nullptr;
 
   if (!pModel->animations.empty()) {
@@ -431,7 +425,6 @@ void MainRenderer::LoadGltfCompute(gtp::Model *pModel) {
 }
 
 void MainRenderer::CreateBLAS(gtp::Model *pModel) {
-
   // new blas instance
   Utilities_AS::BLASData *tempBLAS = new Utilities_AS::BLASData();
 
@@ -449,7 +442,6 @@ void MainRenderer::CreateBLAS(gtp::Model *pModel) {
 }
 
 void MainRenderer::CreateTLAS() {
-
   // blas instances buffer size decl.
   VkDeviceSize blasInstancesBufSize = 0;
 
@@ -461,10 +453,8 @@ void MainRenderer::CreateTLAS() {
 
   // if blas instances 'buffer' contains at least one element
   if (blasInstances.size() != 0) {
-
     // iterate through the models list
     for (int i = 0; i < this->assets.models.size(); i++) {
-
       // handle the instances for particles if the model was loaded for use as a
       // particle
       if (i > 0 && this->assets.models[i]->isParticle) {
@@ -473,7 +463,6 @@ void MainRenderer::CreateTLAS() {
 
       // otherwise handle each instance
       else {
-
         /* transform matrices */
         // rotation matrix
         glm::mat4 rotationMatrix =
@@ -497,7 +486,7 @@ void MainRenderer::CreateTLAS() {
         for (int col = 0; col < 4; ++col) {
           for (int row = 0; row < 3; ++row) {
             vkTransformMatrix.matrix[row][col] =
-                transformMatrix[col][row]; // Vulkan expects column-major order
+                transformMatrix[col][row];  // Vulkan expects column-major order
           }
         }
 
@@ -527,7 +516,6 @@ void MainRenderer::CreateTLAS() {
 
   // if blas instances 'buffer' has any elements
   if (blasInstances.size() != 0) {
-
     // size of instance struct * number of instances in the 'buffer'
     blasInstancesBufSize = sizeof(VkAccelerationStructureInstanceKHR) *
                            static_cast<uint32_t>(blasInstances.size());
@@ -692,7 +680,6 @@ void MainRenderer::CreateTLAS() {
 
 void MainRenderer::InitializeParticleBLASInstances(int particleIdx) {
   for (int i = 0; i < PARTICLE_COUNT; i++) {
-
     VkAccelerationStructureInstanceKHR particleInstance;
 
     glm::mat4 rotationMatrix =
@@ -718,7 +705,7 @@ void MainRenderer::InitializeParticleBLASInstances(int particleIdx) {
     for (int col = 0; col < 4; ++col) {
       for (int row = 0; row < 3; ++row) {
         vkTransformMatrix.matrix[row][col] =
-            transformMatrix[col][row]; // Vulkan expects column-major order
+            transformMatrix[col][row];  // Vulkan expects column-major order
       }
     }
 
@@ -739,7 +726,6 @@ void MainRenderer::InitializeParticleBLASInstances(int particleIdx) {
 }
 
 void MainRenderer::CreateStorageImages() {
-
   // color storage image
   Utilities_AS::createStorageImage(this->pEngineCore, &this->storageImage,
                                    "mainRenderer_storageImage");
@@ -862,7 +848,6 @@ void MainRenderer::CreateStorageImages() {
 // }
 
 void MainRenderer::CreateUniformBuffer() {
-
   buffers.ubo.bufferData.bufferName = "UBOBuffer";
   buffers.ubo.bufferData.bufferMemoryName = "UBOBufferMemory";
 
@@ -910,7 +895,6 @@ void MainRenderer::UpdateUniformBuffer(float deltaTime,
 }
 
 void MainRenderer::CreateRayTracingPipeline() {
-
   // image count
   uint32_t imageCount{0};
 
@@ -1290,7 +1274,6 @@ void MainRenderer::CreateShaderBindingTable() {
 }
 
 void MainRenderer::CreateDescriptorSet() {
-
   // image count
   uint32_t imageCount{0};
 
@@ -1524,7 +1507,6 @@ void MainRenderer::CreateDescriptorSet() {
 }
 
 void MainRenderer::SetupBufferRegionAddresses() {
-
   // setup buffer regions pointing to shaders in shader binding table
   const uint32_t handleSizeAligned = gtp::Utilities_EngCore::alignedSize(
       pEngineCore->deviceProperties.rayTracingPipelineKHR.shaderGroupHandleSize,
@@ -1563,7 +1545,6 @@ void MainRenderer::SetupBufferRegionAddresses() {
 }
 
 void MainRenderer::BuildCommandBuffers() {
-
   // if (resized)
   //{
   //	handleResize();
@@ -1576,7 +1557,6 @@ void MainRenderer::BuildCommandBuffers() {
                                               0, 1};
 
   for (int32_t i = 0; i < pEngineCore->commandBuffers.graphics.size(); ++i) {
-
     // std::cout << " command buffers [" << i << "]" << std::endl;
 
     if (vkBeginCommandBuffer(pEngineCore->commandBuffers.graphics[i],
@@ -1654,7 +1634,6 @@ void MainRenderer::BuildCommandBuffers() {
 }
 
 void MainRenderer::RebuildCommandBuffers(int frame, bool showObjectColorID) {
-
   // subresource range
   VkImageSubresourceRange subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1,
                                               0, 1};
@@ -1691,7 +1670,6 @@ void MainRenderer::RebuildCommandBuffers(int frame, bool showObjectColorID) {
   // prepare ray tracing output image as transfer source
 
   if (!showObjectColorID) {
-
     gtp::Utilities_EngCore::setImageLayout(
         pEngineCore->commandBuffers.graphics[frame], storageImage.image,
         VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
@@ -1763,70 +1741,66 @@ void MainRenderer::RebuildCommandBuffers(int frame, bool showObjectColorID) {
 }
 
 void MainRenderer::UpdateBLAS() {
-  // Build
-  // via a one-time command buffer submission
-  // std::cout << "update blas test 1" << std::endl;
-
+  // begin one time submit command buffer
   VkCommandBuffer commandBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(
       VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-  // handle animated blas
-  for (int i = 0; i < this->assets.models.size(); i++) {
 
+  /* animation bottom level acceleration structures */
+  // iterate through models
+  for (int i = 0; i < this->assets.models.size(); i++) {
+    // check if there are animated models
     if (!this->assets.modelData.animatedModelIndex.empty()) {
+      // check if model is animated
       if (this->assets.modelData.animatedModelIndex[i] == 1) {
         // verify current model is being animated
         if (this->assets.modelData.isAnimated[i]) {
-          // std::cout << "update blas test 2[" << i << "]" << std::endl;
-          // std::cout << "test" << std::endl;
-          //  build BLAS
+          // build bottom level acceleration structure for model
           pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
               commandBuffer, 1,
               &this->bottomLevelAccelerationStructures[i]
                    ->accelerationStructureBuildGeometryInfo,
               this->bottomLevelAccelerationStructures[i]
                   ->pBuildRangeInfos.data());
-
+          // flag that the top level acceleration structure needs to be update
           updateTLAS = true;
         }
       }
     }
   }
 
-  // handle non animated blas
+  /* non animated models */
+  // iterate through model data flag array
   for (int i = 0; i < this->assets.modelData.updateBLAS.size(); i++) {
-    // std::cout << "update blas test 3[" << i << "]" << std::endl;
+    // check if model requires bottom level acceleration structure update and is
+    // not an animated model
     if (this->assets.modelData.updateBLAS[i] == 1 &&
         this->assets.modelData.animatedModelIndex[i] != 1) {
-      // build BLAS
+      // build bottom level acceleration structure for model
       pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
           commandBuffer, 1,
           &this->bottomLevelAccelerationStructures[i]
                ->accelerationStructureBuildGeometryInfo,
           this->bottomLevelAccelerationStructures[i]->pBuildRangeInfos.data());
-      // this->assets.modelData.updateBLAS[i] = false;
+      // flag top level acceleration structure requires update
       updateTLAS = true;
     }
   }
 
-  // std::cout << "update blas test 4" << std::endl;
-
-  // end and submit and destroy command buffer
+  // end, submit, and destroy one time submit command buffer
   pEngineCore->FlushCommandBuffer(commandBuffer, pEngineCore->queue.graphics,
                                   pEngineCore->commandPools.graphics, true);
-
-  // std::cout << "update blas test 5" << std::endl;
-
-  // std::cout << "this->BLAS.deviceAddress" << this->BLAS.deviceAddress <<
-  // std::endl;
 }
 
 void MainRenderer::UpdateTLAS() {
+  // check renderer has been flagged to update top level acceleration structure
   if (this->updateTLAS) {
-    // initialize instances array
+    // check that there are currently models with bottom level acceleration
+    // structures
     if (blasInstances.size() != 0) {
+      // iterate through modelData update blas flag array
       for (int i = 0; i < this->assets.modelData.updateBLAS.size(); i++) {
         if (this->assets.modelData.updateBLAS[i]) {
-
+          // update translation matrices
           glm::mat4 rotationMatrix =
               this->assets.modelData.transformMatrices[i].rotate;
           glm::mat4 translationMatrix =
@@ -1845,12 +1819,11 @@ void MainRenderer::UpdateTLAS() {
             for (int row = 0; row < 3; ++row) {
               vkTransformMatrix.matrix[row][col] =
                   transformMatrix[col]
-                                 [row]; // Vulkan expects column-major order
+                                 [row];  // Vulkan expects column-major order
             }
           }
 
-          // this->blasInstances[i]// Assign this VkTransformMatrixKHR to your
-          // instance
+          // update bottom level acceleration structure instance
           blasInstances[i].transform = vkTransformMatrix;
           blasInstances[i].instanceCustomIndex = i;
           blasInstances[i].mask = 0xFF;
@@ -1863,7 +1836,6 @@ void MainRenderer::UpdateTLAS() {
     }
 
     if (blasInstances.size() != 0) {
-
       // -- update instances buffer
       buffers.tlas_instancesBuffer.copyTo(
           blasInstances.data(),
@@ -2025,7 +1997,6 @@ void MainRenderer::UpdateTLAS() {
 // }
 
 void MainRenderer::CreateGeometryNodesBuffer() {
-
   buffers.g_nodes_buffer.bufferData.bufferName = "g_nodes_buffer";
   buffers.g_nodes_buffer.bufferData.bufferMemoryName = "g_nodes_bufferMemory";
 
@@ -2083,7 +2054,6 @@ void MainRenderer::CreateGeometryNodesBuffer() {
 }
 
 void MainRenderer::UpdateGeometryNodesBuffer(gtp::Model *pModel) {
-
   std::cout << " updating geometry nodes buffer" << std::endl;
 
   std::cout << pModel->modelName << std::endl;
@@ -2129,7 +2099,6 @@ void MainRenderer::UpdateGeometryNodesBuffer(gtp::Model *pModel) {
 }
 
 void MainRenderer::DeleteModel() {
-
   // model idx
   int modelIdx = this->assets.modelData.modelIndex;
 
@@ -2166,7 +2135,6 @@ void MainRenderer::DeleteModel() {
 
   // update bottom level acceleration structures
   for (int i = 0; i < this->bottomLevelAccelerationStructures.size(); i++) {
-
     // accel. structure
     pEngineCore->coreExtensions->vkDestroyAccelerationStructureKHR(
         pEngineCore->devices.logical,
@@ -2340,7 +2308,6 @@ void MainRenderer::DeleteModel() {
 }
 
 void MainRenderer::UpdateDescriptorSet() {
-
   // image count
   uint32_t imageCount{0};
 
@@ -2542,7 +2509,6 @@ void MainRenderer::UpdateAnimations(float deltaTime) {
 
 std::vector<VkCommandBuffer> MainRenderer::RecordParticleComputeCommands(
     int currentFrame, std::vector<VkCommandBuffer> computeCommandBuffer) {
-
   auto &tempCmdBuf = computeCommandBuffer;
 
   // particle commands
@@ -2557,7 +2523,6 @@ std::vector<VkCommandBuffer> MainRenderer::RecordParticleComputeCommands(
 }
 
 void MainRenderer::HandleResize() {
-
   // Delete allocated resources
   vkDestroyImageView(pEngineCore->devices.logical, storageImage.view, nullptr);
   vkDestroyImage(pEngineCore->devices.logical, storageImage.image, nullptr);
@@ -2607,7 +2572,6 @@ void MainRenderer::SetModelData(Utilities_UI::ModelData *pModelData) {
 void MainRenderer::Destroy() { this->Destroy_MainRenderer(); }
 
 void MainRenderer::Destroy_MainRenderer() {
-
   // -- descriptor pool
   vkDestroyDescriptorPool(pEngineCore->devices.logical,
                           this->pipelineData.descriptorPool, nullptr);
@@ -2648,7 +2612,6 @@ void MainRenderer::Destroy_MainRenderer() {
 
   // -- bottom level acceleration structure & related buffers -- //
   for (int i = 0; i < this->bottomLevelAccelerationStructures.size(); i++) {
-
     // accel. structure
     pEngineCore->coreExtensions->vkDestroyAccelerationStructureKHR(
         pEngineCore->devices.logical,
