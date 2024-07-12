@@ -1107,7 +1107,6 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
         this->modelData.translateUpdated = false;
         this->modelData.scaleUpdated = false;
         this->modelData.isUpdated = true;
-        this->modelData.updateBLAS.resize(pModelData->modelName.size());
         this->modelData.updateBLAS[pModelData->modelIndex] = true;
         for (int i = 0; i < this->modelData.updateBLAS.size(); i++) {
           std::cout << "model[" << i

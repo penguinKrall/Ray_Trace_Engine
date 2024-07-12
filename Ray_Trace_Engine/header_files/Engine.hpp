@@ -4,6 +4,7 @@
 #include <EngineCore.hpp>
 #include <MainRenderer.hpp>
 #include <LoadingScreen.hpp>
+#include <DefaultRenderer.hpp>
 
 namespace gtp {
 
@@ -24,6 +25,7 @@ private:
   // -- renderers
   struct Renderers {
     MainRenderer mainRenderer;
+    DefaultRenderer* defaultRenderer = nullptr;
   };
 
   Renderers renderers{};

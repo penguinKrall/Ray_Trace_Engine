@@ -179,6 +179,9 @@ void MainRenderer::LoadModel(
   // add animated toggle to list
   this->assets.modelData.isAnimated.push_back(false);
 
+  // push back update blas
+  this->assets.modelData.updateBLAS.push_back(false);
+
   // add active animation and animation name to their lists.
   // assign 0 and "none" if model is not animated
   std::vector<std::string> tempNames;
@@ -255,6 +258,9 @@ void MainRenderer::LoadParticle(
 
   // add animated toggle to list
   this->assets.modelData.isAnimated.push_back(false);
+
+  // add update blas element to its list
+  this->assets.modelData.updateBLAS.push_back(false);
 
   // add active animation and animation name to their lists.
   // assign 0 and "none" if model is not animated
@@ -1753,7 +1759,8 @@ void MainRenderer::UpdateBLAS() {
       // check if model is animated
       if (this->assets.modelData.animatedModelIndex[i] == 1) {
         // verify current model is being animated
-        if (this->assets.modelData.isAnimated[i]) {
+        if (this->assets.modelData.isAnimated[i] ||
+            this->assets.modelData.updateBLAS[i]) {
           // build bottom level acceleration structure for model
           pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
               commandBuffer, 1,
@@ -1773,7 +1780,7 @@ void MainRenderer::UpdateBLAS() {
   for (int i = 0; i < this->assets.modelData.updateBLAS.size(); i++) {
     // check if model requires bottom level acceleration structure update and is
     // not an animated model
-    if (this->assets.modelData.updateBLAS[i] == 1 &&
+    if (this->assets.modelData.updateBLAS[i] &&
         this->assets.modelData.animatedModelIndex[i] != 1) {
       // build bottom level acceleration structure for model
       pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(

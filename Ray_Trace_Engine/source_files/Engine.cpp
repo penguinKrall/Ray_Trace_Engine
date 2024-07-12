@@ -21,9 +21,10 @@ VkResult Engine::InitEngine() {
   this->UpdateDeltaTime();
   this->userInput();
 
-  // -- loading screen
+  // initialize loading screen
   this->loadingScreen = gtp::LoadingScreen(this->pEngineCore);
 
+  // draw loading screen
   if (!glfwWindowShouldClose(windowGLFW)) {
     this->loadingScreen.Draw(&this->UI, "Loading Renderer...");
   }
@@ -31,15 +32,23 @@ VkResult Engine::InitEngine() {
   // init renderers
   this->InitRenderers();
 
+  // update loading screen
   if (!glfwWindowShouldClose(windowGLFW)) {
     this->loadingScreen.Draw(&this->UI, "Successfully Loaded Renderer!");
   }
 
+  // pause for a sec after everything loads to show success message idk
+  // mostly a test?
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
+  // set window attributes for renderer
   glfwSetWindowAttrib(this->camera->window, GLFW_DECORATED, GLFW_TRUE);
+
+  // set imgui attributes for renderer
   ImGuiStyle &imguiStyle = ImGui::GetStyle();
   imguiStyle.Colors[ImGuiCol_WindowBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.33f);
+
+  // resize window
   this->camera->framebufferResized = true;
   this->HandleResize();
 
@@ -109,6 +118,7 @@ void Engine::Terminate() {
 
   // renderers
   // MainRenderer
+  this->renderers.defaultRenderer->Destroy();
   this->renderers.mainRenderer.Destroy();
 
   // core
@@ -309,8 +319,24 @@ void Engine::InitRenderers() {
   std::cout << "\ninitializing MainRenderer "
                "class\n'''''''''''''''''''''''''''''''''''''''''''''''\n"
             << std::endl;
+
+  // output to loading screen
+  this->loadingScreen.Draw(&this->UI, "Loading Main 'Renderer'");
+
   this->renderers.mainRenderer = MainRenderer(this->pEngineCore);
   std::cout << "\nfinished initializing MainRenderer "
+               "class\n'''''''''''''''''''''''''''''''''''''''''''''''\n"
+            << std::endl;
+
+  std::cout << "\ninitializing RenderBase "
+               "class\n'''''''''''''''''''''''''''''''''''''''''''''''\n"
+            << std::endl;
+
+  // outtput to loading screen
+  this->loadingScreen.Draw(&this->UI, "Loading Default Renderer");
+
+  this->renderers.defaultRenderer = new DefaultRenderer(this->pEngineCore);
+  std::cout << "\nfinished initializing Default Renderer "
                "class\n'''''''''''''''''''''''''''''''''''''''''''''''\n"
             << std::endl;
 }

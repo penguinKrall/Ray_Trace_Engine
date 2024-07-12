@@ -113,6 +113,8 @@
       <Filter>Source Files\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="source_files\LoadingScreen.cpp" />
+    <ClCompile Include="source_files\RenderBase.cpp" />
+    <ClCompile Include="source_files\DefaultRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\AccelerationStructures.hpp">
@@ -200,6 +202,8 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="header_files\LoadingScreen.hpp" />
+    <ClInclude Include="header_files\RenderBase.hpp" />
+    <ClInclude Include="header_files\DefaultRenderer.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\CMakeLists.txt" />
