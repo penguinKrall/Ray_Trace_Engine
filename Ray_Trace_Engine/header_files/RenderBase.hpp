@@ -79,6 +79,7 @@ class RenderBase {
     std::vector<gtp::Particle*> particle;
 
     void LoadDefaultAssets(EngineCore* engineCorePtr);
+    void DestroyDefaultAssets(EngineCore* engineCorePtr);
   };
 
   Assets assets{};

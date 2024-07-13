@@ -27,6 +27,8 @@ void gtp::RenderBase::DestroyRenderBase() {
   this->tools.shader->DestroyShader();
   // -- object mouse select
   this->tools.objectMouseSelect->DestroyObjectMouseSelect();
+  // -- assets
+  this->assets.DestroyDefaultAssets(this->pEngineCore);
 }
 
 void gtp::RenderBase::Tools::InitializeTools(EngineCore* engineCorePtr) {
@@ -51,17 +53,17 @@ void gtp::RenderBase::Assets::LoadDefaultAssets(EngineCore* engineCorePtr) {
       gtp::FileLoadingFlags::PreTransformVertices |
       gtp::FileLoadingFlags::PreMultiplyVertexColors;
 
-  // -- load animation
-  Utilities_UI::TransformMatrices animatedTransformMatrices{};
-
-  animatedTransformMatrices.rotate = glm::rotate(
-      glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-  animatedTransformMatrices.translate =
-      glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 0.0f, 0.0f));
-
-  animatedTransformMatrices.scale =
-      glm::scale(glm::mat4(1.0f), glm::vec3(0.05f));
+  //// -- load animation
+  // Utilities_UI::TransformMatrices animatedTransformMatrices{};
+  //
+  // animatedTransformMatrices.rotate = glm::rotate(
+  //     glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+  //
+  // animatedTransformMatrices.translate =
+  //     glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 0.0f, 0.0f));
+  //
+  // animatedTransformMatrices.scale =
+  //     glm::scale(glm::mat4(1.0f), glm::vec3(0.05f));
 
   // this->LoadModel(
   //   "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/"
@@ -94,4 +96,10 @@ void gtp::RenderBase::Assets::LoadDefaultAssets(EngineCore* engineCorePtr) {
   }
   std::cout << "this->modelData.animatedModelIndex.size(): "
             << this->modelData.animatedModelIndex.size() << std::endl;
+}
+
+void gtp::RenderBase::Assets::DestroyDefaultAssets(EngineCore* engineCorePtr) {
+  for (auto& defaultTex : this->defaultTextures) {
+    defaultTex.DestroyTextureLoader();
+  }
 }
