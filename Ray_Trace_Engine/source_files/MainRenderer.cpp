@@ -352,7 +352,9 @@ void MainRenderer::LoadParticle(
 void MainRenderer::LoadAssets() {
   // cubemap and default textures
   this->assets.cubemap = gtp::TextureLoader(this->pEngineCore);
-  this->assets.cubemap.LoadCubemap();
+
+  this->assets.cubemap.LoadCubemap(
+      "/assets/textures/cubemaps/industrial_sunset_checker_ground");
 
   // -- load glass texture just because why not load a ktx
   this->assets.coloredGlassTexture = gtp::TextureLoader(this->pEngineCore);

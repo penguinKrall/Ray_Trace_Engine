@@ -65,8 +65,7 @@ public:
 stbi_uc* LoadTextureFile(const std::string& fileName, int* width, int* height, VkDeviceSize* imageSize);
 
 // -- load cube map
-void LoadCubemap();
-
+void LoadCubemap(std::string cubeMapFolderPath);
 };
 
 } // namespace gtp

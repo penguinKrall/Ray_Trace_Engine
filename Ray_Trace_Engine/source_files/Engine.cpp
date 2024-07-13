@@ -448,16 +448,6 @@ void Engine::Draw() {
       }
     }
 
-    // particle commands
-    /*for (int i = 0; i > this->renderers.mainRenderer.assets.particle.size();
-                     i++) {
-            if (this->renderers.mainRenderer.assets.particle[i] != nullptr) {
-                    computeCommands.push_back(
-                                    this->renderers.mainRenderer.assets.particle[i]
-                                                    ->RecordComputeCommands(currentFrame));
-            }
-    }*/
-
     // update compute commands to be waited on
     computeCommands =
         this->renderers.mainRenderer.RecordParticleComputeCommands(

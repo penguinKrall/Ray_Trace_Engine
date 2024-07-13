@@ -78,7 +78,29 @@ class Utilities_EngCore {
   };
 
   // -- get working directory
-  static std::string BuildPath(const std::string &fileName);
+  static std::string BuildPath(const std::string& fileName);
+
+  static std::vector<std::string> ListFilesInDirectory(
+      const std::string& directory) {
+    // list of files
+    std::vector<std::string> fileList;
+
+    // iterate through directory
+    std::filesystem::path path(directory);
+    if (std::filesystem::exists(path) && std::filesystem::is_directory(path)) {
+      for (const auto& entry : std::filesystem::directory_iterator(path)) {
+        std::cout << "ListFilesInDirectory()_\n\tentry.path().string(): "
+                  << entry.path().string() << std::endl;
+        fileList.push_back(entry.path().string());
+      }
+    } else {
+      std::cout << "Directory does not exist or is not a directory."
+                << std::endl;
+    }
+
+    // return file list
+    return fileList;
+  }
 
   // -- create image
   // static gtp::Utilities_EngCore::ImageData CreateImage(const std::string&
@@ -94,17 +116,17 @@ class Utilities_EngCore {
   // -- output surface capabilities
   //@brief output surface capabilities data to console for debugging
   static void outputSurfaceCapabilities(
-      const VkSurfaceCapabilitiesKHR &capabilities);
+      const VkSurfaceCapabilitiesKHR& capabilities);
 
   // -- physical device type to string
   //@brief output device data to console for debugging
   static std::string physicalDeviceTypeString(VkPhysicalDeviceType type);
-  static bool loadFunctionPointer(PFN_vkVoidFunction &functionPointer,
+  static bool loadFunctionPointer(PFN_vkVoidFunction& functionPointer,
                                   VkDevice logicalDevice,
-                                  const char *functionName);
-  static bool loadFunctionPointer(PFN_vkVoidFunction &functionPointer,
+                                  const char* functionName);
+  static bool loadFunctionPointer(PFN_vkVoidFunction& functionPointer,
                                   VkInstance instance,
-                                  const char *functionName);
+                                  const char* functionName);
 
   // -- set image layout
   //@brief create an image memory barrier for changing the layout of brief an
@@ -128,7 +150,7 @@ class Utilities_EngCore {
     static VkDescriptorSetLayoutBinding descriptorSetLayoutBinding(
         uint32_t binding, VkDescriptorType descriptorType,
         uint32_t descriptorCount, VkShaderStageFlags stageFlags,
-        const VkSampler *pImmutableSamplers);
+        const VkSampler* pImmutableSamplers);
   };
 
   static void FlushCommandBuffer(VkDevice logicalDevice,

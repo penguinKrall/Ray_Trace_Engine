@@ -38,7 +38,6 @@ ktxResult TextureLoader::loadKTXFile(std::string filename,
 void TextureLoader::loadFromFile(std::string filename, VkFormat format,
                                  VkImageUsageFlags imageUsageFlags,
                                  VkImageLayout imageLayout, bool forceLinear) {
-
   // ktx texture pointer
   ktxTexture *ktxTexture;
 
@@ -97,7 +96,6 @@ void TextureLoader::loadFromFile(std::string filename, VkFormat format,
       VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
   if (useStaging) {
-
     std::cout << "using staging to create image -- optimal tiling "
               << std::endl;
 
@@ -290,7 +288,6 @@ void TextureLoader::loadFromFile(std::string filename, VkFormat format,
   }
 
   else {
-
     std::cout << "NOT using staging to create image -- linear tiling "
               << std::endl;
 
@@ -484,7 +481,6 @@ void TextureLoader::DestroyTextureLoader() {
 
 void TextureLoader::fromglTfImage(tinygltf::Image &gltfimage, std::string path,
                                   EngineCore *pEngineCore, VkQueue copyQueue) {
-
   bool isKtx = false;
 
   // Image points to an external ktx file
@@ -999,13 +995,15 @@ stbi_uc *TextureLoader::LoadTextureFile(const std::string &fileName, int *width,
     // number of channels image uses
     int channels;
 
-    // std::cout << "loadTextureFile vnkTexture.cpp: " << fileName.c_str() <<
-    // std::endl;
+    // std::cout << "loadTextureFile vnkTexture.cpp: " << fileName.c_str()
+    //           << std::endl;
 
-    std::string fileLoc = std::filesystem::current_path().string() + fileName;
+    // std::string fileLoc = std::filesystem::current_path().string() +
+    // fileName;
 
+    // std::cout << "loadTextureFile fileLoc: " << fileLoc << std::endl;
     stbi_uc *image =
-        stbi_load(fileLoc.c_str(), width, height, &channels, STBI_rgb_alpha);
+        stbi_load(fileName.c_str(), width, height, &channels, STBI_rgb_alpha);
 
     if (!image) {
       throw std::invalid_argument("Failed to load Texture!(" + fileName + ")");
@@ -1017,65 +1015,55 @@ stbi_uc *TextureLoader::LoadTextureFile(const std::string &fileName, int *width,
   }
 }
 
-void TextureLoader::LoadCubemap() {
+void TextureLoader::LoadCubemap(std::string cubeMapFolderPath) {
+  // image dimensions
+  int width = 0;
+  int height = 0;
 
-  int width;
-  int height;
-  VkDeviceSize imageSize;
+  // image buffer size
+  VkDeviceSize imageSize = 0;
 
-  // std::filesystem::path projDirectory = std::filesystem::current_path();
+  std::vector<std::filesystem::path> filePaths;
 
-  // std::vector<stbi_uc *> imageData = {
-  //     {this->LoadTextureFile(
+  // Collect all file paths
+  for (const auto &entry : std::filesystem::directory_iterator(
+           gtp::Utilities_EngCore::BuildPath(cubeMapFolderPath))) {
+    if (std::filesystem::is_regular_file(entry.status())) {
+      filePaths.push_back(entry.path());
+    }
+  }
 
-  //        "/assets/textures/cubemaps/space_corners/left.png", &width, &height,
-  //        &imageSize)},
-  //    {this->LoadTextureFile(
+  // Define the desired order
+  const std::vector<std::string> order = {"px", "nx", "py", "ny", "pz", "nz"};
 
-  //        "/assets/textures/cubemaps/space_corners/right.png", &width,
-  //        &height, &imageSize)},
-  //    {this->LoadTextureFile(
+  // Custom comparator to sort according to the desired order
+  auto comparator = [&order](const std::filesystem::path &a,
+                             const std::filesystem::path &b) {
+    std::string filenameA = a.filename().string();
+    std::string filenameB = b.filename().string();
+    auto posA = std::ranges::find_if(
+        order.begin(), order.end(),
+        [&filenameA](const std::string_view &suffix) {
+          return filenameA.find(suffix) != std::string::npos;
+        });
+    auto posB = std::ranges::find_if(
+        order.begin(), order.end(),
+        [&filenameB](const std::string_view &suffix) {
+          return filenameB.find(suffix) != std::string::npos;
+        });
+    return posA < posB;
+  };
 
-  //        "/assets/textures/cubemaps/space_corners/top.png", &width, &height,
-  //        &imageSize)},
-  //    {this->LoadTextureFile(
+  // Sort the file paths using the custom comparator
+  std::ranges::sort(filePaths.begin(), filePaths.end(), comparator);
 
-  //        "/assets/textures/cubemaps/space_corners/bottom.png", &width,
-  //        &height, &imageSize)},
-  //    {this->LoadTextureFile(
+  std::vector<stbi_uc *> imageData;
 
-  //        "/assets/textures/cubemaps/space_corners/front.png", &width,
-  //        &height, &imageSize)},
-  //    {this->LoadTextureFile(
-
-  //        "/assets/textures/cubemaps/space_corners/back.png", &width, &height,
-  //        &imageSize)}};
-
-  std::vector<stbi_uc *> imageData = {
-      {this->LoadTextureFile(
-
-          "/assets/textures/cubemaps/industrial_sunset_checker_ground/px.png",
-          &width, &height, &imageSize)},
-      {this->LoadTextureFile(
-
-          "/assets/textures/cubemaps/industrial_sunset_checker_ground/nx.png",
-          &width, &height, &imageSize)},
-      {this->LoadTextureFile(
-
-          "/assets/textures/cubemaps/industrial_sunset_checker_ground/py.png",
-          &width, &height, &imageSize)},
-      {this->LoadTextureFile(
-
-          "/assets/textures/cubemaps/industrial_sunset_checker_ground/ny.png",
-          &width, &height, &imageSize)},
-      {this->LoadTextureFile(
-
-          "/assets/textures/cubemaps/industrial_sunset_checker_ground/pz.png",
-          &width, &height, &imageSize)},
-      {this->LoadTextureFile(
-
-          "/assets/textures/cubemaps/industrial_sunset_checker_ground/nz.png",
-          &width, &height, &imageSize)}};
+  for (const auto &filepaths : filePaths) {
+    // std::cout << "filepaths: " << filepaths << std::endl;
+    imageData.push_back(
+        this->LoadTextureFile(filepaths.string(), &width, &height, &imageSize));
+  }
 
   // Calculate the image size and the layer size.
   const VkDeviceSize cubemapImageSize = width * height * 4 * 6;
@@ -1291,4 +1279,4 @@ void TextureLoader::LoadCubemap() {
   updateDescriptor();
 }
 
-} // namespace gtp
+}  // namespace gtp

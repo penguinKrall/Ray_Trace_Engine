@@ -3,14 +3,10 @@
 
 namespace gtp {
 
-class DefaultRenderer :
-  private RenderBase
-{
-private:
-
-public:
+class DefaultRenderer : private RenderBase {
+ private:
+ public:
   DefaultRenderer(EngineCore* engineCorePtr);
   void Destroy();
 };
-}
-
+}  // namespace gtp

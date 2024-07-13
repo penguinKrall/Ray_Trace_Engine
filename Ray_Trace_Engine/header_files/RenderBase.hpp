@@ -60,12 +60,34 @@ class RenderBase {
 
   Tools tools{};
 
+  struct Assets {
+    uint32_t textureOffset = 0;
+    std::vector<gtp::TextureLoader> defaultTextures;
+
+    // models
+    std::vector<gtp::Model*> models;
+    Utilities_UI::ModelData modelData;
+    Utilities_UI::LoadModelFlags loadModelFlags;
+
+    // colored glass texture
+    gtp::TextureLoader coloredGlassTexture;
+
+    // cube map
+    gtp::TextureLoader cubemap;
+
+    // particle
+    std::vector<gtp::Particle*> particle;
+
+    void LoadDefaultAssets(EngineCore* engineCorePtr);
+  };
+
+  Assets assets{};
+
  public:
   /*	base class public variables	*/
 
   /*	base class public functions	*/
   // default constructor
-  // initialize constructor
   RenderBase(EngineCore* engineCorePtr);
 
   void DestroyRenderBase();
