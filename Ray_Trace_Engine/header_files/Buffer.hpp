@@ -1,18 +1,18 @@
 #pragma once
 
-#include <array>
 #include <assert.h>
+#include <vulkan/vulkan.h>
+
+#include <array>
 #include <iostream>
 #include <string>
 #include <vector>
-#include <vulkan/vulkan.h>
 
 namespace gtp {
 
 // -- buffer helper class
 class Buffer {
-
-public:
+ public:
   // member datas
   // VkDevice device;
   struct BufferData {
@@ -72,4 +72,4 @@ public:
                                       VkMemoryPropertyFlags properties);
 };
 
-} // namespace gtp
+}  // namespace gtp

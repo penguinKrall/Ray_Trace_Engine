@@ -1,13 +1,13 @@
 #include "Utilities_AS.hpp"
 
-uint64_t Utilities_AS::getBufferDeviceAddress(EngineCore *pEngineCore,
-                                              VkBuffer buffer) {
-  VkBufferDeviceAddressInfoKHR bufferDeviceAI{};
-  bufferDeviceAI.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
-  bufferDeviceAI.buffer = buffer;
-  return pEngineCore->coreExtensions->vkGetBufferDeviceAddressKHR(
-      pEngineCore->devices.logical, &bufferDeviceAI);
-}
+// uint64_t Utilities_AS::getBufferDeviceAddress(EngineCore *pEngineCore,
+//                                               VkBuffer buffer) {
+//   VkBufferDeviceAddressInfoKHR bufferDeviceAI{};
+//   bufferDeviceAI.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+//   bufferDeviceAI.buffer = buffer;
+//   return pEngineCore->coreExtensions->vkGetBufferDeviceAddressKHR(
+//       pEngineCore->devices.logical, &bufferDeviceAI);
+// }
 
 void Utilities_AS::createScratchBuffer(EngineCore *pEngineCore,
                                        gtp::Buffer *buffer, VkDeviceSize size,
@@ -42,15 +42,13 @@ void Utilities_AS::createScratchBuffer(EngineCore *pEngineCore,
   }
 
   buffer->bufferData.bufferDeviceAddress.deviceAddress =
-      Utilities_AS::getBufferDeviceAddress(pEngineCore,
-                                           buffer->bufferData.buffer);
+      pEngineCore->GetBufferDeviceAddress(buffer->bufferData.buffer);
 }
 
 void Utilities_AS::createAccelerationStructureBuffer(
     EngineCore *pEngineCore, VkDeviceMemory *memory, VkBuffer *buffer,
     VkAccelerationStructureBuildSizesInfoKHR *buildSizeInfo,
     std::string bufferName) {
-
   // buffer create info
   VkBufferCreateInfo bufferCreateInfo{};
   bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -106,7 +104,6 @@ void Utilities_AS::createAccelerationStructureBuffer(
 void Utilities_AS::createStorageImage(EngineCore *pEngineCore,
                                       StorageImage *storageImage,
                                       std::string name) {
-
   // image create info
   VkImageCreateInfo imageCreateInfo{};
   imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -197,11 +194,10 @@ void Utilities_AS::createStorageImage(EngineCore *pEngineCore,
 
 void Utilities_AS::createBLAS(
     EngineCore *pEngineCore,
-    std::vector<Utilities_AS::GeometryNode>& geometryNodeBuf,
+    std::vector<Utilities_AS::GeometryNode> &geometryNodeBuf,
     std::vector<Utilities_AS::GeometryIndex> &geometryIndexBuf,
     Utilities_AS::BLASData &blasData, Utilities_AS::AccelerationStructure &BLAS,
     gtp::Model &model, uint32_t textureOffset) {
-
   Utilities_AS::GeometryIndex geometryIndex{};
 
   geometryIndex.nodeOffset = static_cast<int>(geometryNodeBuf.size());
@@ -210,20 +206,16 @@ void Utilities_AS::createBLAS(
 
   for (auto &node : model.linearNodes) {
     if (node->mesh) {
-
       for (auto &primitive : node->mesh->primitives) {
         if (primitive->indexCount > 0) {
-
           VkDeviceOrHostAddressConstKHR vertexBufferDeviceAddress;
           VkDeviceOrHostAddressConstKHR indexBufferDeviceAddress;
 
           vertexBufferDeviceAddress.deviceAddress =
-              Utilities_AS::getBufferDeviceAddress(pEngineCore,
-                                                   model.vertices.buffer);
+              pEngineCore->GetBufferDeviceAddress(model.vertices.buffer);
 
           indexBufferDeviceAddress.deviceAddress =
-              Utilities_AS::getBufferDeviceAddress(pEngineCore,
-                                                   model.indices.buffer) +
+              pEngineCore->GetBufferDeviceAddress(model.indices.buffer) +
               primitive->firstIndex * sizeof(uint32_t);
 
           VkAccelerationStructureGeometryKHR geometry{};
@@ -389,9 +381,8 @@ void Utilities_AS::createBLAS(
           pEngineCore->devices.logical, &accelerationDeviceAddressInfo);
 }
 
-std::vector<gtp::Model::Vertex>
-Utilities_AS::GetVerticesFromBuffer(VkDevice device, gtp::Model *model) {
-
+std::vector<gtp::Model::Vertex> Utilities_AS::GetVerticesFromBuffer(
+    VkDevice device, gtp::Model *model) {
   void *data = nullptr;
 
   VkDeviceSize bufferSize =

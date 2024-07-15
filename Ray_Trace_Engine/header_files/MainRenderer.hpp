@@ -10,11 +10,16 @@
 #include <Utilities_Renderer.hpp>
 #include <Utilities_UI.hpp>
 #include <glTFModel.hpp>
+#include <AccelerationStructures.hpp>
 
 #define VK_GLTF_MATERIAL_IDS
 
 class MainRenderer {
  private:
+
+   //acceleration structures
+   gtp::AccelerationStructures accelerationStructures;
+
   // tlas particle update refactor later
   bool updateTLAS = false;
 
@@ -32,7 +37,6 @@ class MainRenderer {
     gtp::Buffer geometry_nodes_buffer{};
     gtp::Buffer geometry_nodes_indices{};
     gtp::Buffer blas_scratch{};
-    gtp::Buffer second_blas_scratch{};
     gtp::Buffer tlas_scratch{};
     gtp::Buffer tlas_instancesBuffer{};
     gtp::Buffer ubo{};

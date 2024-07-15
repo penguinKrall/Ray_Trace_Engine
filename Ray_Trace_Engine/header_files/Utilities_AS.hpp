@@ -74,8 +74,8 @@ public:
     void Destroy(EngineCore* engineCorePtr);
   };
 
-  static uint64_t getBufferDeviceAddress(EngineCore *pEngineCore,
-                                         VkBuffer buffer);
+  //static uint64_t getBufferDeviceAddress(EngineCore *pEngineCore,
+  //                                       VkBuffer buffer);
 
   static void createScratchBuffer(EngineCore *pEngineCore, gtp::Buffer *buffer,
                                   VkDeviceSize size, std::string name);

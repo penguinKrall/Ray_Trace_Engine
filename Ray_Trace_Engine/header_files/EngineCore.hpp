@@ -102,9 +102,13 @@ public:
   // -- recreate sync objects
   void RecreateSyncObjects();
 
-  //void CreateLoadingScreenImage(const std::string &fileName);
-
-  //void LoadingScreen();
+  uint64_t GetBufferDeviceAddress(VkBuffer buffer) {
+    VkBufferDeviceAddressInfoKHR bufferDeviceAI{};
+    bufferDeviceAI.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+    bufferDeviceAI.buffer = buffer;
+    return coreExtensions->vkGetBufferDeviceAddressKHR(
+      pEngineCore->devices.logical, &bufferDeviceAI);
+  }
 
   // -- destroy core
   // destroys core related objects

@@ -30,6 +30,9 @@ void MainRenderer::Init_MainRenderer(EngineCore *pEngineCore) {
   // object mouse select
   this->tools.objectMouseSelect = gtp::ObjectMouseSelect(this->pEngineCore);
 
+  //acceleration structures class initialize
+  this->accelerationStructures = gtp::AccelerationStructures(this->pEngineCore);
+
   // shader
   shader = gtp::Shader(pEngineCore);
 
@@ -552,8 +555,8 @@ void MainRenderer::CreateTLAS() {
 
   // get instance buffer device address
   tlasData.instanceDataDeviceAddress.deviceAddress =
-      Utilities_AS::getBufferDeviceAddress(
-          this->pEngineCore, buffers.tlas_instancesBuffer.bufferData.buffer);
+      pEngineCore->GetBufferDeviceAddress(
+          buffers.tlas_instancesBuffer.bufferData.buffer);
 
   // initialize top level acceleration structure geometry struct
   tlasData.accelerationStructureGeometry.sType =
@@ -1408,8 +1411,7 @@ void MainRenderer::SetupBufferRegionAddresses() {
 
   // VkStridedDeviceAddressRegionKHR raygenShaderSbtEntry{};
   this->shaderBindingTableData.raygenStridedDeviceAddressRegion
-      .deviceAddress = Utilities_AS::getBufferDeviceAddress(
-      this->pEngineCore,
+      .deviceAddress = pEngineCore->GetBufferDeviceAddress(
       this->shaderBindingTableData.raygenShaderBindingTable.bufferData.buffer);
   this->shaderBindingTableData.raygenStridedDeviceAddressRegion.stride =
       handleSizeAligned;
@@ -1418,8 +1420,7 @@ void MainRenderer::SetupBufferRegionAddresses() {
 
   // VkStridedDeviceAddressRegionKHR missShaderSbtEntry{};
   this->shaderBindingTableData.missStridedDeviceAddressRegion
-      .deviceAddress = Utilities_AS::getBufferDeviceAddress(
-      this->pEngineCore,
+      .deviceAddress = pEngineCore->GetBufferDeviceAddress(
       this->shaderBindingTableData.missShaderBindingTable.bufferData.buffer);
   this->shaderBindingTableData.missStridedDeviceAddressRegion.stride =
       handleSizeAligned;
@@ -1428,8 +1429,7 @@ void MainRenderer::SetupBufferRegionAddresses() {
 
   // VkStridedDeviceAddressRegionKHR hitShaderSbtEntry{};
   this->shaderBindingTableData.hitStridedDeviceAddressRegion.deviceAddress =
-      Utilities_AS::getBufferDeviceAddress(
-          this->pEngineCore,
+      pEngineCore->GetBufferDeviceAddress(
           this->shaderBindingTableData.hitShaderBindingTable.bufferData.buffer);
   this->shaderBindingTableData.hitStridedDeviceAddressRegion.stride =
       handleSizeAligned;
@@ -1738,8 +1738,7 @@ void MainRenderer::UpdateTLAS() {
 
       // -- instance buffer device address
       tlasData.instanceDataDeviceAddress.deviceAddress =
-          Utilities_AS::getBufferDeviceAddress(
-              this->pEngineCore,
+          pEngineCore->GetBufferDeviceAddress(
               buffers.tlas_instancesBuffer.bufferData.buffer);
 
       // -- acceleration Structure Geometry{};
