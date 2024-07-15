@@ -512,25 +512,6 @@ void Engine::Draw() {
 
     this->renderers.mainRenderer.UpdateAnimations(deltaTime);
 
-    // for (size_t i = 0; i < this->renderers.mainRenderer.assets.models.size();
-    //      ++i) {
-    //   // check animated index to check against model list for animated models
-    //   if (this->renderers.mainRenderer.assets.modelData.animatedModelIndex[i]
-    //   ==
-    //       1) {
-    //     // get current model animation
-    //     int activeAnimation =
-    //         this->renderers.mainRenderer.assets.modelData.activeAnimation[i][0];
-    //     // verify current model is being animated
-    //     if (this->renderers.mainRenderer.assets.modelData.isAnimated[i]) {
-    //       this->renderers.mainRenderer.assets.models[i]->updateAnimation(
-    //           activeAnimation, deltaTime,
-    //           &this->renderers.mainRenderer.GetComputeInstances()[i]
-    //                ->jointBuffer);
-    //     }
-    //   }
-    // }
-
     this->renderers.mainRenderer.UpdateUniformBuffer(
         timer, this->UI.rendererData.lightPosition);
 

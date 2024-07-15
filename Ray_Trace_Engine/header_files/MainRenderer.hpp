@@ -14,23 +14,23 @@
 #define VK_GLTF_MATERIAL_IDS
 
 class MainRenderer {
-private:
+ private:
   // tlas particle update refactor later
   bool updateTLAS = false;
 
   std::vector<VkAccelerationStructureInstanceKHR> blasInstances;
 
   // -- geometry node vector
-  std::vector<Utilities_AS::GeometryNode> geometryNodeBuf;
+  std::vector<Utilities_AS::GeometryNode> geometryNodes;
 
   // -- geometry node index vector
-  std::vector<Utilities_AS::GeometryIndex> geometryIndexBuf;
+  std::vector<Utilities_AS::GeometryIndex> geometryNodesIndices;
 
   // -- buffers
   struct Buffers {
     gtp::Buffer transformBuffer{};
-    gtp::Buffer g_nodes_buffer{};
-    gtp::Buffer g_nodes_indices{};
+    gtp::Buffer geometry_nodes_buffer{};
+    gtp::Buffer geometry_nodes_indices{};
     gtp::Buffer blas_scratch{};
     gtp::Buffer second_blas_scratch{};
     gtp::Buffer tlas_scratch{};
@@ -49,9 +49,6 @@ private:
 
   // -- storage image
   Utilities_AS::StorageImage storageImage{};
-
-  // -- storage image
-  // Utilities_AS::StorageImage colorIDStorageImage{};
 
   // -- uniform data
   Utilities_Renderer::UniformData uniformData{};
@@ -115,8 +112,8 @@ private:
                     Utilities_UI::TransformMatrices *pTransformMatrices);
 
   // -- Setup Model Transforms
-  void
-  SetupModelDataTransforms(Utilities_UI::TransformMatrices *pTransformMatrices);
+  void SetupModelDataTransforms(
+      Utilities_UI::TransformMatrices *pTransformMatrices);
 
   // -- load assets
   void LoadAssets();
@@ -160,7 +157,7 @@ private:
   // -- create geometry nodes buffer
   void CreateGeometryNodesBuffer();
 
-public:
+ public:
   /* tools */
   struct Tools {
     gtp::ObjectMouseSelect objectMouseSelect;

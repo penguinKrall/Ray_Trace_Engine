@@ -90,10 +90,10 @@ public:
 
   static void
   createBLAS(EngineCore *pEngineCore,
-             std::vector<Utilities_AS::GeometryNode> *geometryNodeBuf,
-             std::vector<Utilities_AS::GeometryIndex> *geometryIndexBuf,
-             Utilities_AS::BLASData *blasData,
-             Utilities_AS::AccelerationStructure *BLAS, gtp::Model *model,
+             std::vector<Utilities_AS::GeometryNode>& geometryNodeBuf,
+             std::vector<Utilities_AS::GeometryIndex>& geometryIndexBuf,
+             Utilities_AS::BLASData& blasData,
+             Utilities_AS::AccelerationStructure& BLAS, gtp::Model& model,
              uint32_t textureOffset);
 
   static std::vector<gtp::Model::Vertex>

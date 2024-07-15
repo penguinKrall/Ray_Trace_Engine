@@ -437,9 +437,9 @@ void MainRenderer::CreateBLAS(gtp::Model *pModel) {
   Utilities_AS::BLASData *tempBLAS = new Utilities_AS::BLASData();
 
   // create blas
-  Utilities_AS::createBLAS(this->pEngineCore, &this->geometryNodeBuf,
-                           &this->geometryIndexBuf, tempBLAS,
-                           &tempBLAS->accelerationStructure, pModel,
+  Utilities_AS::createBLAS(this->pEngineCore, this->geometryNodes,
+                           this->geometryNodesIndices, *tempBLAS,
+                           tempBLAS->accelerationStructure, *pModel,
                            this->assets.textureOffset);
 
   // increment offset by size of models texture array
@@ -737,123 +737,7 @@ void MainRenderer::CreateStorageImages() {
   // color storage image
   Utilities_AS::createStorageImage(this->pEngineCore, &this->storageImage,
                                    "mainRenderer_storageImage");
-
-  //// color id storage image
-  // Utilities_AS::createStorageImage(this->pEngineCore,
-  //                                  &this->colorIDStorageImage,
-  //                                  "mainRenderer_colorIDStorageImage");
 }
-
-// void MainRenderer::CreateColorIDImageBuffer() {
-//   // name color image id buffer
-//   buffers.colorIDImageBuffer.bufferData.bufferName = "Color_Image_ID_Buffer";
-//   buffers.colorIDImageBuffer.bufferData.bufferMemoryName =
-//       "Color_Image_ID_BufferMemory";
-//
-//   // buffer size
-//   VkDeviceSize bufferSize =
-//       pEngineCore->swapchainData.swapchainExtent2D.width *
-//       pEngineCore->swapchainData.swapchainExtent2D.height * 4;
-//
-//   // create color id image buffer
-//   validate_vk_result(pEngineCore->CreateBuffer(
-//       VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-//       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-//           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-//       &buffers.colorIDImageBuffer, bufferSize, nullptr));
-// }
-
-// void MainRenderer::RetrieveObjectIDFromImage() {
-//
-//   if (this->pEngineCore->posX <
-//           this->pEngineCore->swapchainData.swapchainExtent2D.width &&
-//       this->pEngineCore->posX > 0) {
-//     if (this->pEngineCore->posY <
-//             this->pEngineCore->swapchainData.swapchainExtent2D.height &&
-//         this->pEngineCore->posY > 0) {
-//
-//       VkCommandBuffer commandBuffer =
-//           pEngineCore->objCreate.VKCreateCommandBuffer(
-//               VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-//
-//       // subresource range
-//       VkImageSubresourceRange subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT,
-//       0,
-//                                                   1, 0, 1};
-//
-//       // set color ID image layout to transfer src optimal
-//       gtp::Utilities_EngCore::setImageLayout(
-//           commandBuffer, colorIDStorageImage.image, VK_IMAGE_LAYOUT_GENERAL,
-//           VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresourceRange);
-//
-//       // copy region
-//       VkBufferImageCopy region{};
-//       region.bufferOffset = 0;
-//       region.bufferRowLength = 0;
-//       region.bufferImageHeight = 0;
-//       region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-//       region.imageSubresource.mipLevel = 0;
-//       region.imageSubresource.baseArrayLayer = 0;
-//       region.imageSubresource.layerCount = 1;
-//       region.imageOffset = {0, 0, 0};
-//       region.imageExtent =
-//       {pEngineCore->swapchainData.swapchainExtent2D.width,
-//                             pEngineCore->swapchainData.swapchainExtent2D.height,
-//                             1};
-//
-//       vkCmdCopyImageToBuffer(commandBuffer, colorIDStorageImage.image,
-//                              VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-//                              this->buffers.colorIDImageBuffer.bufferData.buffer,
-//                              1, &region);
-//
-//       // Map the buffer memory
-//       void *data;
-//       vkMapMemory(pEngineCore->devices.logical,
-//                   this->buffers.colorIDImageBuffer.bufferData.memory, 0,
-//                   VK_WHOLE_SIZE, 0, &data);
-//
-//       // Adjust mouse coordinates if necessary
-//       auto adjustedY =
-//           static_cast<int>(pEngineCore->swapchainData.swapchainExtent2D.height
-//           -
-//                            1 - this->pEngineCore->posY);
-//
-//       // Calculate the index
-//       int index = static_cast<int>(
-//           (adjustedY * pEngineCore->swapchainData.swapchainExtent2D.width +
-//            this->pEngineCore->posX) *
-//           4);
-//
-//       // Retrieve the color at the mouse position
-//       uint8_t *pixel = static_cast<uint8_t *>(data) + index;
-//       uint8_t red = pixel[0];
-//       uint8_t green = pixel[1];
-//       uint8_t blue = pixel[2];
-//       uint8_t alpha = pixel[3];
-//
-//       // Unmap the buffer memory
-//       vkUnmapMemory(pEngineCore->devices.logical,
-//                     this->buffers.colorIDImageBuffer.bufferData.memory);
-//
-//       // Identify the object using the color
-//       float objectID = red;
-//
-//       // std::cout << "Selected Object ID: " << objectID << std::endl;
-//
-//       // set color ID image layout to transfer src optimal
-//       gtp::Utilities_EngCore::setImageLayout(
-//           commandBuffer, colorIDStorageImage.image,
-//           VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
-//           subresourceRange);
-//
-//       // end and submit and destroy command buffer
-//       pEngineCore->FlushCommandBuffer(commandBuffer,
-//                                       pEngineCore->queue.graphics,
-//                                       pEngineCore->commandPools.graphics,
-//                                       true);
-//     }
-//   }
-// }
 
 void MainRenderer::CreateUniformBuffer() {
   buffers.ubo.bufferData.bufferName = "UBOBuffer";
@@ -1401,33 +1285,34 @@ void MainRenderer::CreateDescriptorSet() {
   uniformBufferWrite.pBufferInfo = &uboDescriptor;
   uniformBufferWrite.descriptorCount = 1;
 
-  // g_nodes_buffer
-  VkDescriptorBufferInfo g_nodes_BufferDescriptor{
-      this->buffers.g_nodes_buffer.bufferData.buffer, 0,
-      this->buffers.g_nodes_buffer.bufferData.size};
+  // geometry_nodes_buffer
+  VkDescriptorBufferInfo geometry_nodes_BufferDescriptor{
+      this->buffers.geometry_nodes_buffer.bufferData.buffer, 0,
+      this->buffers.geometry_nodes_buffer.bufferData.size};
 
   // geometry descriptor write info
-  VkWriteDescriptorSet g_nodes_bufferWrite{};
-  g_nodes_bufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  g_nodes_bufferWrite.dstSet = pipelineData.descriptorSet;
-  g_nodes_bufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  g_nodes_bufferWrite.dstBinding = 4;
-  g_nodes_bufferWrite.pBufferInfo = &g_nodes_BufferDescriptor;
-  g_nodes_bufferWrite.descriptorCount = 1;
+  VkWriteDescriptorSet geometry_nodes_bufferWrite{};
+  geometry_nodes_bufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  geometry_nodes_bufferWrite.dstSet = pipelineData.descriptorSet;
+  geometry_nodes_bufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  geometry_nodes_bufferWrite.dstBinding = 4;
+  geometry_nodes_bufferWrite.pBufferInfo = &geometry_nodes_BufferDescriptor;
+  geometry_nodes_bufferWrite.descriptorCount = 1;
 
-  // g_nodes_indices
-  VkDescriptorBufferInfo g_nodes_indicesDescriptor{
-      this->buffers.g_nodes_indices.bufferData.buffer, 0,
-      this->buffers.g_nodes_indices.bufferData.size};
+  // geometry_nodes_indices
+  VkDescriptorBufferInfo geometry_nodes_indicesDescriptor{
+      this->buffers.geometry_nodes_indices.bufferData.buffer, 0,
+      this->buffers.geometry_nodes_indices.bufferData.size};
 
   // geometry descriptor write info
-  VkWriteDescriptorSet g_nodes_indicesWrite{};
-  g_nodes_indicesWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  g_nodes_indicesWrite.dstSet = pipelineData.descriptorSet;
-  g_nodes_indicesWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  g_nodes_indicesWrite.dstBinding = 5;
-  g_nodes_indicesWrite.pBufferInfo = &g_nodes_indicesDescriptor;
-  g_nodes_indicesWrite.descriptorCount = 1;
+  VkWriteDescriptorSet geometry_nodes_indicesWrite{};
+  geometry_nodes_indicesWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  geometry_nodes_indicesWrite.dstSet = pipelineData.descriptorSet;
+  geometry_nodes_indicesWrite.descriptorType =
+      VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  geometry_nodes_indicesWrite.dstBinding = 5;
+  geometry_nodes_indicesWrite.pBufferInfo = &geometry_nodes_indicesDescriptor;
+  geometry_nodes_indicesWrite.descriptorCount = 1;
 
   VkDescriptorImageInfo glassTextureDescriptor{
       this->assets.coloredGlassTexture.sampler,
@@ -1466,10 +1351,10 @@ void MainRenderer::CreateDescriptorSet() {
       colorIDStorageImageWrite,
       // Binding 2: Uniform data
       uniformBufferWrite,
-      // Binding 3: g_nodes_buffer write
-      g_nodes_bufferWrite,
-      // Binding 4: g_nodes_indices write
-      g_nodes_indicesWrite,
+      // Binding 3: geometry_nodes_buffer write
+      geometry_nodes_bufferWrite,
+      // Binding 4: geometry_nodes_indices write
+      geometry_nodes_indicesWrite,
       // Binding 5: glass texture image write
       glassTextureWrite,
       // Binding 6: cubemap texture image write
@@ -2006,15 +1891,16 @@ void MainRenderer::UpdateTLAS() {
 // }
 
 void MainRenderer::CreateGeometryNodesBuffer() {
-  buffers.g_nodes_buffer.bufferData.bufferName = "g_nodes_buffer";
-  buffers.g_nodes_buffer.bufferData.bufferMemoryName = "g_nodes_bufferMemory";
+  buffers.geometry_nodes_buffer.bufferData.bufferName = "geometry_nodes_buffer";
+  buffers.geometry_nodes_buffer.bufferData.bufferMemoryName =
+      "geometry_nodes_bufferMemory";
 
   void *nodeData = nullptr;
   VkDeviceSize nodeBufSize = 0;
 
-  if (!geometryNodeBuf.empty()) {
-    nodeData = geometryNodeBuf.data();
-    nodeBufSize = static_cast<uint32_t>(geometryNodeBuf.size()) *
+  if (!geometryNodes.empty()) {
+    nodeData = geometryNodes.data();
+    nodeBufSize = static_cast<uint32_t>(geometryNodes.size()) *
                   sizeof(Utilities_AS::GeometryNode);
   }
 
@@ -2028,22 +1914,23 @@ void MainRenderer::CreateGeometryNodesBuffer() {
                                     VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                &buffers.g_nodes_buffer, nodeBufSize,
+                                &buffers.geometry_nodes_buffer, nodeBufSize,
                                 nodeData) != VK_SUCCESS) {
-    throw std::invalid_argument("failed to create g_nodes_buffer");
+    throw std::invalid_argument("failed to create geometry_nodes_buffer");
   }
 
-  buffers.g_nodes_indices.bufferData.bufferName = "g_nodes_indicesBuffer";
-  buffers.g_nodes_indices.bufferData.bufferMemoryName =
-      "g_nodes_indicesBufferMemory";
+  buffers.geometry_nodes_indices.bufferData.bufferName =
+      "geometry_nodes_indicesBuffer";
+  buffers.geometry_nodes_indices.bufferData.bufferMemoryName =
+      "geometry_nodes_indicesBufferMemory";
 
   void *gIndexData = nullptr;
   VkDeviceSize gIndexBufSize = 0;
 
-  if (!geometryIndexBuf.empty()) {
-    gIndexData = geometryIndexBuf.data();
+  if (!geometryNodesIndices.empty()) {
+    gIndexData = geometryNodesIndices.data();
     gIndexBufSize =
-        static_cast<uint32_t>(geometryIndexBuf.size()) * sizeof(int);
+        static_cast<uint32_t>(geometryNodesIndices.size()) * sizeof(int);
   }
 
   else {
@@ -2056,9 +1943,9 @@ void MainRenderer::CreateGeometryNodesBuffer() {
                                     VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                &buffers.g_nodes_indices, gIndexBufSize,
+                                &buffers.geometry_nodes_indices, gIndexBufSize,
                                 gIndexData) != VK_SUCCESS) {
-    throw std::invalid_argument("failed to create g_nodes_index buffer");
+    throw std::invalid_argument("failed to create geometry_nodes_index buffer");
   }
 }
 
@@ -2067,20 +1954,12 @@ void MainRenderer::UpdateGeometryNodesBuffer(gtp::Model *pModel) {
 
   std::cout << pModel->modelName << std::endl;
 
-  this->buffers.g_nodes_buffer.destroy(this->pEngineCore->devices.logical);
-  this->buffers.g_nodes_indices.destroy(this->pEngineCore->devices.logical);
+  // destroy geometry nodes and geometry node indices buffer
+  this->buffers.geometry_nodes_buffer.destroy(
+      this->pEngineCore->devices.logical);
+  this->buffers.geometry_nodes_indices.destroy(
+      this->pEngineCore->devices.logical);
   CreateGeometryNodesBuffer();
-  //// update g nodes buffer with updated vector of g nodes
-  // this->buffers.g_nodes_buffer.copyTo(
-  //     this->geometryNodeBuf.data(),
-  //     static_cast<uint32_t>(geometryNodeBuf.size()) *
-  //         sizeof(Utilities_AS::GeometryNode));
-
-  //// update g node indices buffer with updated vector of g node indices
-  // this->buffers.g_nodes_indices.copyTo(
-  //     this->geometryIndexBuf.data(),
-  //     static_cast<uint32_t>(geometryIndexBuf.size()) * sizeof(int));
-
   // -- top level acceleration structure & related buffers -- //
 
   // accel. structure
@@ -2104,7 +1983,6 @@ void MainRenderer::UpdateGeometryNodesBuffer(gtp::Model *pModel) {
   CreateTLAS();
   UpdateRayTracingPipeline();
   CreateDescriptorSet();
-  // UpdateDescriptorSet();
 }
 
 void MainRenderer::DeleteModel() {
@@ -2176,9 +2054,9 @@ void MainRenderer::DeleteModel() {
   std::vector<Utilities_AS::BLASData *> tempLevelAccelerationStructures;
 
   // clear g node buffer
-  this->geometryNodeBuf.clear();
+  this->geometryNodes.clear();
   // clear g node index buffer
-  this->geometryIndexBuf.clear();
+  this->geometryNodesIndices.clear();
   // clear bottom level acceleration structures "buffer"
   this->bottomLevelAccelerationStructures.clear();
 
@@ -2187,15 +2065,14 @@ void MainRenderer::DeleteModel() {
   }
 
   // update g nodes buffer with updated vector of g nodes
-  this->buffers.g_nodes_buffer.copyTo(
-      this->geometryNodeBuf.data(),
-      static_cast<uint32_t>(geometryNodeBuf.size()) *
-          sizeof(Utilities_AS::GeometryNode));
+  this->buffers.geometry_nodes_buffer.copyTo(
+      this->geometryNodes.data(), static_cast<uint32_t>(geometryNodes.size()) *
+                                      sizeof(Utilities_AS::GeometryNode));
 
   // update g node indices buffer with updated vector of g node indices
-  this->buffers.g_nodes_indices.copyTo(
-      this->geometryIndexBuf.data(),
-      static_cast<uint32_t>(geometryIndexBuf.size()) * sizeof(int));
+  this->buffers.geometry_nodes_indices.copyTo(
+      this->geometryNodesIndices.data(),
+      static_cast<uint32_t>(geometryNodesIndices.size()) * sizeof(int));
 
   // erase models / modelData assignments
 
@@ -2388,33 +2265,34 @@ void MainRenderer::UpdateDescriptorSet() {
   uniformBufferWrite.pBufferInfo = &uboDescriptor;
   uniformBufferWrite.descriptorCount = 1;
 
-  // g_nodes_buffer
-  VkDescriptorBufferInfo g_nodes_BufferDescriptor{
-      this->buffers.g_nodes_buffer.bufferData.buffer, 0,
-      this->buffers.g_nodes_buffer.bufferData.size};
+  // geometry_nodes_buffer
+  VkDescriptorBufferInfo geometry_nodes_BufferDescriptor{
+      this->buffers.geometry_nodes_buffer.bufferData.buffer, 0,
+      this->buffers.geometry_nodes_buffer.bufferData.size};
 
   // geometry descriptor write info
-  VkWriteDescriptorSet g_nodes_bufferWrite{};
-  g_nodes_bufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  g_nodes_bufferWrite.dstSet = pipelineData.descriptorSet;
-  g_nodes_bufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  g_nodes_bufferWrite.dstBinding = 4;
-  g_nodes_bufferWrite.pBufferInfo = &g_nodes_BufferDescriptor;
-  g_nodes_bufferWrite.descriptorCount = 1;
+  VkWriteDescriptorSet geometry_nodes_bufferWrite{};
+  geometry_nodes_bufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  geometry_nodes_bufferWrite.dstSet = pipelineData.descriptorSet;
+  geometry_nodes_bufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  geometry_nodes_bufferWrite.dstBinding = 4;
+  geometry_nodes_bufferWrite.pBufferInfo = &geometry_nodes_BufferDescriptor;
+  geometry_nodes_bufferWrite.descriptorCount = 1;
 
-  // g_nodes_indices
-  VkDescriptorBufferInfo g_nodes_indicesDescriptor{
-      this->buffers.g_nodes_indices.bufferData.buffer, 0,
-      this->buffers.g_nodes_indices.bufferData.size};
+  // geometry_nodes_indices
+  VkDescriptorBufferInfo geometry_nodes_indicesDescriptor{
+      this->buffers.geometry_nodes_indices.bufferData.buffer, 0,
+      this->buffers.geometry_nodes_indices.bufferData.size};
 
   // geometry descriptor write info
-  VkWriteDescriptorSet g_nodes_indicesWrite{};
-  g_nodes_indicesWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  g_nodes_indicesWrite.dstSet = pipelineData.descriptorSet;
-  g_nodes_indicesWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  g_nodes_indicesWrite.dstBinding = 5;
-  g_nodes_indicesWrite.pBufferInfo = &g_nodes_indicesDescriptor;
-  g_nodes_indicesWrite.descriptorCount = 1;
+  VkWriteDescriptorSet geometry_nodes_indicesWrite{};
+  geometry_nodes_indicesWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  geometry_nodes_indicesWrite.dstSet = pipelineData.descriptorSet;
+  geometry_nodes_indicesWrite.descriptorType =
+      VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  geometry_nodes_indicesWrite.dstBinding = 5;
+  geometry_nodes_indicesWrite.pBufferInfo = &geometry_nodes_indicesDescriptor;
+  geometry_nodes_indicesWrite.descriptorCount = 1;
 
   VkDescriptorImageInfo glassTextureDescriptor{
       this->assets.coloredGlassTexture.sampler,
@@ -2453,10 +2331,10 @@ void MainRenderer::UpdateDescriptorSet() {
       colorIDStorageImageWrite,
       // Binding 2: Uniform data
       uniformBufferWrite,
-      // Binding 3: g_nodes_buffer write
-      g_nodes_bufferWrite,
-      // Binding 4: g_nodes_indices write
-      g_nodes_indicesWrite,
+      // Binding 3: geometry_nodes_buffer write
+      geometry_nodes_bufferWrite,
+      // Binding 4: geometry_nodes_indices write
+      geometry_nodes_indicesWrite,
       // Binding 5: glass texture image write
       glassTextureWrite,
       // Binding 6: cubemap texture image write
@@ -2614,10 +2492,12 @@ void MainRenderer::Destroy_MainRenderer() {
   this->storageImage.Destroy(this->pEngineCore);
 
   // g node buffer
-  this->buffers.g_nodes_buffer.destroy(this->pEngineCore->devices.logical);
+  this->buffers.geometry_nodes_buffer.destroy(
+      this->pEngineCore->devices.logical);
 
   // g node indices buffer
-  this->buffers.g_nodes_indices.destroy(this->pEngineCore->devices.logical);
+  this->buffers.geometry_nodes_indices.destroy(
+      this->pEngineCore->devices.logical);
 
   // -- bottom level acceleration structure & related buffers -- //
   for (int i = 0; i < this->bottomLevelAccelerationStructures.size(); i++) {

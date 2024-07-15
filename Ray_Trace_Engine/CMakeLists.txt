@@ -7,7 +7,7 @@ cmake_minimum_required (VERSION 3.8)
 
 project ("Ray_Trace_Engine") 
 
-# Vulkan toolchain
+# Vulkan toolchain 
 find_package(Vulkan REQUIRED)
 find_program(glslc_executable NAMES glslc HINTS Vulkan::glslc)
 

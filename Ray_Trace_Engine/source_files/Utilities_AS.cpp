@@ -197,18 +197,18 @@ void Utilities_AS::createStorageImage(EngineCore *pEngineCore,
 
 void Utilities_AS::createBLAS(
     EngineCore *pEngineCore,
-    std::vector<Utilities_AS::GeometryNode> *geometryNodeBuf,
-    std::vector<Utilities_AS::GeometryIndex> *geometryIndexBuf,
-    Utilities_AS::BLASData *blasData, Utilities_AS::AccelerationStructure *BLAS,
-    gtp::Model *model, uint32_t textureOffset) {
+    std::vector<Utilities_AS::GeometryNode>& geometryNodeBuf,
+    std::vector<Utilities_AS::GeometryIndex> &geometryIndexBuf,
+    Utilities_AS::BLASData &blasData, Utilities_AS::AccelerationStructure &BLAS,
+    gtp::Model &model, uint32_t textureOffset) {
 
   Utilities_AS::GeometryIndex geometryIndex{};
 
-  geometryIndex.nodeOffset = static_cast<int>(geometryNodeBuf->size());
+  geometryIndex.nodeOffset = static_cast<int>(geometryNodeBuf.size());
 
-  geometryIndexBuf->push_back(geometryIndex);
+  geometryIndexBuf.push_back(geometryIndex);
 
-  for (auto &node : model->linearNodes) {
+  for (auto &node : model.linearNodes) {
     if (node->mesh) {
 
       for (auto &primitive : node->mesh->primitives) {
@@ -219,11 +219,11 @@ void Utilities_AS::createBLAS(
 
           vertexBufferDeviceAddress.deviceAddress =
               Utilities_AS::getBufferDeviceAddress(pEngineCore,
-                                                   model->vertices.buffer);
+                                                   model.vertices.buffer);
 
           indexBufferDeviceAddress.deviceAddress =
               Utilities_AS::getBufferDeviceAddress(pEngineCore,
-                                                   model->indices.buffer) +
+                                                   model.indices.buffer) +
               primitive->firstIndex * sizeof(uint32_t);
 
           VkAccelerationStructureGeometryKHR geometry{};
@@ -235,20 +235,20 @@ void Utilities_AS::createBLAS(
           geometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
           geometry.geometry.triangles.vertexData = vertexBufferDeviceAddress;
           geometry.geometry.triangles.maxVertex =
-              static_cast<uint32_t>(model->vertexCount);
+              static_cast<uint32_t>(model.vertexCount);
           geometry.geometry.triangles.vertexStride = sizeof(gtp::Model::Vertex);
           geometry.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
           geometry.geometry.triangles.indexData = indexBufferDeviceAddress;
-          blasData->geometries.push_back(geometry);
-          blasData->maxPrimitiveCounts.push_back(primitive->indexCount / 3);
-          blasData->maxPrimitiveCount += primitive->indexCount / 3;
+          blasData.geometries.push_back(geometry);
+          blasData.maxPrimitiveCounts.push_back(primitive->indexCount / 3);
+          blasData.maxPrimitiveCount += primitive->indexCount / 3;
 
           VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo{};
           buildRangeInfo.firstVertex = 0;
           buildRangeInfo.primitiveOffset = 0;
           buildRangeInfo.primitiveCount = primitive->indexCount / 3;
           buildRangeInfo.transformOffset = 0;
-          blasData->buildRangeInfos.push_back(buildRangeInfo);
+          blasData.buildRangeInfos.push_back(buildRangeInfo);
 
           Utilities_AS::GeometryNode geometryNode{};
           geometryNode.vertexBufferDeviceAddress =
@@ -283,7 +283,7 @@ void Utilities_AS::createBLAS(
                                      textureOffset)
                   : -1;
 
-          geometryNode.semiTransparentFlag = model->semiTransparentFlag;
+          geometryNode.semiTransparentFlag = model.semiTransparentFlag;
 
           geometryNode.objectIDColor =
               (static_cast<float>(textureOffset) * 8.0f / 255.0f);
@@ -292,49 +292,49 @@ void Utilities_AS::createBLAS(
                     << ((static_cast<float>(textureOffset) + 8.0f) / 255.0f)
                     << std::endl;
 
-          geometryNodeBuf->push_back(geometryNode);
+          geometryNodeBuf.push_back(geometryNode);
         }
       }
     }
   }
 
-  for (auto &rangeInfo : blasData->buildRangeInfos) {
-    blasData->pBuildRangeInfos.push_back(&rangeInfo);
+  for (auto &rangeInfo : blasData.buildRangeInfos) {
+    blasData.pBuildRangeInfos.push_back(&rangeInfo);
   }
 
   // Get size info
   // acceleration structure build geometry info
-  blasData->accelerationStructureBuildGeometryInfo.sType =
+  blasData.accelerationStructureBuildGeometryInfo.sType =
       VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-  blasData->accelerationStructureBuildGeometryInfo.type =
+  blasData.accelerationStructureBuildGeometryInfo.type =
       VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-  blasData->accelerationStructureBuildGeometryInfo.flags =
+  blasData.accelerationStructureBuildGeometryInfo.flags =
       VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
-  blasData->accelerationStructureBuildGeometryInfo.geometryCount =
-      static_cast<uint32_t>(blasData->geometries.size());
-  blasData->accelerationStructureBuildGeometryInfo.pGeometries =
-      blasData->geometries.data();
+  blasData.accelerationStructureBuildGeometryInfo.geometryCount =
+      static_cast<uint32_t>(blasData.geometries.size());
+  blasData.accelerationStructureBuildGeometryInfo.pGeometries =
+      blasData.geometries.data();
 
-  blasData->accelerationStructureBuildSizesInfo.sType =
+  blasData.accelerationStructureBuildSizesInfo.sType =
       VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
   pEngineCore->coreExtensions->vkGetAccelerationStructureBuildSizesKHR(
       pEngineCore->devices.logical,
       VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
-      &blasData->accelerationStructureBuildGeometryInfo,
-      blasData->maxPrimitiveCounts.data(),
-      &blasData->accelerationStructureBuildSizesInfo);
+      &blasData.accelerationStructureBuildGeometryInfo,
+      blasData.maxPrimitiveCounts.data(),
+      &blasData.accelerationStructureBuildSizesInfo);
 
   Utilities_AS::createAccelerationStructureBuffer(
-      pEngineCore, &BLAS->memory, &BLAS->buffer,
-      &blasData->accelerationStructureBuildSizesInfo,
+      pEngineCore, &BLAS.memory, &BLAS.buffer,
+      &blasData.accelerationStructureBuildSizesInfo,
       "Utilities_AS::createBLAS___AccelerationStructureBuffer");
 
   VkAccelerationStructureCreateInfoKHR accelerationStructureCreateInfo{};
   accelerationStructureCreateInfo.sType =
       VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
-  accelerationStructureCreateInfo.buffer = BLAS->buffer;
+  accelerationStructureCreateInfo.buffer = BLAS.buffer;
   accelerationStructureCreateInfo.size =
-      blasData->accelerationStructureBuildSizesInfo.accelerationStructureSize;
+      blasData.accelerationStructureBuildSizesInfo.accelerationStructureSize;
   accelerationStructureCreateInfo.type =
       VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
 
@@ -343,26 +343,26 @@ void Utilities_AS::createBLAS(
       [pEngineCore, &BLAS, &accelerationStructureCreateInfo]() {
         return pEngineCore->objCreate.VKCreateAccelerationStructureKHR(
             &accelerationStructureCreateInfo, nullptr,
-            &BLAS->accelerationStructureKHR);
+            &BLAS.accelerationStructureKHR);
       },
       "Utilities_AS::createBLAS___BLASAccelerationStructureKHR");
 
   // create scratch buffer for acceleration structure build
   // gtp::Buffer scratchBuffer;
   Utilities_AS::createScratchBuffer(
-      pEngineCore, &BLAS->scratchBuffer,
-      blasData->accelerationStructureBuildSizesInfo.buildScratchSize,
+      pEngineCore, &BLAS.scratchBuffer,
+      blasData.accelerationStructureBuildSizesInfo.buildScratchSize,
       "Utilities_AS::createBLAS___blas_ScratchBufferBLAS");
 
-  blasData->accelerationStructureBuildGeometryInfo.mode =
+  blasData.accelerationStructureBuildGeometryInfo.mode =
       VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
-  blasData->accelerationStructureBuildGeometryInfo.dstAccelerationStructure =
-      BLAS->accelerationStructureKHR;
-  blasData->accelerationStructureBuildGeometryInfo.scratchData.deviceAddress =
-      BLAS->scratchBuffer.bufferData.bufferDeviceAddress.deviceAddress;
+  blasData.accelerationStructureBuildGeometryInfo.dstAccelerationStructure =
+      BLAS.accelerationStructureKHR;
+  blasData.accelerationStructureBuildGeometryInfo.scratchData.deviceAddress =
+      BLAS.scratchBuffer.bufferData.bufferDeviceAddress.deviceAddress;
 
   const VkAccelerationStructureBuildRangeInfoKHR *buildOffsetInfo =
-      blasData->buildRangeInfos.data();
+      blasData.buildRangeInfos.data();
 
   // Build the acceleration structure on the device via a one-time command
   // buffer submission create command buffer
@@ -371,8 +371,8 @@ void Utilities_AS::createBLAS(
 
   // build BLAS
   pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
-      commandBuffer, 1, &blasData->accelerationStructureBuildGeometryInfo,
-      blasData->pBuildRangeInfos.data());
+      commandBuffer, 1, &blasData.accelerationStructureBuildGeometryInfo,
+      blasData.pBuildRangeInfos.data());
 
   // end and submit and destroy command buffer
   pEngineCore->FlushCommandBuffer(commandBuffer, pEngineCore->queue.graphics,
@@ -383,8 +383,8 @@ void Utilities_AS::createBLAS(
   accelerationDeviceAddressInfo.sType =
       VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
   accelerationDeviceAddressInfo.accelerationStructure =
-      BLAS->accelerationStructureKHR;
-  BLAS->deviceAddress =
+      BLAS.accelerationStructureKHR;
+  BLAS.deviceAddress =
       pEngineCore->coreExtensions->vkGetAccelerationStructureDeviceAddressKHR(
           pEngineCore->devices.logical, &accelerationDeviceAddressInfo);
 }
