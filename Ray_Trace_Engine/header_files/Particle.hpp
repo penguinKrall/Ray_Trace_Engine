@@ -31,6 +31,9 @@ class Particle {
   // -- destroy particle
   void DestroyParticle();
 
+  // -- initialize particle torus transforms
+  VkTransformMatrixKHR ParticleTorusTransforms(int particleIdx, Utilities_UI::ModelData& modelData);
+
  private:
   gtp::Model *sphereModel = nullptr;
 
@@ -108,6 +111,7 @@ class Particle {
 
   // -- create particle compute pipeline command buffers
   void CreateCommandBuffers();
+
 };
 
 }  // namespace gtp

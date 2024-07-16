@@ -55,7 +55,8 @@ struct BottomLevelAccelerationStructureData {
 
 // -- Top Level Acceleration Structure data struct
 struct TopLevelAccelerationStructureData {
-  std::vector<VkAccelerationStructureInstanceKHR> bottomLevelAccelerationStructureInstances;
+  std::vector<VkAccelerationStructureInstanceKHR>
+      bottomLevelAccelerationStructureInstances{};
   VkAccelerationStructureGeometryKHR accelerationStructureGeometry{};
   VkAccelerationStructureBuildGeometryInfoKHR
       accelerationStructureBuildGeometryInfo{};
@@ -103,7 +104,7 @@ class AccelerationStructures {
 
   // -- top level acceleration structure
   AccelerationStructure topLevelAccelerationStructure{};
-  TopLevelAccelerationStructureData* topLevelAccelerationStructureData{};
+  TopLevelAccelerationStructureData topLevelAccelerationStructureData{};
 
   // core ptr
   EngineCore* pEngineCore = nullptr;
@@ -126,7 +127,9 @@ class AccelerationStructures {
   void CreateGeometryNodesBuffer();
 
   // -- create top level acceleration structure
-  void CreateTopLevelAccelerationStructure(std::vector<gtp::Model*> pModelList, Utilities_UI::ModelData& modelData);
+  void CreateTopLevelAccelerationStructure(
+      std::vector<gtp::Model*> pModelList, Utilities_UI::ModelData modelData,
+      std::vector<gtp::Particle*> pParticleList);
 
   // -- init func
   void InitAccelerationStructures(EngineCore* engineCorePtr);
@@ -134,6 +137,11 @@ class AccelerationStructures {
  public:
   // -- build bottom level acceleration structure
   void BuildBottomLevelAccelerationStructure(gtp::Model* pModel);
+
+  // -- build top level acceleration structure
+  void BuildTopLevelAccelerationStructure(
+      std::vector<gtp::Model*> pModelList, Utilities_UI::ModelData modelData,
+      std::vector<gtp::Particle*> pParticleList);
 
   // -- build geometry nodes buffer
   void BuildGeometryNodesBuffer();

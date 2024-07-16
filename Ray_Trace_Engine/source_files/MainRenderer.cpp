@@ -55,6 +55,10 @@ void MainRenderer::Init_MainRenderer(EngineCore *pEngineCore) {
   ////create top level acceleration structure
   this->CreateTLAS();
 
+  // acceleration structures class top level acceleration structure
+  this->accelerationStructures.BuildTopLevelAccelerationStructure(
+      this->assets.models, this->assets.modelData, this->assets.particle);
+
   std::cout << "\nfinished creating top level acceleration structure"
             << std::endl;
 
@@ -478,7 +482,26 @@ void MainRenderer::CreateTLAS() {
       // handle the instances for particles if the model was loaded for use as a
       // particle
       if (i > 0 && this->assets.models[i]->isParticle) {
-        this->InitializeParticleBLASInstances(i);
+        for (int i = 0; i < PARTICLE_COUNT; i++) {
+          VkAccelerationStructureInstanceKHR particleInstance;
+
+          // Assign this VkTransformMatrixKHR to your instance
+          particleInstance.transform =
+              this->assets.particle[i]->ParticleTorusTransforms(
+                  i, this->assets.modelData);
+          particleInstance.instanceCustomIndex = i;
+          particleInstance.mask = 0xFF;
+          particleInstance.instanceShaderBindingTableRecordOffset = 0;
+          particleInstance.accelerationStructureReference =
+              this->bottomLevelAccelerationStructures[i]
+                  ->accelerationStructure.deviceAddress;
+          // std::cout << "mainRenderer_bottom_levelAS_device_address"
+          //   << this->bottomLevelAccelerationStructures[particleIdx]
+          //   ->accelerationStructure.deviceAddress
+          //   << std::endl;
+          this->tlasData.bottomLevelAccelerationStructureInstances.push_back(
+              particleInstance);
+        }
       }
 
       // otherwise handle each instance
@@ -521,7 +544,7 @@ void MainRenderer::CreateTLAS() {
             .accelerationStructureReference =
             this->bottomLevelAccelerationStructures[i]
                 ->accelerationStructure.deviceAddress;
-        std::cout << "this->secondBLAS.deviceAddress"
+        std::cout << "mainRenderer_bottom_levelAS_device_address"
                   << this->bottomLevelAccelerationStructures[i]
                          ->accelerationStructure.deviceAddress
                   << std::endl;
@@ -744,7 +767,7 @@ void MainRenderer::InitializeParticleBLASInstances(int particleIdx) {
     particleInstance.accelerationStructureReference =
         this->bottomLevelAccelerationStructures[particleIdx]
             ->accelerationStructure.deviceAddress;
-    // std::cout << "this->secondBLAS.deviceAddress"
+    // std::cout << "mainRenderer_bottom_levelAS_device_address"
     //   << this->bottomLevelAccelerationStructures[particleIdx]
     //   ->accelerationStructure.deviceAddress
     //   << std::endl;

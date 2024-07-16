@@ -293,6 +293,9 @@ void gtp::AccelerationStructures::CreateBottomLevelAccelerationStructure(
 
   // add bottom level acceleration structure data to vector of bottom level as
   // datas
+  std::cout << " acceleration classes added bottomLevelASData to list"
+            << std::endl;
+
   this->bottomLevelAccelerationStructures.push_back(bottomLevelASData);
 }
 
@@ -356,14 +359,15 @@ void gtp::AccelerationStructures::CreateGeometryNodesBuffer() {
 }
 
 void gtp::AccelerationStructures::CreateTopLevelAccelerationStructure(
-    std::vector<gtp::Model*> pModelList, Utilities_UI::ModelData& modelData) {
+    std::vector<gtp::Model*> pModelList, Utilities_UI::ModelData modelData,
+    std::vector<gtp::Particle*> pParticleList) {
   // blas instances buffer size decl.
   VkDeviceSize blasInstancesBufSize = 0;
 
   // void pointer for blas instances data
   void* blasInstancesData = nullptr;
 
-  VkAccelerationStructureInstanceKHR bottomLevelAccelerationStructureInstance;
+  VkAccelerationStructureInstanceKHR tempASInstance{};
 
   /*OLD DELETE*/
   // resize renderer's blas instances 'buffer'
@@ -376,7 +380,26 @@ void gtp::AccelerationStructures::CreateTopLevelAccelerationStructure(
       // handle the instances for particles if the model was loaded for use as a
       // particle
       if (i > 0 && pModelList[i]->isParticle) {
-        // this->InitializeParticleBLASInstances(i);
+        for (int j = 0; j < PARTICLE_COUNT; j++) {
+          VkAccelerationStructureInstanceKHR particleInstance;
+
+          // Assign this VkTransformMatrixKHR to your instance
+          particleInstance.transform =
+              pParticleList[i]->ParticleTorusTransforms(i, modelData);
+          particleInstance.instanceCustomIndex = i;
+          particleInstance.mask = 0xFF;
+          particleInstance.instanceShaderBindingTableRecordOffset = 0;
+          particleInstance.accelerationStructureReference =
+              this->bottomLevelAccelerationStructures[i]
+                  ->accelerationStructure.deviceAddress;
+          // std::cout << "acceleration_structures_class_.deviceAddress"
+          //   << this->bottomLevelAccelerationStructures[particleIdx]
+          //   ->accelerationStructure.deviceAddress
+          //   << std::endl;
+          this->topLevelAccelerationStructureData
+              .bottomLevelAccelerationStructureInstances.push_back(
+                  particleInstance);
+        }
       }
 
       // otherwise handle each instance
@@ -396,7 +419,7 @@ void gtp::AccelerationStructures::CreateTopLevelAccelerationStructure(
             translationMatrix * rotationMatrix * scaleMatrix;
 
         // Convert glm::mat4 to VkTransformMatrixKHR
-        VkTransformMatrixKHR vkTransformMatrix;
+        VkTransformMatrixKHR vkTransformMatrix{};
 
         for (int col = 0; col < 4; ++col) {
           for (int row = 0; row < 3; ++row) {
@@ -407,32 +430,33 @@ void gtp::AccelerationStructures::CreateTopLevelAccelerationStructure(
 
         // assign VkTransformMatrixKHR to instance and initialize instance
         // struct data
-        bottomLevelAccelerationStructureInstance.transform = vkTransformMatrix;
-        bottomLevelAccelerationStructureInstance.instanceCustomIndex = i;
-        bottomLevelAccelerationStructureInstance.mask = 0xFF;
-        bottomLevelAccelerationStructureInstance
-            .instanceShaderBindingTableRecordOffset = 0;
-        bottomLevelAccelerationStructureInstance
-            .accelerationStructureReference =
+        tempASInstance.transform = vkTransformMatrix;
+        tempASInstance.instanceCustomIndex = i;
+        tempASInstance.mask = 0xFF;
+        tempASInstance.instanceShaderBindingTableRecordOffset = 0;
+        // std::cout << "accel tlas test: " << i << std::endl;
+        tempASInstance.accelerationStructureReference =
             this->bottomLevelAccelerationStructures[i]
                 ->accelerationStructure.deviceAddress;
-        std::cout << "this->secondBLAS.deviceAddress"
-                  << this->bottomLevelAccelerationStructures[i]
-                         ->accelerationStructure.deviceAddress
-                  << std::endl;
+        // std::cout
+        //     << "acceleration_structures_class_.bottom_level_AS_DeviceAddress"
+        //     << this->bottomLevelAccelerationStructures[i]
+        //            ->accelerationStructure.deviceAddress
+        //     << std::endl;
         this->topLevelAccelerationStructureData
-            ->bottomLevelAccelerationStructureInstances.push_back(
-                bottomLevelAccelerationStructureInstance);
+            .bottomLevelAccelerationStructureInstances.push_back(
+                tempASInstance);
       }
+      // std::cout << "outerTest: " << i << std::endl;
     }
   }
 
   /* instances buffer */
   // name buffer for debug hashmap
   buffers.tlas_instancesBuffer.bufferData.bufferName =
-      "MainRenderer_TLASInstancesBuffer";
+      "acceleration_structures_class_topLevelAS_InstancesBuffer";
   buffers.tlas_instancesBuffer.bufferData.bufferMemoryName =
-      "MainRenderer_TLASInstancesBufferMemory";
+      "acceleration_structures_class_topLevelAS_InstancesBufferMemory";
 
   // if blas instances 'buffer' has any elements
   if (this->bottomLevelAccelerationStructures.size() != 0) {
@@ -443,7 +467,7 @@ void gtp::AccelerationStructures::CreateTopLevelAccelerationStructure(
 
     // void pointer now points to instances 'buffer' data
     blasInstancesData = this->topLevelAccelerationStructureData
-                            ->bottomLevelAccelerationStructureInstances.data();
+                            .bottomLevelAccelerationStructureInstances.data();
   }
 
   // if instances 'buffer' is empty, assign a single uninitialized AS instance
@@ -461,67 +485,66 @@ void gtp::AccelerationStructures::CreateTopLevelAccelerationStructure(
           &buffers.tlas_instancesBuffer, blasInstancesBufSize,
           blasInstancesData) != VK_SUCCESS) {
     throw std::invalid_argument(
-        "failed to create MainRenderer instances buffer");
+        "failed to create accelerationStructuresClass instances buffer");
   }
 
   // get instance buffer device address
-  topLevelAccelerationStructureData->instanceDataDeviceAddress.deviceAddress =
+  topLevelAccelerationStructureData.instanceDataDeviceAddress.deviceAddress =
       pEngineCore->GetBufferDeviceAddress(
           buffers.tlas_instancesBuffer.bufferData.buffer);
 
   // initialize top level acceleration structure geometry struct
-  topLevelAccelerationStructureData->accelerationStructureGeometry.sType =
+  topLevelAccelerationStructureData.accelerationStructureGeometry.sType =
       VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
-  topLevelAccelerationStructureData->accelerationStructureGeometry
-      .geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
-  topLevelAccelerationStructureData->accelerationStructureGeometry.flags =
+  topLevelAccelerationStructureData.accelerationStructureGeometry.geometryType =
+      VK_GEOMETRY_TYPE_INSTANCES_KHR;
+  topLevelAccelerationStructureData.accelerationStructureGeometry.flags =
       VK_GEOMETRY_OPAQUE_BIT_KHR;
-  topLevelAccelerationStructureData->accelerationStructureGeometry.geometry
+  topLevelAccelerationStructureData.accelerationStructureGeometry.geometry
       .instances.sType =
       VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
-  topLevelAccelerationStructureData->accelerationStructureGeometry.geometry
+  topLevelAccelerationStructureData.accelerationStructureGeometry.geometry
       .instances.arrayOfPointers = VK_FALSE;
-  topLevelAccelerationStructureData->accelerationStructureGeometry.geometry
+  topLevelAccelerationStructureData.accelerationStructureGeometry.geometry
       .instances.data =
-      topLevelAccelerationStructureData->instanceDataDeviceAddress;
+      topLevelAccelerationStructureData.instanceDataDeviceAddress;
 
   /* get tlas size information */
   // Acceleration Structure Build Geometry Info
-  topLevelAccelerationStructureData->accelerationStructureBuildGeometryInfo
+  topLevelAccelerationStructureData.accelerationStructureBuildGeometryInfo
       .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-  topLevelAccelerationStructureData->accelerationStructureBuildGeometryInfo
+  topLevelAccelerationStructureData.accelerationStructureBuildGeometryInfo
       .type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-  topLevelAccelerationStructureData->accelerationStructureBuildGeometryInfo
+  topLevelAccelerationStructureData.accelerationStructureBuildGeometryInfo
       .flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
-  topLevelAccelerationStructureData->accelerationStructureBuildGeometryInfo
+  topLevelAccelerationStructureData.accelerationStructureBuildGeometryInfo
       .geometryCount = 1;
-  topLevelAccelerationStructureData->accelerationStructureBuildGeometryInfo
+  topLevelAccelerationStructureData.accelerationStructureBuildGeometryInfo
       .pGeometries =
-      &topLevelAccelerationStructureData->accelerationStructureGeometry;
+      &topLevelAccelerationStructureData.accelerationStructureGeometry;
 
   // -- tlas data member
   // primitive count
-  topLevelAccelerationStructureData->primitive_count = static_cast<uint32_t>(
+  topLevelAccelerationStructureData.primitive_count = static_cast<uint32_t>(
       this->topLevelAccelerationStructureData
-          ->bottomLevelAccelerationStructureInstances.size());
+          .bottomLevelAccelerationStructureInstances.size());
 
   // -- acceleration Structure Build Sizes Info
-  topLevelAccelerationStructureData->accelerationStructureBuildSizesInfo.sType =
+  topLevelAccelerationStructureData.accelerationStructureBuildSizesInfo.sType =
       VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 
   // -- get acceleration structure build sizes
   pEngineCore->coreExtensions->vkGetAccelerationStructureBuildSizesKHR(
       pEngineCore->devices.logical,
       VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
-      &topLevelAccelerationStructureData
-           ->accelerationStructureBuildGeometryInfo,
-      &topLevelAccelerationStructureData->primitive_count,
-      &topLevelAccelerationStructureData->accelerationStructureBuildSizesInfo);
+      &topLevelAccelerationStructureData.accelerationStructureBuildGeometryInfo,
+      &topLevelAccelerationStructureData.primitive_count,
+      &topLevelAccelerationStructureData.accelerationStructureBuildSizesInfo);
 
   // -- create acceleration structure buffer
   this->CreateAccelerationStructureBuffer(
       this->topLevelAccelerationStructure,
-      &topLevelAccelerationStructureData->accelerationStructureBuildSizesInfo,
+      &topLevelAccelerationStructureData.accelerationStructureBuildSizesInfo,
       "accelerationStructures_topLevelAS_Buffer");
 
   // -- acceleration structure create info
@@ -531,7 +554,7 @@ void gtp::AccelerationStructures::CreateTopLevelAccelerationStructure(
   accelerationStructureCreateInfo.buffer =
       this->topLevelAccelerationStructure.buffer;
   accelerationStructureCreateInfo.size =
-      topLevelAccelerationStructureData->accelerationStructureBuildSizesInfo
+      topLevelAccelerationStructureData.accelerationStructureBuildSizesInfo
           .accelerationStructureSize;
   accelerationStructureCreateInfo.type =
       VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
@@ -543,32 +566,32 @@ void gtp::AccelerationStructures::CreateTopLevelAccelerationStructure(
             &accelerationStructureCreateInfo, nullptr,
             &this->topLevelAccelerationStructure.accelerationStructureKHR);
       },
-      "MainRenderer_accelerationStructureKHR");
+      "accelerationStructuresClass_accelerationStructureKHR");
 
   // -- create scratch buffer
   this->CreateScratchBuffer(
       buffers.tlas_scratch,
-      topLevelAccelerationStructureData->accelerationStructureBuildSizesInfo
+      topLevelAccelerationStructureData.accelerationStructureBuildSizesInfo
           .buildScratchSize,
-      "mainRenderer_ScratchBufferTLAS");
+      "acceleration_structures_class_ScratchBuffer_top_levelAS");
 
   // acceleration Build Geometry Info{};
-  topLevelAccelerationStructureData->accelerationBuildGeometryInfo.sType =
+  topLevelAccelerationStructureData.accelerationBuildGeometryInfo.sType =
       VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-  topLevelAccelerationStructureData->accelerationBuildGeometryInfo.type =
+  topLevelAccelerationStructureData.accelerationBuildGeometryInfo.type =
       VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-  topLevelAccelerationStructureData->accelerationBuildGeometryInfo.flags =
+  topLevelAccelerationStructureData.accelerationBuildGeometryInfo.flags =
       VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
-  topLevelAccelerationStructureData->accelerationBuildGeometryInfo.mode =
+  topLevelAccelerationStructureData.accelerationBuildGeometryInfo.mode =
       VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
-  topLevelAccelerationStructureData->accelerationBuildGeometryInfo
+  topLevelAccelerationStructureData.accelerationBuildGeometryInfo
       .dstAccelerationStructure =
       this->topLevelAccelerationStructure.accelerationStructureKHR;
-  topLevelAccelerationStructureData->accelerationBuildGeometryInfo
+  topLevelAccelerationStructureData.accelerationBuildGeometryInfo
       .geometryCount = 1;
-  topLevelAccelerationStructureData->accelerationBuildGeometryInfo.pGeometries =
-      &topLevelAccelerationStructureData->accelerationStructureGeometry;
-  topLevelAccelerationStructureData->accelerationBuildGeometryInfo.scratchData
+  topLevelAccelerationStructureData.accelerationBuildGeometryInfo.pGeometries =
+      &topLevelAccelerationStructureData.accelerationStructureGeometry;
+  topLevelAccelerationStructureData.accelerationBuildGeometryInfo.scratchData
       .deviceAddress =
       buffers.tlas_scratch.bufferData.bufferDeviceAddress.deviceAddress;
 
@@ -576,13 +599,13 @@ void gtp::AccelerationStructures::CreateTopLevelAccelerationStructure(
   VkAccelerationStructureBuildRangeInfoKHR
       accelerationStructureBuildRangeInfo{};
   accelerationStructureBuildRangeInfo.primitiveCount =
-      topLevelAccelerationStructureData->primitive_count;
+      topLevelAccelerationStructureData.primitive_count;
   accelerationStructureBuildRangeInfo.primitiveOffset = 0;
   accelerationStructureBuildRangeInfo.firstVertex = 0;
   accelerationStructureBuildRangeInfo.transformOffset = 0;
 
   // array of acceleration structure build range info
-  topLevelAccelerationStructureData->accelerationBuildStructureRangeInfos = {
+  topLevelAccelerationStructureData.accelerationBuildStructureRangeInfos = {
       &accelerationStructureBuildRangeInfo};
 
   // build the acceleration structure on the device via a one-time command
@@ -598,8 +621,8 @@ void gtp::AccelerationStructures::CreateTopLevelAccelerationStructure(
   // build acceleration structure/s
   pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
       commandBuffer, 1,
-      &topLevelAccelerationStructureData->accelerationBuildGeometryInfo,
-      topLevelAccelerationStructureData->accelerationBuildStructureRangeInfos
+      &topLevelAccelerationStructureData.accelerationBuildGeometryInfo,
+      topLevelAccelerationStructureData.accelerationBuildStructureRangeInfos
           .data());
 
   // flush one time submit command buffer
@@ -630,6 +653,13 @@ void gtp::AccelerationStructures::InitAccelerationStructures(
 void gtp::AccelerationStructures::BuildBottomLevelAccelerationStructure(
     gtp::Model* pModel) {
   this->CreateBottomLevelAccelerationStructure(pModel);
+}
+
+void gtp::AccelerationStructures::BuildTopLevelAccelerationStructure(
+    std::vector<gtp::Model*> pModelList, Utilities_UI::ModelData modelData,
+    std::vector<gtp::Particle*> pParticleList) {
+  this->CreateTopLevelAccelerationStructure(pModelList, modelData,
+                                            pParticleList);
 }
 
 void gtp::AccelerationStructures::BuildGeometryNodesBuffer() {
@@ -676,6 +706,28 @@ void gtp::AccelerationStructures::DestroyAccelerationStructures() {
                      ->accelerationStructure.memory,
                  nullptr);
   }
+
+  // -- top level acceleration structure & related buffers -- //
+
+  // accel. structure
+  pEngineCore->coreExtensions->vkDestroyAccelerationStructureKHR(
+      pEngineCore->devices.logical,
+      this->topLevelAccelerationStructure.accelerationStructureKHR, nullptr);
+
+  // scratch buffer
+  buffers.tlas_scratch.destroy(this->pEngineCore->devices.logical);
+
+  // instances buffer
+  buffers.tlas_instancesBuffer.destroy(this->pEngineCore->devices.logical);
+
+  // accel. structure buffer and memory
+  vkDestroyBuffer(pEngineCore->devices.logical,
+                  this->topLevelAccelerationStructure.buffer, nullptr);
+  vkFreeMemory(pEngineCore->devices.logical,
+               this->topLevelAccelerationStructure.memory, nullptr);
+
+  // transforms buffer
+  this->buffers.transformBuffer.destroy(this->pEngineCore->devices.logical);
 
   // output success
   std::cout << "successfully destroyed acceleration structures class"

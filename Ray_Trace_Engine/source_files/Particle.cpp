@@ -497,3 +497,34 @@ void gtp::Particle::CreateCommandBuffers() {
   validate_vk_result(vkAllocateCommandBuffers(
       pEngineCore->devices.logical, &allocInfo, commandBuffers.data()));
 }
+
+VkTransformMatrixKHR gtp::Particle::ParticleTorusTransforms(int particleIdx, Utilities_UI::ModelData& modelData)
+{
+  glm::mat4 rotationMatrix =
+    modelData.transformMatrices[particleIdx].rotate;
+
+  // Scale down to 10%
+  glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
+
+  // Generate a random position on the torus
+  glm::vec3 randomPosition = generateRandomTorusPosition(1000.0f, 450.0f);
+
+  // Apply translation
+  glm::mat4 translationMatrix =
+    glm::translate(glm::mat4(1.0f), randomPosition);
+
+  // Combine rotation, translation, and scale into a single 4x4 matrix
+  glm::mat4 transformMatrix =
+    translationMatrix * rotationMatrix * scaleMatrix;
+
+  // Convert glm::mat4 to VkTransformMatrixKHR
+  VkTransformMatrixKHR vkTransformMatrix;
+
+  for (int col = 0; col < 4; ++col) {
+    for (int row = 0; row < 3; ++row) {
+      vkTransformMatrix.matrix[row][col] =
+        transformMatrix[col][row];  // Vulkan expects column-major order
+    }
+  }
+  return vkTransformMatrix;
+}
