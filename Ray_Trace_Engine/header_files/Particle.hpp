@@ -15,7 +15,7 @@
 namespace gtp {
 
 class Particle {
-public:
+ public:
   // -- default ctor
   Particle();
 
@@ -26,12 +26,12 @@ public:
   VkCommandBuffer RecordComputeCommands(int frame);
 
   // -- get model
-  gtp::Model* ParticleModel();
+  gtp::Model *ParticleModel();
 
   // -- destroy particle
   void DestroyParticle();
 
-private:
+ private:
   gtp::Model *sphereModel = nullptr;
 
   // -- compute shader data
@@ -110,4 +110,4 @@ private:
   void CreateCommandBuffers();
 };
 
-} // namespace gtp
+}  // namespace gtp

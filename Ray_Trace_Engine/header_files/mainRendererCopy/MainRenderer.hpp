@@ -23,7 +23,7 @@ class MainRenderer {
   // tlas particle update refactor later
   bool updateTLAS = false;
 
-  //std::vector<VkAccelerationStructureInstanceKHR> blasInstances;
+  std::vector<VkAccelerationStructureInstanceKHR> blasInstances;
 
   // -- geometry node vector
   std::vector<Utilities_AS::GeometryNode> geometryNodes;

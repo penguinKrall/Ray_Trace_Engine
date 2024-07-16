@@ -1,5 +1,22 @@
 #include "Particle.hpp"
 
+// Function to generate a random float between min and max
+float randomFloat(float min, float max) {
+  static std::default_random_engine generator;
+  std::uniform_real_distribution<float> distribution(min, max);
+  return distribution(generator);
+}
+
+// Function to generate a random position on a torus
+glm::vec3 generateRandomTorusPosition(float outerRadius, float innerRadius) {
+  float u = randomFloat(0.0f, 2.0f * glm::pi<float>());
+  float v = randomFloat(0.0f, 2.0f * glm::pi<float>());
+  float x = (outerRadius + innerRadius * cos(v)) * cos(u);
+  float z = (outerRadius + innerRadius * cos(v)) * sin(u);  // swapped y with z
+  float y = innerRadius * sin(v) / 4;                       // swapped z with y
+  return glm::vec3(x, y, z);
+}
+
 gtp::Particle::Particle() {}
 
 gtp::Particle::Particle(EngineCore *corePtr) { this->InitParticle(corePtr); }

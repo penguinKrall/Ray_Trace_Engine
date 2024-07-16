@@ -1,16 +1,16 @@
 #include "MainRenderer.hpp"
 
 // Function to generate a random float between min and max
-float rFloat(float min, float max) {
+float randomFloat(float min, float max) {
   static std::default_random_engine generator;
   std::uniform_real_distribution<float> distribution(min, max);
   return distribution(generator);
 }
 
 // Function to generate a random position on a torus
-glm::vec3 randomTorusPosition(float outerRadius, float innerRadius) {
-  float u = rFloat(0.0f, 2.0f * glm::pi<float>());
-  float v = rFloat(0.0f, 2.0f * glm::pi<float>());
+glm::vec3 generateRandomTorusPosition(float outerRadius, float innerRadius) {
+  float u = randomFloat(0.0f, 2.0f * glm::pi<float>());
+  float v = randomFloat(0.0f, 2.0f * glm::pi<float>());
   float x = (outerRadius + innerRadius * cos(v)) * cos(u);
   float z = (outerRadius + innerRadius * cos(v)) * sin(u);  // swapped y with z
   float y = innerRadius * sin(v) / 4;                       // swapped z with y
@@ -30,7 +30,7 @@ void MainRenderer::Init_MainRenderer(EngineCore *pEngineCore) {
   // object mouse select
   this->tools.objectMouseSelect = gtp::ObjectMouseSelect(this->pEngineCore);
 
-  // acceleration structures class initialize
+  //acceleration structures class initialize
   this->accelerationStructures = gtp::AccelerationStructures(this->pEngineCore);
 
   // shader
@@ -43,9 +43,6 @@ void MainRenderer::Init_MainRenderer(EngineCore *pEngineCore) {
   this->LoadAssets();
 
   std::cout << "\nfinished loading assets." << std::endl;
-
-  // acceleration structures class geometry nodes buffer
-  this->accelerationStructures.BuildGeometryNodesBuffer();
 
   ////create geometry nodes buffer
   this->CreateGeometryNodesBuffer();
@@ -226,9 +223,6 @@ void MainRenderer::LoadModel(
 
   // create bottom level acceleration structure for model
   CreateBLAS(tempModel);
-
-  // acceleration structures class refactor
-  this->accelerationStructures.BuildBottomLevelAccelerationStructure(tempModel);
 
   // not a particle
   this->assets.particle.push_back(nullptr);
@@ -465,14 +459,11 @@ void MainRenderer::CreateTLAS() {
   // void pointer for blas instances data
   void *blasInstancesData = nullptr;
 
-  VkAccelerationStructureInstanceKHR bottomLevelAccelerationStructureInstance;
-
-  /*OLD DELETE*/
   // resize renderer's blas instances 'buffer'
-  // blasInstances.resize(this->bottomLevelAccelerationStructures.size());
+  blasInstances.resize(this->bottomLevelAccelerationStructures.size());
 
   // if blas instances 'buffer' contains at least one element
-  if (this->bottomLevelAccelerationStructures.size() != 0) {
+  if (blasInstances.size() != 0) {
     // iterate through the models list
     for (int i = 0; i < this->assets.models.size(); i++) {
       // handle the instances for particles if the model was loaded for use as a
@@ -512,21 +503,17 @@ void MainRenderer::CreateTLAS() {
 
         // assign VkTransformMatrixKHR to instance and initialize instance
         // struct data
-        bottomLevelAccelerationStructureInstance.transform = vkTransformMatrix;
-        bottomLevelAccelerationStructureInstance.instanceCustomIndex = i;
-        bottomLevelAccelerationStructureInstance.mask = 0xFF;
-        bottomLevelAccelerationStructureInstance
-            .instanceShaderBindingTableRecordOffset = 0;
-        bottomLevelAccelerationStructureInstance
-            .accelerationStructureReference =
+        blasInstances[i].transform = vkTransformMatrix;
+        blasInstances[i].instanceCustomIndex = i;
+        blasInstances[i].mask = 0xFF;
+        blasInstances[i].instanceShaderBindingTableRecordOffset = 0;
+        blasInstances[i].accelerationStructureReference =
             this->bottomLevelAccelerationStructures[i]
                 ->accelerationStructure.deviceAddress;
         std::cout << "this->secondBLAS.deviceAddress"
                   << this->bottomLevelAccelerationStructures[i]
                          ->accelerationStructure.deviceAddress
                   << std::endl;
-        this->tlasData.bottomLevelAccelerationStructureInstances.push_back(
-            bottomLevelAccelerationStructureInstance);
       }
     }
   }
@@ -539,15 +526,13 @@ void MainRenderer::CreateTLAS() {
       "MainRenderer_TLASInstancesBufferMemory";
 
   // if blas instances 'buffer' has any elements
-  if (this->bottomLevelAccelerationStructures.size() != 0) {
+  if (blasInstances.size() != 0) {
     // size of instance struct * number of instances in the 'buffer'
-    blasInstancesBufSize =
-        sizeof(VkAccelerationStructureInstanceKHR) *
-        static_cast<uint32_t>(this->bottomLevelAccelerationStructures.size());
+    blasInstancesBufSize = sizeof(VkAccelerationStructureInstanceKHR) *
+                           static_cast<uint32_t>(blasInstances.size());
 
     // void pointer now points to instances 'buffer' data
-    blasInstancesData =
-        this->tlasData.bottomLevelAccelerationStructureInstances.data();
+    blasInstancesData = blasInstances.data();
   }
 
   // if instances 'buffer' is empty, assign a single uninitialized AS instance
@@ -600,8 +585,7 @@ void MainRenderer::CreateTLAS() {
 
   // -- tlas data member
   // primitive count
-  tlasData.primitive_count = static_cast<uint32_t>(
-      this->tlasData.bottomLevelAccelerationStructureInstances.size());
+  tlasData.primitive_count = static_cast<uint32_t>(blasInstances.size());
 
   // -- acceleration Structure Build Sizes Info
   tlasData.accelerationStructureBuildSizesInfo.sType =
@@ -716,7 +700,7 @@ void MainRenderer::InitializeParticleBLASInstances(int particleIdx) {
     glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
 
     // Generate a random position on the torus
-    glm::vec3 randomPosition = randomTorusPosition(1000.0f, 450.0f);
+    glm::vec3 randomPosition = generateRandomTorusPosition(1000.0f, 450.0f);
 
     // Apply translation
     glm::mat4 translationMatrix =
@@ -748,8 +732,7 @@ void MainRenderer::InitializeParticleBLASInstances(int particleIdx) {
     //   << this->bottomLevelAccelerationStructures[particleIdx]
     //   ->accelerationStructure.deviceAddress
     //   << std::endl;
-    this->tlasData.bottomLevelAccelerationStructureInstances.push_back(
-        particleInstance);
+    blasInstances.push_back(particleInstance);
   }
 }
 
@@ -1707,7 +1690,7 @@ void MainRenderer::UpdateTLAS() {
   if (this->updateTLAS) {
     // check that there are currently models with bottom level acceleration
     // structures
-    if (this->tlasData.bottomLevelAccelerationStructureInstances.size() != 0) {
+    if (blasInstances.size() != 0) {
       // iterate through modelData update blas flag array
       for (int i = 0; i < this->assets.modelData.updateBLAS.size(); i++) {
         if (this->assets.modelData.updateBLAS[i]) {
@@ -1735,30 +1718,23 @@ void MainRenderer::UpdateTLAS() {
           }
 
           // update bottom level acceleration structure instance
-          this->tlasData.bottomLevelAccelerationStructureInstances[i]
-              .transform = vkTransformMatrix;
-          this->tlasData.bottomLevelAccelerationStructureInstances[i]
-              .instanceCustomIndex = i;
-          this->tlasData.bottomLevelAccelerationStructureInstances[i].mask =
-              0xFF;
-          this->tlasData.bottomLevelAccelerationStructureInstances[i]
-              .instanceShaderBindingTableRecordOffset = 0;
-          this->tlasData.bottomLevelAccelerationStructureInstances[i]
-              .accelerationStructureReference =
+          blasInstances[i].transform = vkTransformMatrix;
+          blasInstances[i].instanceCustomIndex = i;
+          blasInstances[i].mask = 0xFF;
+          blasInstances[i].instanceShaderBindingTableRecordOffset = 0;
+          blasInstances[i].accelerationStructureReference =
               this->bottomLevelAccelerationStructures[i]
                   ->accelerationStructure.deviceAddress;
         }
       }
     }
 
-    if (this->tlasData.bottomLevelAccelerationStructureInstances.size() != 0) {
+    if (blasInstances.size() != 0) {
       // -- update instances buffer
       buffers.tlas_instancesBuffer.copyTo(
-          this->tlasData.bottomLevelAccelerationStructureInstances.data(),
+          blasInstances.data(),
           sizeof(VkAccelerationStructureInstanceKHR) *
-              static_cast<uint32_t>(
-                  this->tlasData.bottomLevelAccelerationStructureInstances
-                      .size()));
+              static_cast<uint32_t>(blasInstances.size()));
 
       // -- instance buffer device address
       tlasData.instanceDataDeviceAddress.deviceAddress =
@@ -1792,8 +1768,7 @@ void MainRenderer::UpdateTLAS() {
 
       // -- tlas data member
       // primitive count
-      tlasData.primitive_count = static_cast<uint32_t>(
-          this->tlasData.bottomLevelAccelerationStructureInstances.size());
+      tlasData.primitive_count = static_cast<uint32_t>(blasInstances.size());
 
       // -- acceleration Structure Build Sizes Info
       tlasData.accelerationStructureBuildSizesInfo.sType =
@@ -2023,7 +1998,7 @@ void MainRenderer::DeleteModel() {
   vkDeviceWaitIdle(this->pEngineCore->devices.logical);
 
   // clear blas instances 'buffer'
-  this->tlasData.bottomLevelAccelerationStructureInstances.clear();
+  blasInstances.clear();
 
   // destroy particle class if one is associated
   if (this->assets.models[this->assets.modelData.modelIndex]->isParticle) {
@@ -2522,9 +2497,6 @@ void MainRenderer::Destroy_MainRenderer() {
   // g node indices buffer
   this->buffers.geometry_nodes_indices.destroy(
       this->pEngineCore->devices.logical);
-
-  // acceleration structures class
-  this->accelerationStructures.DestroyAccelerationStructures();
 
   // -- bottom level acceleration structure & related buffers -- //
   for (int i = 0; i < this->bottomLevelAccelerationStructures.size(); i++) {

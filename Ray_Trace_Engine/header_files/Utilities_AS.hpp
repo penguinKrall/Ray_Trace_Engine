@@ -52,6 +52,7 @@ public:
 
   // -- TLAS data struct
   struct TLASData {
+    std::vector<VkAccelerationStructureInstanceKHR> bottomLevelAccelerationStructureInstances;
     VkAccelerationStructureGeometryKHR accelerationStructureGeometry{};
     VkAccelerationStructureBuildGeometryInfoKHR
         accelerationStructureBuildGeometryInfo{};
