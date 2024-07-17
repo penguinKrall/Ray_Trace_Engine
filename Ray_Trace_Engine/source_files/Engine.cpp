@@ -155,7 +155,7 @@ void Engine::HandleUI() {
 void Engine::RetrieveColorID() {
   if (this->pEngineCore->camera->mouseOnWindow) {
     if (this->isLMBPressed) {
-      this->renderers.mainRenderer.tools.objectMouseSelect.RetrieveObjectID();
+      this->renderers.mainRenderer.GetTools().objectMouseSelect.RetrieveObjectID();
       this->isLMBPressed = false;
     }
   }

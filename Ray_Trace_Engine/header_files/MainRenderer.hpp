@@ -1,5 +1,6 @@
 #pragma once
 
+#include <AccelerationStructures.hpp>
 #include <ComputeVertex.hpp>
 #include <EngineCore.hpp>
 #include <ObjectMouseSelect.hpp>
@@ -10,15 +11,13 @@
 #include <Utilities_Renderer.hpp>
 #include <Utilities_UI.hpp>
 #include <glTFModel.hpp>
-#include <AccelerationStructures.hpp>
 
 #define VK_GLTF_MATERIAL_IDS
 
 class MainRenderer {
  private:
-
-   //acceleration structures
-   gtp::AccelerationStructures accelerationStructures;
+  // acceleration structures
+  gtp::AccelerationStructures accelerationStructures;
 
   // tlas particle update refactor later
   bool updateTLAS = false;
@@ -123,9 +122,8 @@ class MainRenderer {
   void BuildCommandBuffers();
 
   // -- create geometry nodes buffer
-  //void CreateGeometryNodesBuffer();
+  // void CreateGeometryNodesBuffer();
 
- public:
   /* tools */
   struct Tools {
     gtp::ObjectMouseSelect objectMouseSelect;
@@ -133,6 +131,7 @@ class MainRenderer {
 
   Tools tools{};
 
+ public:
   // -- constructor
   MainRenderer();
 
@@ -178,6 +177,9 @@ class MainRenderer {
 
   // -- set renderer asset model data
   void SetModelData(Utilities_UI::ModelData *pModelData);
+
+  // -- get tools
+  MainRenderer::Tools GetTools();
 
   // -- Destroy
   void Destroy();
