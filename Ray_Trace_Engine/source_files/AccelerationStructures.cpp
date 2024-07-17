@@ -38,7 +38,7 @@ void gtp::AccelerationStructures::CreateScratchBuffer(gtp::Buffer& buffer,
 void gtp::AccelerationStructures::CreateAccelerationStructureBuffer(
     AccelerationStructure& accelerationStructure,
     VkAccelerationStructureBuildSizesInfoKHR* buildSizeInfo,
-    std::string bufferName) {
+    std::string& bufferName) {
   // buffer create info
   VkBufferCreateInfo bufferCreateInfo{};
   bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -219,10 +219,10 @@ void gtp::AccelerationStructures::CreateBottomLevelAccelerationStructure(
       bottomLevelASData->maxPrimitiveCounts.data(),
       &bottomLevelASData->accelerationStructureBuildSizesInfo);
 
+  std::string bufName = "createBLAS___AccelerationStructureBuffer";
   this->CreateAccelerationStructureBuffer(
       bottomLevelASData->accelerationStructure,
-      &bottomLevelASData->accelerationStructureBuildSizesInfo,
-      "createBLAS___AccelerationStructureBuffer");
+      &bottomLevelASData->accelerationStructureBuildSizesInfo, bufName);
 
   VkAccelerationStructureCreateInfoKHR accelerationStructureCreateInfo{};
   accelerationStructureCreateInfo.sType =
@@ -359,8 +359,8 @@ void gtp::AccelerationStructures::CreateGeometryNodesBuffer() {
 }
 
 void gtp::AccelerationStructures::CreateTopLevelAccelerationStructure(
-    std::vector<gtp::Model*> pModelList, Utilities_UI::ModelData modelData,
-    std::vector<gtp::Particle*> pParticleList) {
+    std::vector<gtp::Model*>& pModelList, Utilities_UI::ModelData& modelData,
+    std::vector<gtp::Particle*>& pParticleList) {
   // blas instances buffer size decl.
   VkDeviceSize blasInstancesBufSize = 0;
 
@@ -541,11 +541,13 @@ void gtp::AccelerationStructures::CreateTopLevelAccelerationStructure(
       &topLevelAccelerationStructureData.primitive_count,
       &topLevelAccelerationStructureData.accelerationStructureBuildSizesInfo);
 
+  std::string bufName = "accelerationStructures_topLevelAS_Buffer";
+
   // -- create acceleration structure buffer
   this->CreateAccelerationStructureBuffer(
       this->topLevelAccelerationStructure,
       &topLevelAccelerationStructureData.accelerationStructureBuildSizesInfo,
-      "accelerationStructures_topLevelAS_Buffer");
+      bufName);
 
   // -- acceleration structure create info
   VkAccelerationStructureCreateInfoKHR accelerationStructureCreateInfo{};
@@ -655,15 +657,472 @@ void gtp::AccelerationStructures::BuildBottomLevelAccelerationStructure(
   this->CreateBottomLevelAccelerationStructure(pModel);
 }
 
+void gtp::AccelerationStructures::RebuildBottomLevelAccelerationStructure(
+    int modelCount, Utilities_UI::ModelData& modelData) {
+  // begin one time submit command buffer
+  VkCommandBuffer commandBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(
+      VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+  /* animation bottom level acceleration structures */
+  // iterate through models
+  for (int i = 0; i < modelCount; i++) {
+    // check if there are animated models
+    if (!modelData.animatedModelIndex.empty()) {
+      // check if model is animated
+      if (modelData.animatedModelIndex[i] == 1) {
+        // verify current model is being animated
+        if (modelData.isAnimated[i] || modelData.updateBLAS[i]) {
+          // build bottom level acceleration structure for model
+          pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
+              commandBuffer, 1,
+              &this->bottomLevelAccelerationStructures[i]
+                   ->accelerationStructureBuildGeometryInfo,
+              this->bottomLevelAccelerationStructures[i]
+                  ->pBuildRangeInfos.data());
+          // flag that the top level acceleration structure needs to be update
+          updateTopLevelAS = true;
+        }
+      }
+    }
+  }
+
+  /* non animated models */
+  // iterate through model data flag array
+  for (int i = 0; i < modelData.updateBLAS.size(); i++) {
+    // check if model requires bottom level acceleration structure update and is
+    // not an animated model
+    if (modelData.updateBLAS[i] && modelData.animatedModelIndex[i] != 1) {
+      // build bottom level acceleration structure for model
+      pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
+          commandBuffer, 1,
+          &this->bottomLevelAccelerationStructures[i]
+               ->accelerationStructureBuildGeometryInfo,
+          this->bottomLevelAccelerationStructures[i]->pBuildRangeInfos.data());
+      // flag top level acceleration structure requires update
+      updateTopLevelAS = true;
+    }
+  }
+
+  // end, submit, and destroy one time submit command buffer
+  pEngineCore->FlushCommandBuffer(commandBuffer, pEngineCore->queue.graphics,
+                                  pEngineCore->commandPools.graphics, true);
+}
+
+void gtp::AccelerationStructures::RebuildTopLevelAccelerationStructure(
+    Utilities_UI::ModelData& modelData) {
+  // check renderer has been flagged to update top level acceleration structure
+  if (this->updateTopLevelAS) {
+    // check that there are currently models with bottom level acceleration
+    // structures
+    if (this->topLevelAccelerationStructureData
+            .bottomLevelAccelerationStructureInstances.size() != 0) {
+      // iterate through modelData update blas flag array
+      for (int i = 0; i < modelData.updateBLAS.size(); i++) {
+        if (modelData.updateBLAS[i]) {
+          // update translation matrices
+          glm::mat4 rotationMatrix = modelData.transformMatrices[i].rotate;
+          glm::mat4 translationMatrix =
+              modelData.transformMatrices[i].translate;
+
+          glm::mat4 scaleMatrix = modelData.transformMatrices[i].scale;
+
+          // Combine rotation, translation, and scale into a single 4x4 matrix
+          glm::mat4 transformMatrix =
+              translationMatrix * rotationMatrix * scaleMatrix;
+
+          // Convert glm::mat4 to VkTransformMatrixKHR
+          VkTransformMatrixKHR vkTransformMatrix;
+          for (int col = 0; col < 4; ++col) {
+            for (int row = 0; row < 3; ++row) {
+              vkTransformMatrix.matrix[row][col] =
+                  transformMatrix[col]
+                                 [row];  // Vulkan expects column-major order
+            }
+          }
+
+          // update bottom level acceleration structure instance
+          this->topLevelAccelerationStructureData
+              .bottomLevelAccelerationStructureInstances[i]
+              .transform = vkTransformMatrix;
+          this->topLevelAccelerationStructureData
+              .bottomLevelAccelerationStructureInstances[i]
+              .instanceCustomIndex = i;
+          this->topLevelAccelerationStructureData
+              .bottomLevelAccelerationStructureInstances[i]
+              .mask = 0xFF;
+          this->topLevelAccelerationStructureData
+              .bottomLevelAccelerationStructureInstances[i]
+              .instanceShaderBindingTableRecordOffset = 0;
+          this->topLevelAccelerationStructureData
+              .bottomLevelAccelerationStructureInstances[i]
+              .accelerationStructureReference =
+              this->bottomLevelAccelerationStructures[i]
+                  ->accelerationStructure.deviceAddress;
+        }
+      }
+    }
+
+    if (this->topLevelAccelerationStructureData
+            .bottomLevelAccelerationStructureInstances.size() != 0) {
+      // -- update instances buffer
+      buffers.tlas_instancesBuffer.copyTo(
+          this->topLevelAccelerationStructureData
+              .bottomLevelAccelerationStructureInstances.data(),
+          sizeof(VkAccelerationStructureInstanceKHR) *
+              static_cast<uint32_t>(
+                  this->topLevelAccelerationStructureData
+                      .bottomLevelAccelerationStructureInstances.size()));
+
+      // -- instance buffer device address
+      topLevelAccelerationStructureData.instanceDataDeviceAddress
+          .deviceAddress = pEngineCore->GetBufferDeviceAddress(
+          buffers.tlas_instancesBuffer.bufferData.buffer);
+
+      // -- acceleration Structure Geometry{};
+      topLevelAccelerationStructureData.accelerationStructureGeometry.sType =
+          VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+      topLevelAccelerationStructureData.accelerationStructureGeometry
+          .geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
+      topLevelAccelerationStructureData.accelerationStructureGeometry.flags =
+          VK_GEOMETRY_OPAQUE_BIT_KHR;
+      topLevelAccelerationStructureData.accelerationStructureGeometry.geometry
+          .instances.sType =
+          VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
+      topLevelAccelerationStructureData.accelerationStructureGeometry.geometry
+          .instances.arrayOfPointers = VK_FALSE;
+      topLevelAccelerationStructureData.accelerationStructureGeometry.geometry
+          .instances.data =
+          topLevelAccelerationStructureData.instanceDataDeviceAddress;
+
+      //  -- Get size info -- //
+      // Acceleration Structure Build Geometry Info
+      topLevelAccelerationStructureData.accelerationStructureBuildGeometryInfo
+          .sType =
+          VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+      topLevelAccelerationStructureData.accelerationStructureBuildGeometryInfo
+          .type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+      topLevelAccelerationStructureData.accelerationStructureBuildGeometryInfo
+          .flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
+      topLevelAccelerationStructureData.accelerationStructureBuildGeometryInfo
+          .geometryCount = 1;
+      topLevelAccelerationStructureData.accelerationStructureBuildGeometryInfo
+          .pGeometries =
+          &topLevelAccelerationStructureData.accelerationStructureGeometry;
+
+      // -- tlas data member
+      // primitive count
+      topLevelAccelerationStructureData.primitive_count = static_cast<uint32_t>(
+          this->topLevelAccelerationStructureData
+              .bottomLevelAccelerationStructureInstances.size());
+
+      // -- acceleration Structure Build Sizes Info
+      topLevelAccelerationStructureData.accelerationStructureBuildSizesInfo
+          .sType =
+          VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
+
+      // -- get acceleration structure build sizes
+      pEngineCore->coreExtensions->vkGetAccelerationStructureBuildSizesKHR(
+          pEngineCore->devices.logical,
+          VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+          &topLevelAccelerationStructureData
+               .accelerationStructureBuildGeometryInfo,
+          &topLevelAccelerationStructureData.primitive_count,
+          &topLevelAccelerationStructureData
+               .accelerationStructureBuildSizesInfo);
+
+      VkAccelerationStructureGeometryKHR accelerationStructureGeometry{};
+      accelerationStructureGeometry.sType =
+          VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+      accelerationStructureGeometry.geometryType =
+          VK_GEOMETRY_TYPE_INSTANCES_KHR;
+      accelerationStructureGeometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+      accelerationStructureGeometry.geometry.instances.sType =
+          VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
+      accelerationStructureGeometry.geometry.instances.arrayOfPointers =
+          VK_FALSE;
+      accelerationStructureGeometry.geometry.instances.data =
+          topLevelAccelerationStructureData.instanceDataDeviceAddress;
+
+      // Get size info
+      VkAccelerationStructureBuildGeometryInfoKHR
+          accelerationStructureBuildGeometryInfo{};
+      accelerationStructureBuildGeometryInfo.sType =
+          VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+      accelerationStructureBuildGeometryInfo.type =
+          VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+      accelerationStructureBuildGeometryInfo.flags =
+          VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+      accelerationStructureBuildGeometryInfo.mode =
+          VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+      accelerationStructureBuildGeometryInfo.dstAccelerationStructure =
+          this->topLevelAccelerationStructure.accelerationStructureKHR;
+      accelerationStructureBuildGeometryInfo.geometryCount = 1;
+      accelerationStructureBuildGeometryInfo.pGeometries =
+          &accelerationStructureGeometry;
+      accelerationStructureBuildGeometryInfo.scratchData.deviceAddress =
+          buffers.tlas_scratch.bufferData.bufferDeviceAddress.deviceAddress;
+
+      // uint32_t primitive_count = buffers.tlas_instancesBuffer.;
+
+      VkAccelerationStructureBuildSizesInfoKHR
+          accelerationStructureBuildSizesInfo{};
+      accelerationStructureBuildSizesInfo.sType =
+          VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
+
+      pEngineCore->coreExtensions->vkGetAccelerationStructureBuildSizesKHR(
+          pEngineCore->devices.logical,
+          VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+          &accelerationStructureBuildGeometryInfo,
+          &topLevelAccelerationStructureData.primitive_count,
+          &accelerationStructureBuildSizesInfo);
+
+      VkAccelerationStructureBuildRangeInfoKHR
+          accelerationStructureBuildRangeInfo{};
+      accelerationStructureBuildRangeInfo.primitiveCount =
+          topLevelAccelerationStructureData.primitive_count;
+      accelerationStructureBuildRangeInfo.primitiveOffset = 0;
+      accelerationStructureBuildRangeInfo.firstVertex = 0;
+      accelerationStructureBuildRangeInfo.transformOffset = 0;
+
+      std::vector<VkAccelerationStructureBuildRangeInfoKHR*>
+          accelerationBuildStructureRangeInfos = {
+              &accelerationStructureBuildRangeInfo};
+
+      // build the acceleration structure on the device via a one-time command
+      // buffer submission some implementations may support acceleration
+      // structure building on the host
+      //(VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands),
+      // but we prefer device builds create command buffer
+      VkCommandBuffer commandBuffer =
+          pEngineCore->objCreate.VKCreateCommandBuffer(
+              VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+      // this is where i start next
+      // build acceleration structures
+      pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
+          commandBuffer, 1, &accelerationStructureBuildGeometryInfo,
+          accelerationBuildStructureRangeInfos.data());
+
+      // flush command buffer
+      pEngineCore->FlushCommandBuffer(commandBuffer,
+                                      pEngineCore->queue.graphics,
+                                      pEngineCore->commandPools.graphics, true);
+
+      // std::cout << " test" << std::endl;
+
+      // get acceleration structure device address
+      VkAccelerationStructureDeviceAddressInfoKHR
+          accelerationDeviceAddressInfo{};
+      accelerationDeviceAddressInfo.sType =
+          VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
+      accelerationDeviceAddressInfo.accelerationStructure =
+          this->topLevelAccelerationStructure.accelerationStructureKHR;
+
+      this->topLevelAccelerationStructure.deviceAddress =
+          pEngineCore->coreExtensions
+              ->vkGetAccelerationStructureDeviceAddressKHR(
+                  pEngineCore->devices.logical, &accelerationDeviceAddressInfo);
+    }
+  }
+
+  this->updateTopLevelAS = false;
+}
+
 void gtp::AccelerationStructures::BuildTopLevelAccelerationStructure(
-    std::vector<gtp::Model*> pModelList, Utilities_UI::ModelData modelData,
-    std::vector<gtp::Particle*> pParticleList) {
+    std::vector<gtp::Model*>& pModelList, Utilities_UI::ModelData& modelData,
+    std::vector<gtp::Particle*>& pParticleList) {
+  this->CreateTopLevelAccelerationStructure(pModelList, modelData,
+                                            pParticleList);
+}
+
+void gtp::AccelerationStructures::RebuildAccelerationStructures(
+    int modelCount, Utilities_UI::ModelData& modelData) {
+  this->RebuildBottomLevelAccelerationStructure(modelCount, modelData);
+  this->RebuildTopLevelAccelerationStructure(modelData);
+}
+
+void gtp::AccelerationStructures::RebuildGeometryBuffer(
+    gtp::Model* pModel, std::vector<gtp::Model*>& pModelList,
+    Utilities_UI::ModelData& modelData,
+    std::vector<gtp::Particle*>& pParticleList) {
+  std::cout << " updating geometry nodes buffer" << std::endl;
+
+  std::cout << pModel->modelName << std::endl;
+
+  // destroy geometry nodes and geometry node indices buffer
+  this->buffers.geometry_nodes_buffer.destroy(
+      this->pEngineCore->devices.logical);
+  this->buffers.geometry_nodes_indices.destroy(
+      this->pEngineCore->devices.logical);
+
+  this->CreateGeometryNodesBuffer();
+
+  // -- top level acceleration structure & related buffers -- //
+
+  // accel. structure
+  pEngineCore->coreExtensions->vkDestroyAccelerationStructureKHR(
+      pEngineCore->devices.logical,
+      this->topLevelAccelerationStructure.accelerationStructureKHR, nullptr);
+
+  // scratch buffer
+  buffers.tlas_scratch.destroy(this->pEngineCore->devices.logical);
+
+  // instances buffer
+  buffers.tlas_instancesBuffer.destroy(this->pEngineCore->devices.logical);
+
+  // accel. structure buffer and memory
+  vkDestroyBuffer(pEngineCore->devices.logical,
+                  this->topLevelAccelerationStructure.buffer, nullptr);
+  vkFreeMemory(pEngineCore->devices.logical,
+               this->topLevelAccelerationStructure.memory, nullptr);
+
+  // transforms buffer
+  this->buffers.transformBuffer.destroy(this->pEngineCore->devices.logical);
+
   this->CreateTopLevelAccelerationStructure(pModelList, modelData,
                                             pParticleList);
 }
 
 void gtp::AccelerationStructures::BuildGeometryNodesBuffer() {
   this->CreateGeometryNodesBuffer();
+}
+
+void gtp::AccelerationStructures::HandleModelDeleteBottomLevel(
+    int defaultTexCount, std::vector<gtp::Model*>& modelList) {
+  // update bottom level acceleration structures
+  for (int i = 0; i < this->bottomLevelAccelerationStructures.size(); i++) {
+    // accel. structure
+    pEngineCore->coreExtensions->vkDestroyAccelerationStructureKHR(
+        pEngineCore->devices.logical,
+        this->bottomLevelAccelerationStructures[i]
+            ->accelerationStructure.accelerationStructureKHR,
+        nullptr);
+
+    // scratch buffer
+    this->bottomLevelAccelerationStructures[i]
+        ->accelerationStructure.scratchBuffer.destroy(
+            this->pEngineCore->devices.logical);
+
+    // accel structure buffer and memory
+    vkDestroyBuffer(pEngineCore->devices.logical,
+                    this->bottomLevelAccelerationStructures[i]
+                        ->accelerationStructure.buffer,
+                    nullptr);
+    vkFreeMemory(pEngineCore->devices.logical,
+                 this->bottomLevelAccelerationStructures[i]
+                     ->accelerationStructure.memory,
+                 nullptr);
+  }
+
+  // update texture offset
+  this->textureOffset = static_cast<uint32_t>(defaultTexCount);
+
+  // create vector of blas pointers to reassign mainRenderer member of blas
+  // pointers with
+  std::vector<Utilities_AS::BLASData*> tempLevelAccelerationStructures;
+
+  // clear g node buffer
+  this->geometryNodes.clear();
+  // clear g node index buffer
+  this->geometryNodesIndex.clear();
+  // clear bottom level acceleration structures "buffer"
+  this->bottomLevelAccelerationStructures.clear();
+
+  for (int i = 0; i < modelList.size(); i++) {
+    this->CreateBottomLevelAccelerationStructure(modelList[i]);
+  }
+
+  // update g nodes buffer with updated vector of g nodes
+  this->buffers.geometry_nodes_buffer.copyTo(
+      this->geometryNodes.data(), static_cast<uint32_t>(geometryNodes.size()) *
+                                      sizeof(Utilities_AS::GeometryNode));
+
+  // update g node indices buffer with updated vector of g node indices
+  this->buffers.geometry_nodes_indices.copyTo(
+      this->geometryNodesIndex.data(),
+      static_cast<uint32_t>(geometryNodesIndex.size()) * sizeof(int));
+}
+
+void gtp::AccelerationStructures::HandleModelDeleteTopLevel(
+    std::vector<gtp::Model*>& modelList, Utilities_UI::ModelData& modelData,
+    std::vector<gtp::Particle*>& pParticleList) {
+  // accel. structure
+  pEngineCore->coreExtensions->vkDestroyAccelerationStructureKHR(
+      pEngineCore->devices.logical,
+      this->topLevelAccelerationStructure.accelerationStructureKHR, nullptr);
+
+  // scratch buffer
+  buffers.tlas_scratch.destroy(this->pEngineCore->devices.logical);
+
+  // instances buffer
+  buffers.tlas_instancesBuffer.destroy(this->pEngineCore->devices.logical);
+
+  // accel. structure buffer and memory
+  vkDestroyBuffer(pEngineCore->devices.logical,
+                  this->topLevelAccelerationStructure.buffer, nullptr);
+  vkFreeMemory(pEngineCore->devices.logical,
+               this->topLevelAccelerationStructure.memory, nullptr);
+
+  // transforms buffer
+  this->buffers.transformBuffer.destroy(this->pEngineCore->devices.logical);
+
+  modelData.modelIndex = 0;
+
+  vkDeviceWaitIdle(this->pEngineCore->devices.logical);
+
+  // UpdateBLAS();
+  this->RebuildBottomLevelAccelerationStructure(
+      static_cast<int>(modelList.size()), modelData);
+  this->CreateTopLevelAccelerationStructure(modelList, modelData,
+                                            pParticleList);
+  // CreateTLAS();
+
+  //// acceleration structures class update acceleration structures
+  // this->RebuildAccelerationStructures(
+  //     modelList.size(), modelData);
+}
+
+VkAccelerationStructureKHR
+gtp::AccelerationStructures::GetTopLevelAccelerationStructureKHR() {
+  return this->topLevelAccelerationStructure.accelerationStructureKHR;
+}
+
+VkDescriptorBufferInfo
+gtp::AccelerationStructures::GetGeometryNodesBufferDescriptor() {
+  VkDescriptorBufferInfo gNodeDescriptor{};
+  gNodeDescriptor.buffer =
+      this->buffers.geometry_nodes_buffer.bufferData.buffer;
+  gNodeDescriptor.offset = 0;
+  gNodeDescriptor.range = this->buffers.geometry_nodes_buffer.bufferData.size;
+
+  return gNodeDescriptor;
+}
+
+VkDescriptorBufferInfo
+gtp::AccelerationStructures::GetGeometryNodesIndexBufferDescriptor() {
+  VkDescriptorBufferInfo gNodeIndexDescriptor{};
+  gNodeIndexDescriptor.buffer =
+      this->buffers.geometry_nodes_indices.bufferData.buffer;
+  gNodeIndexDescriptor.offset = 0;
+  gNodeIndexDescriptor.range =
+      this->buffers.geometry_nodes_indices.bufferData.size;
+
+  return gNodeIndexDescriptor;
+}
+
+void gtp::AccelerationStructures::SetTextureOffset(int offset)
+{
+  this->textureOffset = offset;
+}
+
+uint32_t gtp::AccelerationStructures::GetTextureOffset() {
+  return this->textureOffset;
+}
+
+void gtp::AccelerationStructures::
+    ClearBottomLevelAccelerationStructureInstances() {
+  this->topLevelAccelerationStructureData
+      .bottomLevelAccelerationStructureInstances.clear();
 }
 
 gtp::AccelerationStructures::AccelerationStructures() {}

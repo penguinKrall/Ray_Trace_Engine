@@ -74,6 +74,9 @@ struct TopLevelAccelerationStructureData {
 class AccelerationStructures {
  private:
   /* vars */
+   //flags
+   bool updateTopLevelAS = false;
+   bool updateBottomLevelAS = false;
 
   // buffers
   //  -- buffers
@@ -118,7 +121,7 @@ class AccelerationStructures {
   void CreateAccelerationStructureBuffer(
       AccelerationStructure& accelerationStructure,
       VkAccelerationStructureBuildSizesInfoKHR* buildSizeInfo,
-      std::string bufferName);
+      std::string& bufferName);
 
   // -- create bottom level acceleration structure
   void CreateBottomLevelAccelerationStructure(gtp::Model* pModel);
@@ -128,23 +131,62 @@ class AccelerationStructures {
 
   // -- create top level acceleration structure
   void CreateTopLevelAccelerationStructure(
-      std::vector<gtp::Model*> pModelList, Utilities_UI::ModelData modelData,
-      std::vector<gtp::Particle*> pParticleList);
+      std::vector<gtp::Model*>& pModelList, Utilities_UI::ModelData& modelData,
+      std::vector<gtp::Particle*>& pParticleList);
 
   // -- init func
   void InitAccelerationStructures(EngineCore* engineCorePtr);
+
+  // -- rebuild bottom level acceleration structure
+  void RebuildBottomLevelAccelerationStructure(int modelCount, Utilities_UI::ModelData& modelData);
+
+  // -- rebuild top level acceleration structure
+  void RebuildTopLevelAccelerationStructure(Utilities_UI::ModelData& modelData);
 
  public:
   // -- build bottom level acceleration structure
   void BuildBottomLevelAccelerationStructure(gtp::Model* pModel);
 
+
   // -- build top level acceleration structure
   void BuildTopLevelAccelerationStructure(
-      std::vector<gtp::Model*> pModelList, Utilities_UI::ModelData modelData,
-      std::vector<gtp::Particle*> pParticleList);
+      std::vector<gtp::Model*>& pModelList, Utilities_UI::ModelData& modelData,
+      std::vector<gtp::Particle*>& pParticleList);
+
+  // -- rebuild Acceleration structures
+  void RebuildAccelerationStructures(int modelCount, Utilities_UI::ModelData& modelData);
+
+  // -- rebuild Geometry buffer
+  void RebuildGeometryBuffer(gtp::Model* pModel, std::vector<gtp::Model*>& pModelList, Utilities_UI::ModelData& modelData,
+    std::vector<gtp::Particle*>& pParticleList);
 
   // -- build geometry nodes buffer
   void BuildGeometryNodesBuffer();
+  
+  // -- handle model delete bottom level
+  void HandleModelDeleteBottomLevel(int defaultTexCount, std::vector<gtp::Model*>& modelList);
+
+  // -- handle model delete top level
+  void HandleModelDeleteTopLevel(std::vector<gtp::Model*>& modelList, Utilities_UI::ModelData& modelData,
+    std::vector<gtp::Particle*>& pParticleList);
+
+  // -- get accelerationStructureKHR
+  VkAccelerationStructureKHR GetTopLevelAccelerationStructureKHR();
+
+  // -- get geometry buffer descriptor info
+  VkDescriptorBufferInfo GetGeometryNodesBufferDescriptor();
+
+  // -- get geometry nodes index buffer descriptor info
+  VkDescriptorBufferInfo GetGeometryNodesIndexBufferDescriptor();
+
+  // -- set texture offset
+  void SetTextureOffset(int offset);
+
+  // -- get texture offset
+  uint32_t GetTextureOffset();
+
+  // -- clear bottom level AS instances
+  void ClearBottomLevelAccelerationStructureInstances();
 
   // -- base ctor
   AccelerationStructures();

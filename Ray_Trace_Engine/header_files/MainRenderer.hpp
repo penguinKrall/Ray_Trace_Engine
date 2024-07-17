@@ -26,19 +26,19 @@ class MainRenderer {
   //std::vector<VkAccelerationStructureInstanceKHR> blasInstances;
 
   // -- geometry node vector
-  std::vector<Utilities_AS::GeometryNode> geometryNodes;
+  //std::vector<Utilities_AS::GeometryNode> geometryNodes;
 
   // -- geometry node index vector
-  std::vector<Utilities_AS::GeometryIndex> geometryNodesIndices;
+  //std::vector<Utilities_AS::GeometryIndex> geometryNodesIndices;
 
   // -- buffers
   struct Buffers {
-    gtp::Buffer transformBuffer{};
-    gtp::Buffer geometry_nodes_buffer{};
-    gtp::Buffer geometry_nodes_indices{};
-    gtp::Buffer blas_scratch{};
-    gtp::Buffer tlas_scratch{};
-    gtp::Buffer tlas_instancesBuffer{};
+    //gtp::Buffer transformBuffer{};
+    //gtp::Buffer geometry_nodes_buffer{};
+    //gtp::Buffer geometry_nodes_indices{};
+    //gtp::Buffer blas_scratch{};
+    //gtp::Buffer tlas_scratch{};
+    //gtp::Buffer tlas_instancesBuffer{};
     gtp::Buffer ubo{};
   };
 
@@ -46,7 +46,7 @@ class MainRenderer {
   Utilities_Renderer::ShaderBindingTableData shaderBindingTableData{};
 
   // -- top level acceleration structure
-  Utilities_AS::AccelerationStructure TLAS{};
+  //Utilities_AS::AccelerationStructure TLAS{};
 
   // -- core pointer
   EngineCore *pEngineCore = nullptr;
@@ -58,10 +58,10 @@ class MainRenderer {
   Utilities_Renderer::UniformData uniformData{};
 
   // -- bottom level acceleration structures
-  std::vector<Utilities_AS::BLASData *> bottomLevelAccelerationStructures;
+  //std::vector<Utilities_AS::BLASData *> bottomLevelAccelerationStructures;
 
   // -- TLAS data
-  Utilities_AS::TLASData tlasData{};
+  //Utilities_AS::TLASData tlasData{};
 
   // -- Buffers
   Buffers buffers;
@@ -83,7 +83,7 @@ class MainRenderer {
 
   // -- assets data struct
   struct Assets {
-    uint32_t textureOffset = 0;
+    //uint32_t textureOffset = 0;
     std::vector<gtp::TextureLoader> defaultTextures;
 
     // models
@@ -123,16 +123,16 @@ class MainRenderer {
   void LoadAssets();
 
   // -- create BLAS
-  void CreateBLAS(gtp::Model *pModel);
+  //void CreateBLAS(gtp::Model *pModel);
 
   // -- create top level acceleration structure
-  void CreateTLAS();
+  //void CreateTLAS();
 
   // -- load gltf compute
   void LoadGltfCompute(gtp::Model *pModel);
 
   // -- handle particle tlas instances
-  void InitializeParticleBLASInstances(int particleIdx);
+  //void InitializeParticleBLASInstances(int particleIdx);
 
   // -- create storage image
   void CreateStorageImages();
@@ -159,7 +159,7 @@ class MainRenderer {
   void BuildCommandBuffers();
 
   // -- create geometry nodes buffer
-  void CreateGeometryNodesBuffer();
+  //void CreateGeometryNodesBuffer();
 
  public:
   /* tools */
@@ -192,16 +192,19 @@ class MainRenderer {
   void RebuildCommandBuffers(int frame, bool showObjectColorID);
 
   // -- update BLAS
-  void UpdateBLAS();
+  //void UpdateBLAS();
 
   // -- update TLAS
-  void UpdateTLAS();
+  //void UpdateTLAS();
 
   //// -- create geometry nodes buffer
   // void CreateGeometryNodesBuffer();
 
   // -- update geometry nodes buffer
-  void UpdateGeometryNodesBuffer(gtp::Model *pModel);
+  //void UpdateGeometryNodesBuffer(gtp::Model *pModel);
+
+  // -- handle acceleration structure update
+  void HandleAccelerationStructureUpdate();
 
   // -- delete model
   void DeleteModel();

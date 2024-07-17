@@ -515,9 +515,11 @@ void Engine::Draw() {
     this->renderers.mainRenderer.UpdateUniformBuffer(
         timer, this->UI.rendererData.lightPosition);
 
-    this->renderers.mainRenderer.UpdateBLAS();
+    this->renderers.mainRenderer.HandleAccelerationStructureUpdate();
 
-    this->renderers.mainRenderer.UpdateTLAS();
+    // this->renderers.mainRenderer.UpdateBLAS();
+    //
+    // this->renderers.mainRenderer.UpdateTLAS();
 
     for (int i = 0; i < this->UI.modelData.updateBLAS.size(); i++) {
       this->UI.modelData.updateBLAS[i] = false;
