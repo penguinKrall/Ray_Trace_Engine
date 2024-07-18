@@ -1828,6 +1828,7 @@ void MainRenderer::HandleLoadModel(gtp::FileLoadingFlags loadingFlags) {
   // call main renderer load model function
   this->LoadModel(this->assets.modelData.loadModelFilepath, loadingFlags);
 
+  
   // update main renderer geometry nodes buffer
   // this->UpdateGeometryNodesBuffer(
   //    this->assets.models[this->assets.models.size() - 1]);

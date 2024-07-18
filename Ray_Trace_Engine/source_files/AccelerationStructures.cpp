@@ -671,7 +671,7 @@ void gtp::AccelerationStructures::RebuildBottomLevelAccelerationStructure(
       // check if model is animated
       if (modelData.animatedModelIndex[i] == 1) {
         // verify current model is being animated
-        if (modelData.isAnimated[i] || modelData.updateBLAS[i]) {
+        if (modelData.isAnimated[i]) {
           // build bottom level acceleration structure for model
           pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
               commandBuffer, 1,
