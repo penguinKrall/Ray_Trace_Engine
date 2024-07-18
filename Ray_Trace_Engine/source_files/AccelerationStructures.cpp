@@ -671,7 +671,7 @@ void gtp::AccelerationStructures::RebuildBottomLevelAccelerationStructure(
       // check if model is animated
       if (modelData.animatedModelIndex[i] == 1) {
         // verify current model is being animated
-        if (modelData.isAnimated[i]) {
+        if (modelData.isAnimated[i] || modelData.updateBLAS[i]) {
           // build bottom level acceleration structure for model
           pEngineCore->coreExtensions->vkCmdBuildAccelerationStructuresKHR(
               commandBuffer, 1,
@@ -966,6 +966,9 @@ void gtp::AccelerationStructures::RebuildGeometryBuffer(
 
   // scratch buffer
   buffers.tlas_scratch.destroy(this->pEngineCore->devices.logical);
+
+  this->topLevelAccelerationStructureData
+      .bottomLevelAccelerationStructureInstances.clear();
 
   // instances buffer
   buffers.tlas_instancesBuffer.destroy(this->pEngineCore->devices.logical);
