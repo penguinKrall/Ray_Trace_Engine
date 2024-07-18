@@ -84,6 +84,13 @@ void main() {
             ignoreIntersectionEXT;
         }
     }
+
+    //else{
+    // rayPayload.bgTest = rayPayload.color.rgb;
+    // rayPayload.accumulatedColor.rgb = rayPayload.color.rgb;
+    // rayPayload.accumulatedAlpha = 1.0f;
+    //}
+
 }
 
 

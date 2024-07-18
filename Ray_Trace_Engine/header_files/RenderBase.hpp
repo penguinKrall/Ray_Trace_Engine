@@ -10,6 +10,7 @@
 #include <Utilities_Renderer.hpp>
 #include <Utilities_UI.hpp>
 #include <glTFModel.hpp>
+#include <AccelerationStructures.hpp>
 
 #define VK_GLTF_MATERIAL_IDS
 
@@ -19,25 +20,11 @@ class RenderBase {
   /*	base class private data structures	*/
   // -- buffers
   struct Buffers {
-    gtp::Buffer transformBuffer{};
-    gtp::Buffer g_nodes_buffer{};
-    gtp::Buffer g_nodes_indices{};
-    gtp::Buffer blas_scratch{};
-    gtp::Buffer tlas_scratch{};
-    gtp::Buffer tlas_instancesBuffer{};
     gtp::Buffer ubo{};
   };
   Buffers buffers{};
 
   /*	base class private variables	*/
-  // bottom level acceleration structure instances
-  std::vector<VkAccelerationStructureInstanceKHR> blasInstances;
-
-  // -- geometry node vector
-  std::vector<Utilities_AS::GeometryNode> geometryNodeBuf;
-
-  // -- geometry node index vector
-  std::vector<Utilities_AS::GeometryIndex> geometryIndexBuf;
 
   // core pointer
   EngineCore* pEngineCore = nullptr;

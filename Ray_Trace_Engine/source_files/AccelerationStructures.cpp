@@ -380,7 +380,7 @@ void gtp::AccelerationStructures::CreateTopLevelAccelerationStructure(
       // handle the instances for particles if the model was loaded for use as a
       // particle
       if (i > 0 && pModelList[i]->isParticle) {
-        for (int j = 0; j < PARTICLE_COUNT; j++) {
+        for (int i = 0; i < PARTICLE_COUNT; i++) {
           VkAccelerationStructureInstanceKHR particleInstance;
 
           // Assign this VkTransformMatrixKHR to your instance
@@ -1110,8 +1110,7 @@ gtp::AccelerationStructures::GetGeometryNodesIndexBufferDescriptor() {
   return gNodeIndexDescriptor;
 }
 
-void gtp::AccelerationStructures::SetTextureOffset(int offset)
-{
+void gtp::AccelerationStructures::SetTextureOffset(int offset) {
   this->textureOffset = offset;
 }
 

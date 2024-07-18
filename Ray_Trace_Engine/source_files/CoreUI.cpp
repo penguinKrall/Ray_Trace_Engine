@@ -111,7 +111,6 @@ void CoreUI::InitCoreUI(EngineCore *pEngineCore) {
 }
 
 void CoreUI::CreateFontImage() {
-
   // font texture data
   // unsigned char* fontData = nullptr;
 
@@ -241,7 +240,6 @@ void CoreUI::CreateFontSampler() {
 }
 
 void CoreUI::CreateUIRenderPass() {
-
   // attachments (swapchain image)
   std::array<VkAttachmentDescription, 1> attachmentDescription{};
   attachmentDescription[0].format =
@@ -310,7 +308,6 @@ void CoreUI::CreateUIRenderPass() {
 }
 
 void CoreUI::CreateUIPipeline() {
-
   // push constant range
   VkPushConstantRange pushConstantRange{};
   pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
@@ -516,7 +513,6 @@ void CoreUI::CreateUIFramebuffer() {
 
   for (auto &imageviews :
        pEngineCore->swapchainData.swapchainImages.imageView) {
-
     std::vector<VkImageView> framebufferAttachments = {
         imageviews,
     };
@@ -557,7 +553,6 @@ void CoreUI::RecreateFramebuffers() {
 }
 
 void CoreUI::CreateResources() {
-
   // create font image/memory/view
   CreateFontImage();
 
@@ -668,7 +663,6 @@ void CoreUI::CreateResources() {
 }
 
 void CoreUI::CreateFontImageDescriptor() {
-
   // pool sizes
   std::vector<VkDescriptorPoolSize> poolSizes = {
       {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1}};
@@ -747,7 +741,6 @@ void CoreUI::CreateFontImageDescriptor() {
 }
 
 void CoreUI::UpdateBuffers() {
-
   // get draw data
   backends.drawData = ImGui::GetDrawData();
 
@@ -775,7 +768,6 @@ void CoreUI::UpdateBuffers() {
   // update vertex buffer
   if ((buffers.vertex.bufferData.buffer == VK_NULL_HANDLE) ||
       (buffers.vertexCount != backends.drawData->TotalVtxCount)) {
-
     // unmap
     if (buffers.vertex.bufferData.mapped != nullptr) {
       vkUnmapMemory(pEngineCore->devices.logical,
@@ -813,7 +805,6 @@ void CoreUI::UpdateBuffers() {
   // update index buffer
   if ((buffers.index.bufferData.buffer == VK_NULL_HANDLE) ||
       (buffers.indexCount < backends.drawData->TotalIdxCount)) {
-
     // unmap
     if (buffers.index.bufferData.mapped != nullptr) {
       vkUnmapMemory(pEngineCore->devices.logical,
@@ -876,7 +867,6 @@ void CoreUI::UpdateBuffers() {
 }
 
 void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
-
   ImGui_ImplVulkan_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
@@ -888,21 +878,20 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
                ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBackground |
                    ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove);
 
-  ImGui::SetWindowPos(ImVec2(0, 0)); // set position to top left
+  ImGui::SetWindowPos(ImVec2(0, 0));  // set position to top left
   ImGui::SetWindowSize(ImVec2(
       static_cast<float>(pEngineCore->swapchainData.swapchainExtent2D.width),
-      100)); // set size of top left window
+      100));  // set size of top left window
 
   // top left window menu bar
   // file/close
   if (ImGui::BeginMenuBar()) {
     if (ImGui::BeginMenu("File", true)) {
-
       if (ImGui::MenuItem("Exit", "Esc")) {
         glfwSetWindowShouldClose(pEngineCore->windowGLFW, true);
       }
 
-      ImGui::EndMenu(); // End "File" drop-down menu
+      ImGui::EndMenu();  // End "File" drop-down menu
     }
 
     // Place this line after rendering the menu bar
@@ -913,7 +902,7 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
     ImGui::Text("framerate: %.3f ms/frame (%.1f FPS)",
                 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
-    ImGui::EndMenuBar(); // End main menu bar
+    ImGui::EndMenuBar();  // End main menu bar
   }
 
   ImGui::End();
@@ -923,7 +912,6 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
   if (pModelData->modelName.size() != 0) {
     if (ImGui::BeginCombo(
             "Model", pModelData->modelName[pModelData->modelIndex].c_str())) {
-
       for (int i = 0; i < pModelData->modelName.size(); ++i) {
         bool isSelected = (pModelData->modelIndex == i);
         if (ImGui::Selectable(pModelData->modelName[i].c_str(), isSelected)) {
@@ -944,7 +932,6 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
   }
 
   if (ImGui::CollapsingHeader("Add/Delete Model")) {
-
     if (ImGui::Button("Select File")) {
       IGFD::FileDialogConfig config;
       config.path = ".";
@@ -964,6 +951,7 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
     if (ImGui::Button("Load Model") &&
         this->loadModelFlags.loadModelName != "none") {
       this->modelData.loadModel = true;
+      this->modelData.isUpdated = true;
     }
 
     // choose file window
@@ -992,7 +980,6 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
   // -- Model Controls
   if (pModelData->modelName.size() != 0) {
     if (ImGui::CollapsingHeader("Model Controls")) {
-
       // toggle animation on or off
       if (ImGui::Button("Animate")) {
         this->modelData.isAnimated[pModelData->modelIndex] =
@@ -1011,7 +998,6 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
                       [pModelData->modelIndex]
                       [pModelData->activeAnimation[pModelData->modelIndex][0]]
                   .c_str())) {
-
         for (int i = 0;
              i < pModelData->animationNames[pModelData->modelIndex].size();
              ++i) {
@@ -1128,7 +1114,6 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
   }
   // -- Debug Controls
   if (ImGui::CollapsingHeader("Render/Debug Controls")) {
-
     if (ImGui::Button("Show Object Color IDS ON")) {
       this->rendererData.showColorImage = false;
       this->rendererData.showIDImage = true;
@@ -1148,7 +1133,6 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
 }
 
 void CoreUI::DrawUI(const VkCommandBuffer commandBuffer, int currentFrame) {
-
   // set viewport and scissor
   pEngineCore->extent.width =
       pEngineCore->swapchainData.swapchainExtent2D.width;
@@ -1252,11 +1236,9 @@ void CoreUI::DrawUI(const VkCommandBuffer commandBuffer, int currentFrame) {
 
   // draw
   for (int32_t i = 0; i < backends.drawData->CmdListsCount; i++) {
-
     const ImDrawList *cmd_list = backends.drawData->CmdLists[i];
 
     for (int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
-
       const ImDrawCmd *pcmd = &cmd_list->CmdBuffer[j];
       VkRect2D scissorRect{};
       scissorRect.offset.x = std::max((int32_t)(pcmd->ClipRect.x), 0);
@@ -1278,7 +1260,6 @@ void CoreUI::DrawUI(const VkCommandBuffer commandBuffer, int currentFrame) {
 }
 
 void CoreUI::SetModelData(const Utilities_UI::ModelData *pModelData) {
-
   // set names
   this->modelData = *pModelData;
 
@@ -1290,7 +1271,6 @@ void CoreUI::SetModelData(const Utilities_UI::ModelData *pModelData) {
 }
 
 void CoreUI::DestroyUI() {
-
   // framebuffers
   for (const auto &fbuffs : renderData.framebuffer) {
     vkDestroyFramebuffer(pEngineCore->devices.logical, fbuffs, nullptr);

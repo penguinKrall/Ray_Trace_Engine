@@ -141,19 +141,12 @@ void gtp::ObjectMouseSelect::RetrieveObjectID() {
 
       // Identify the object using the color
       float objectIDRed = red;
-      float objectIDGreen = green;
-      float objectIDBlue = blue;
-      float objectIDAlpha = alpha;
 
-      std::cout << "Selected Object ID: \n" << objectIDRed << std::endl;
-      std::cout << "mouse position" << "\nx: " << this->pEngineCore->posX
-                << "\ny: " << this->pEngineCore->posY << std::endl;
-      std::cout << "adjustedY: " << adjustedY << "\nindex: " << index
-                << std::endl;
-
-      //<< objectIDGreen << std::endl
-      //<< objectIDBlue << std::endl
-      //<< objectIDAlpha << std::endl;
+      //std::cout << "Selected Object ID: \n" << objectIDRed << std::endl;
+      //std::cout << "mouse position" << "\nx: " << this->pEngineCore->posX
+      //          << "\ny: " << this->pEngineCore->posY << std::endl;
+      //std::cout << "adjustedY: " << adjustedY << "\nindex: " << index
+      //          << std::endl;
 
       // set color ID image layout to transfer src optimal
       gtp::Utilities_EngCore::setImageLayout(

@@ -1,4 +1,4 @@
-//
+
 layout(push_constant) uniform BufferReferences {
 	uint64_t vertices;
 	uint64_t indices;
