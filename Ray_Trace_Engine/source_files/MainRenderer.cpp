@@ -1861,10 +1861,7 @@ void MainRenderer::SetModelData(Utilities_UI::ModelData *pModelData) {
   this->assets.modelData.isUpdated = false;
 }
 
-MainRenderer::Tools MainRenderer::GetTools()
-{
-  return this->tools;
-}
+MainRenderer::Tools MainRenderer::GetTools() { return this->tools; }
 
 void MainRenderer::Destroy() { this->Destroy_MainRenderer(); }
 

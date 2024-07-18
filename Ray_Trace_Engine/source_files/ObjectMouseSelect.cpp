@@ -1,7 +1,6 @@
 #include "ObjectMouseSelect.hpp"
 
 void gtp::ObjectMouseSelect::InitObjectMouseSelect(EngineCore *engineCorePtr) {
-
   // init core pointer
   this->pEngineCore = engineCorePtr;
 
@@ -71,14 +70,12 @@ void gtp::ObjectMouseSelect::HandleResize() {
 }
 
 void gtp::ObjectMouseSelect::RetrieveObjectID() {
-
   if (this->pEngineCore->posX <
           this->pEngineCore->swapchainData.swapchainExtent2D.width &&
       this->pEngineCore->posX > 0) {
     if (this->pEngineCore->posY <
             this->pEngineCore->swapchainData.swapchainExtent2D.height &&
         this->pEngineCore->posY > 0) {
-
       VkCommandBuffer commandBuffer =
           pEngineCore->objCreate.VKCreateCommandBuffer(
               VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -118,9 +115,12 @@ void gtp::ObjectMouseSelect::RetrieveObjectID() {
                   VK_WHOLE_SIZE, 0, &data);
 
       // Adjust mouse coordinates if necessary
-      auto adjustedY =
-          static_cast<int>(pEngineCore->swapchainData.swapchainExtent2D.height -
-                           1 - this->pEngineCore->posY);
+      // auto adjustedY =
+      //    static_cast<int>(pEngineCore->swapchainData.swapchainExtent2D.height
+      //    -
+      //                     1 - this->pEngineCore->posY);
+
+      auto adjustedY = this->pEngineCore->posY;
 
       // Calculate the index
       int index = static_cast<int>(
@@ -140,9 +140,20 @@ void gtp::ObjectMouseSelect::RetrieveObjectID() {
                     this->buffers.colorIDImageBuffer.bufferData.memory);
 
       // Identify the object using the color
-      float objectID = red;
+      float objectIDRed = red;
+      float objectIDGreen = green;
+      float objectIDBlue = blue;
+      float objectIDAlpha = alpha;
 
-      // std::cout << "Selected Object ID: " << objectID << std::endl;
+      std::cout << "Selected Object ID: \n" << objectIDRed << std::endl;
+      std::cout << "mouse position" << "\nx: " << this->pEngineCore->posX
+                << "\ny: " << this->pEngineCore->posY << std::endl;
+      std::cout << "adjustedY: " << adjustedY << "\nindex: " << index
+                << std::endl;
+
+      //<< objectIDGreen << std::endl
+      //<< objectIDBlue << std::endl
+      //<< objectIDAlpha << std::endl;
 
       // set color ID image layout to transfer src optimal
       gtp::Utilities_EngCore::setImageLayout(

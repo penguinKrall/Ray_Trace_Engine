@@ -20,7 +20,7 @@ class MainRenderer {
   gtp::AccelerationStructures accelerationStructures;
 
   // tlas particle update refactor later
-  bool updateTLAS = false;
+  //bool updateTLAS = false;
 
   // -- buffers
   struct Buffers {
