@@ -70,10 +70,10 @@ void Engine::Run() {
     // poll events
     glfwPollEvents();
 
-    // timer
-    this->UpdateDeltaTime();
-
     if (camera->activeWindow) {
+      // timer
+      this->UpdateDeltaTime();
+
       // handle input
       this->userInput();
 
@@ -94,13 +94,13 @@ void Engine::Run() {
 
       // draw
       this->Draw();
+
+      // set to false - wont update buffers again unless view changes
+      pEngineCore->camera->viewUpdated = false;
+
+      // Update Animation Timer
+      this->UpdateAnimationTimer();
     }
-
-    // set to false - wont update buffers again unless view changes
-    pEngineCore->camera->viewUpdated = false;
-
-    // Update Animation Timer
-    this->UpdateAnimationTimer();
   }
 }
 
@@ -119,7 +119,7 @@ void Engine::Terminate() {
   // renderers
   // MainRenderer
   this->renderers.defaultRenderer->Destroy();
-  this->renderers.mainRenderer.Destroy();
+  // this->renderers.mainRenderer.Destroy();
 
   // core
   DestroyCore();
@@ -135,8 +135,10 @@ void Engine::UpdateAnimationTimer() { this->timer += deltaTime; }
 
 void Engine::UpdateUI() {
   if (this->isUIUpdated) {
-    this->UI.SetModelData(this->renderers.mainRenderer.GetModelData());
-    this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
+    // this->UI.SetModelData(this->renderers.mainRenderer.GetModelData());
+    this->UI.SetModelData(this->renderers.defaultRenderer->pModelData());
+    this->renderers.defaultRenderer->ModelDataSet(&this->UI.modelData);
+    // this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
     this->isUIUpdated = false;
   }
 }
@@ -155,8 +157,9 @@ void Engine::HandleUI() {
 void Engine::RetrieveColorID() {
   if (this->pEngineCore->camera->mouseOnWindow) {
     if (this->isLMBPressed) {
-      this->renderers.mainRenderer.GetTools()
-          .objectMouseSelect.RetrieveObjectID();
+      // this->renderers.mainRenderer.GetTools()
+      //     .objectMouseSelect.RetrieveObjectID();
+      this->renderers.defaultRenderer->ObjectID();
       this->isLMBPressed = false;
     }
   }
@@ -166,8 +169,8 @@ void Engine::LoadModel() {
   // continue if ui load model is true
   if (this->UI.modelData.loadModel) {
     // set main renderer model data to ui model data
-    this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
-
+    // this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
+    this->renderers.defaultRenderer->ModelDataSet(&this->UI.modelData);
     // set file loading flags
     gtp::FileLoadingFlags loadingFlags =
         this->UI.loadModelFlags.flipY ? gtp::FileLoadingFlags::FlipY
@@ -179,7 +182,8 @@ void Engine::LoadModel() {
             : gtp::FileLoadingFlags::None;
 
     // handle renderer part of load model
-    this->renderers.mainRenderer.HandleLoadModel(loadingFlags);
+    // this->renderers.mainRenderer.HandleLoadModel(loadingFlags);
+    this->renderers.defaultRenderer->LoadNewModel(loadingFlags);
 
     this->UI.loadModelFlags.flipY = false;
     this->UI.loadModelFlags.preMultiplyColors = false;
@@ -187,17 +191,21 @@ void Engine::LoadModel() {
     this->UI.loadModelFlags.loadModelName = "none";
 
     // set ui model data to main renderer model data
-    this->UI.SetModelData(this->renderers.mainRenderer.GetModelData());
+    // this->UI.SetModelData(this->renderers.mainRenderer.GetModelData());
+    this->UI.SetModelData(this->renderers.defaultRenderer->pModelData());
   }
 }
 
 void Engine::DeleteModel() {
   if (this->UI.modelData.deleteModel) {
-    this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
-    this->renderers.mainRenderer.DeleteModel();
+    // this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
+    this->renderers.defaultRenderer->ModelDataSet(&this->UI.modelData);
+    // this->renderers.mainRenderer.DeleteModel();
+    this->renderers.defaultRenderer->HandleDeleteModel();
 
     // this->renderers.mainRenderer.assets.modelData.deleteModel = false;
-    this->UI.SetModelData(this->renderers.mainRenderer.GetModelData());
+    // this->UI.SetModelData(this->renderers.mainRenderer.GetModelData());
+    this->UI.SetModelData(this->renderers.defaultRenderer->pModelData());
     this->UI.modelData.isUpdated = true;
   }
 }
@@ -205,34 +213,36 @@ void Engine::DeleteModel() {
 void Engine::UpdateRenderer() {
   if (this->UI.modelData.isUpdated) {
     // -- update renderer model data struct with ui
-    this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
+    // this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
+    this->renderers.defaultRenderer->ModelDataSet(&this->UI.modelData);
     // this->renderers.mainRenderer.assets.modelData.isUpdated = false;
     //  -- update ui data to updated renderer model data with updated flags
-    this->UI.SetModelData(this->renderers.mainRenderer.GetModelData());
+    // this->UI.SetModelData(this->renderers.mainRenderer.GetModelData());
+    this->UI.SetModelData(this->renderers.defaultRenderer->pModelData());
   }
 }
 
 void Engine::HandleResize() {
-  if (camera->activeWindow) {
-    if (camera->framebufferResized) {
-      // wait idle
-      vkDeviceWaitIdle(devices.logical);
-      // recreate semaphores, fences
-      RecreateSyncObjects();
-      // recreate swapchain, swapchain images/views
-      RecreateCoreSwapchain();
-      // recreate god knows what
-      renderers.mainRenderer.HandleResize();
-      // default renderer resize
-      this->renderers.defaultRenderer->Resize();
-      // recreate ui framebuffers
-      UI.RecreateFramebuffers();
-      // Flaggy McFlaggerson
-      camera->framebufferResized = false;
-      // ret
-      return;
-    }
+  // if (camera->activeWindow) {
+  if (camera->framebufferResized) {
+    // wait idle
+    vkDeviceWaitIdle(devices.logical);
+    // recreate semaphores, fences
+    RecreateSyncObjects();
+    // recreate swapchain, swapchain images/views
+    RecreateCoreSwapchain();
+    // recreate god knows what
+    // renderers.mainRenderer.HandleResize();
+    // default renderer resize
+    this->renderers.defaultRenderer->Resize();
+    // recreate ui framebuffers
+    UI.RecreateFramebuffers();
+    // Flaggy McFlaggerson
+    camera->framebufferResized = false;
+    // ret
+    return;
   }
+  //}
 }
 
 void Engine::userInput() {
@@ -300,12 +310,12 @@ void Engine::InitRenderers() {
             << std::endl;
 
   // output to loading screen
-  this->loadingScreen.Draw(&this->UI, "Loading Main 'Renderer'");
+  // this->loadingScreen.Draw(&this->UI, "Loading Main 'Renderer'");
 
-  this->renderers.mainRenderer = MainRenderer(this->pEngineCore);
-  std::cout << "\nfinished initializing MainRenderer "
-               "class\n'''''''''''''''''''''''''''''''''''''''''''''''\n"
-            << std::endl;
+  // this->renderers.mainRenderer = MainRenderer(this->pEngineCore);
+  // std::cout << "\nfinished initializing MainRenderer "
+  //              "class\n'''''''''''''''''''''''''''''''''''''''''''''''\n"
+  //           << std::endl;
 
   std::cout << "\ninitializing RenderBase "
                "class\n'''''''''''''''''''''''''''''''''''''''''''''''\n"
@@ -348,22 +358,25 @@ void Engine::Draw() {
   /*------------------*/
 
   if (camera->activeWindow) {
-    if (camera->framebufferResized) {
-      // wait idle
-      vkDeviceWaitIdle(devices.logical);
-      // recreate semaphores, fences
-      RecreateSyncObjects();
-      // recreate swapchain, swapchain images/views
-      RecreateCoreSwapchain();
-      // recreate god knows what
-      renderers.mainRenderer.HandleResize();
-      // recreate ui framebuffers
-      UI.RecreateFramebuffers();
-      // Flaggy McFlaggerson
-      camera->framebufferResized = false;
-      // ret
-      return;
-    }
+    //  if (camera->framebufferResized) {
+    //    // wait idle
+    //    vkDeviceWaitIdle(devices.logical);
+    //    // recreate semaphores, fences
+    //    RecreateSyncObjects();
+    //    // recreate swapchain, swapchain images/views
+    //    RecreateCoreSwapchain();
+    //    // recreate god knows what
+    //    renderers.mainRenderer.HandleResize();
+    //    // recreate ui framebuffers
+    //    UI.RecreateFramebuffers();
+    //    // Flaggy McFlaggerson
+    //    camera->framebufferResized = false;
+    //    // ret
+    //    return;
+    //  }
+
+    // resize if resized
+    this->HandleResize();
 
     //---------------------//
     //---COMPUTE QUEUE-----//
@@ -379,70 +392,25 @@ void Engine::Draw() {
     // reset fences
     vkResetFences(devices.logical, 1, &sync.computeFences[currentFrame]);
 
-    VkCommandBufferBeginInfo computeBeginInfo{};
-    computeBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-    /* record compute commands section */
-    // compute command buffer vector
-    std::vector<VkCommandBuffer> computeCommands;
-
-    // iterate through renderer compute instances
-    for (int i = 0;
-         i < this->renderers.mainRenderer.GetComputeInstances().size(); i++) {
-      // if one element is initialized...
-      //   begin process of reset/begin/record commands from that one
-      //   instance/submit
-      if (this->renderers.mainRenderer.GetComputeInstances()[i] != nullptr) {
-        validate_vk_result(vkResetCommandBuffer(
-            this->renderers.mainRenderer.GetComputeInstances()[i]
-                ->commandBuffers[currentFrame],
-            /*VkCommandBufferResetFlagBits*/ 0));
-
-        //  begin compute command buffer
-        validate_vk_result(vkBeginCommandBuffer(
-            this->renderers.mainRenderer.GetComputeInstances()[i]
-                ->commandBuffers[currentFrame],
-            &computeBeginInfo));
-
-        //  record compute commands
-        // check that the model is one with animations and selected to be
-        // animated
-
-        if (this->renderers.mainRenderer.GetModelData()
-                ->animatedModelIndex[i] == 1) {
-          if (this->renderers.mainRenderer.GetModelData()->isAnimated[i]) {
-            // verify current model is being animated
-            this->renderers.mainRenderer.GetComputeInstances()[i]
-                ->RecordComputeCommands(currentFrame);
-          }
-        }
-
-        //  end compute command buffer
-        validate_vk_result(vkEndCommandBuffer(
-            this->renderers.mainRenderer.GetComputeInstances()[i]
-                ->commandBuffers[currentFrame]));
-        computeCommands.push_back(
-            this->renderers.mainRenderer.GetComputeInstances()[i]
-                ->commandBuffers[currentFrame]);
-      }
-    }
-
-    // update compute commands to be waited on
-    computeCommands =
-        this->renderers.mainRenderer.RecordParticleComputeCommands(
-            currentFrame, computeCommands);
-
+    ///* record compute commands section */
+    //// compute command buffer vector
+    std::vector<VkCommandBuffer> computeCommandBuffers;
+    // computeCommandBuffers =
+    // this->renderers.mainRenderer.RecordCompute(currentFrame);
+    computeCommandBuffers =
+        this->renderers.defaultRenderer->ComputeCommands(currentFrame);
     // compute pipeline wait stages
     std::vector<VkPipelineStageFlags> computeWaitStages = {
         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT};
+
     //  compute submit info
     VkSubmitInfo computeSubmitInfo{};
     computeSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     computeSubmitInfo.pWaitDstStageMask = computeWaitStages.data();
     computeSubmitInfo.signalSemaphoreCount = 1;
     computeSubmitInfo.commandBufferCount =
-        static_cast<uint32_t>(computeCommands.size());
-    computeSubmitInfo.pCommandBuffers = computeCommands.data();
+        static_cast<uint32_t>(computeCommandBuffers.size());
+    computeSubmitInfo.pCommandBuffers = computeCommandBuffers.data();
     computeSubmitInfo.signalSemaphoreCount = 1;
     computeSubmitInfo.pSignalSemaphores =
         &this->sync.computeFinishedSemaphore[currentFrame];
@@ -489,16 +457,19 @@ void Engine::Draw() {
 
     bool isBLASUpdated = false;
 
-    this->renderers.mainRenderer.UpdateAnimations(deltaTime);
-
-    this->renderers.mainRenderer.UpdateUniformBuffer(
-        timer, this->UI.rendererData.lightPosition);
-
-    this->renderers.mainRenderer.HandleAccelerationStructureUpdate();
+    // this->renderers.mainRenderer.UpdateAnimations(deltaTime);
+    //
+    // this->renderers.mainRenderer.UpdateUniformBuffer(
+    //     timer, this->UI.rendererData.lightPosition);
+    //
+    // this->renderers.mainRenderer.HandleAccelerationStructureUpdate();
 
     // this->renderers.mainRenderer.UpdateBLAS();
     //
     // this->renderers.mainRenderer.UpdateTLAS();
+
+    this->renderers.defaultRenderer->UpdateShaderBuffers(
+        deltaTime, timer, this->UI.rendererData.lightPosition);
 
     for (int i = 0; i < this->UI.modelData.updateBLAS.size(); i++) {
       this->UI.modelData.updateBLAS[i] = false;
@@ -508,10 +479,13 @@ void Engine::Draw() {
     //     record command buffer       //
     /*--------------------------------*/
 
-    BeginGraphicsCommandBuffer(currentFrame);
+    this->BeginGraphicsCommandBuffer(currentFrame);
 
     // multi blas
-    this->renderers.mainRenderer.RebuildCommandBuffers(
+    // this->renderers.mainRenderer.RebuildCommandBuffers(
+    //    currentFrame, this->UI.rendererData.showIDImage);
+
+    this->renderers.defaultRenderer->RebuildCommands(
         currentFrame, this->UI.rendererData.showIDImage);
 
     /*---------------------------------*/

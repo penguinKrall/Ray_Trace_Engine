@@ -163,8 +163,8 @@ class MainRenderer {
   void UpdateAnimations(float deltaTime);
 
   // -- record particle compute commands
-  std::vector<VkCommandBuffer> RecordParticleComputeCommands(
-      int currentFrame, std::vector<VkCommandBuffer> computeCommandBuffer);
+  VkCommandBuffer RecordParticleComputeCommands(
+    int currentFrame, int particleIndex);
 
   // -- handle window resize
   void HandleResize();
@@ -180,6 +180,8 @@ class MainRenderer {
 
   // -- get tools
   MainRenderer::Tools GetTools();
+
+  std::vector<VkCommandBuffer> RecordCompute(int frame);
 
   // -- Destroy
   void Destroy();

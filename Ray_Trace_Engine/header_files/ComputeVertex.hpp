@@ -77,7 +77,7 @@ public:
   void UpdateJointBuffer();
 
   // -- record compute commands
-  void RecordComputeCommands(int frame);
+  VkCommandBuffer RecordComputeCommands(int frame);
 
   // -- retrieve buffer data
   // std::vector<gtp::Model::Vertex> RetrieveBufferData();

@@ -14,6 +14,21 @@ class DefaultRenderer : private RenderBase {
 
   void Resize();
 
+  Utilities_UI::ModelData* pModelData();
+
+  void ModelDataSet(Utilities_UI::ModelData* pModelData);
+
+  void ObjectID();
+
+  void LoadNewModel(gtp::FileLoadingFlags loadingFlags);
+
+  void HandleDeleteModel();
+
+  std::vector<VkCommandBuffer> ComputeCommands(int frame);
+
+  void UpdateShaderBuffers(float deltaTime, float timer, glm::vec4 lightPosition);
+
+  void RebuildCommands(int frame, bool showObjectColorID);
 };
 
 }  // namespace gtp

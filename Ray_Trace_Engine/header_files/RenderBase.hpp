@@ -6,21 +6,21 @@
 #include <Particle.hpp>
 #include <Shader.hpp>
 #include <TextureLoader.hpp>
-//#include <Utilities_AS.hpp>
+// #include <Utilities_AS.hpp>
+#include <AccelerationStructures.hpp>
 #include <Utilities_Renderer.hpp>
 #include <Utilities_UI.hpp>
 #include <glTFModel.hpp>
-#include <AccelerationStructures.hpp>
 
 #define VK_GLTF_MATERIAL_IDS
 
 namespace gtp {
 class RenderBase : private AccelerationStructures {
- private:
+private:
   /*	base class private variables	and data structures*/
 
-   // -- uniform data
-   Utilities_Renderer::UniformData uniformData{};
+  // -- uniform data
+  Utilities_Renderer::UniformData uniformData{};
 
   // -- buffers
   struct Buffers {
@@ -29,37 +29,36 @@ class RenderBase : private AccelerationStructures {
 
   Buffers buffers{};
 
-
   // core pointer
-  EngineCore* pEngineCore = nullptr;
+  EngineCore *pEngineCore = nullptr;
 
   /*	base class private functions	*/
   // initialize function
-  void InitializeRenderBase(EngineCore* engineCorePtr);
+  void InitializeRenderBase(EngineCore *engineCorePtr);
 
   // class tools
   struct Tools {
     // object select class
-    gtp::ObjectMouseSelect* objectMouseSelect;
+    gtp::ObjectMouseSelect *objectMouseSelect;
 
     // shader
-    gtp::Shader* shader;
+    gtp::Shader *shader;
 
     // -- shader binding table data
     Utilities_Renderer::ShaderBindingTableData shaderBindingTableData{};
 
     // tools initialize function
-    void InitializeTools(EngineCore* engineCorePtr);
+    void InitializeTools(EngineCore *engineCorePtr);
   };
 
   Tools tools{};
 
   struct Assets {
-    uint32_t textureOffset = 0;
+    //uint32_t textureOffset = 0;
     std::vector<gtp::TextureLoader> defaultTextures;
 
     // models
-    std::vector<gtp::Model*> models;
+    std::vector<gtp::Model *> models;
     Utilities_UI::ModelData modelData;
     Utilities_UI::LoadModelFlags loadModelFlags;
 
@@ -70,13 +69,13 @@ class RenderBase : private AccelerationStructures {
     gtp::TextureLoader cubemap;
 
     // particle
-    std::vector<gtp::Particle*> particle;
+    std::vector<gtp::Particle *> particle;
 
     // gltf compute -- animation compute
-    std::vector<ComputeVertex*> gltfCompute;
+    std::vector<ComputeVertex *> gltfCompute;
 
-    void LoadDefaultAssets(EngineCore* engineCorePtr);
-    void DestroyDefaultAssets(EngineCore* engineCorePtr);
+    void LoadDefaultAssets(EngineCore *engineCorePtr);
+    void DestroyDefaultAssets(EngineCore *engineCorePtr);
   };
 
   Assets assets{};
@@ -108,42 +107,47 @@ class RenderBase : private AccelerationStructures {
   // build command buffers
   void CreateDefaultCommandBuffers();
 
-  void RebuildCommandBuffers(int frame, bool showObjectColorID);
+  void
+  SetupModelDataTransforms(Utilities_UI::TransformMatrices *pTransformMatrices);
 
-  void SetupModelDataTransforms(
-    Utilities_UI::TransformMatrices* pTransformMatrices);
-
-  void LoadGltfCompute(gtp::Model* pModel);
+  void LoadGltfCompute(gtp::Model *pModel);
 
   void UpdateDefaultRayTracingPipeline();
 
   void UpdateDefaultDescriptorSet();
 
- public:
+public:
   /*	base class public variables	*/
 
   /*	base class public functions	*/
   // default constructor
-  RenderBase(EngineCore* engineCorePtr);
+  RenderBase(EngineCore *engineCorePtr);
 
   // update default uniform buffer
   void UpdateDefaultUniformBuffer(float deltaTime, glm::vec4 lightPosition);
 
-  //destroy render base class and resources
+  // rebuild command buffers
+  void RebuildCommandBuffers(int frame, bool showObjectColorID);
+
+  // destroy render base class and resources
   void DestroyRenderBase();
 
-  // set assets model data struct // primary interface between renderer and ui via engine
-  void SetModelData(Utilities_UI::ModelData* pModelData);
+  Utilities_UI::ModelData *GetModelData();
+
+  // set assets model data struct // primary interface between renderer and ui
+  // via engine
+  void SetModelData(Utilities_UI::ModelData *pModelData);
 
   // retrieve object id
-  //@brief uses object mouse select class color map and window input to find which object is under mouse when LMB pressed
+  //@brief uses object mouse select class color map and window input to find
+  //which object is under mouse when LMB pressed
   void RetrieveObjectID();
 
   // load model
   void LoadModel(std::string filename, uint32_t fileLoadingFlags = 0,
-    Utilities_Renderer::ModelLoadingFlags modelLoadingFlags =
-    Utilities_Renderer::ModelLoadingFlags::None,
-    Utilities_UI::TransformMatrices* pTransformMatrices = nullptr);
+                 Utilities_Renderer::ModelLoadingFlags modelLoadingFlags =
+                     Utilities_Renderer::ModelLoadingFlags::None,
+                 Utilities_UI::TransformMatrices *pTransformMatrices = nullptr);
 
   // handle load model
   void HandleLoadModel(gtp::FileLoadingFlags loadingFlags);
@@ -151,5 +155,15 @@ class RenderBase : private AccelerationStructures {
   // handle resize
   void HandleResize();
 
+  // record compute commands
+  std::vector<VkCommandBuffer> RecordCompute(int frame);
+
+  // update animateds
+  void UpdateAnimations(float deltaTime);
+
+  // -- delete model
+  void DeleteModel();
+
+  void RebuildAS();
 };
-}  // namespace gtp
+} // namespace gtp

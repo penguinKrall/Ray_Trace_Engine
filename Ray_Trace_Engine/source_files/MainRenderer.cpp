@@ -1794,19 +1794,9 @@ void MainRenderer::UpdateAnimations(float deltaTime) {
   }
 }
 
-std::vector<VkCommandBuffer> MainRenderer::RecordParticleComputeCommands(
-    int currentFrame, std::vector<VkCommandBuffer> computeCommandBuffer) {
-  auto &tempCmdBuf = computeCommandBuffer;
-
-  // particle commands
-  for (int i = 0; i > this->assets.particle.size(); i++) {
-    if (this->assets.particle[i] != nullptr) {
-      tempCmdBuf.push_back(
-          this->assets.particle[i]->RecordComputeCommands(currentFrame));
-    }
-  }
-
-  return tempCmdBuf;
+VkCommandBuffer MainRenderer::RecordParticleComputeCommands(
+    int currentFrame, int particleIndex) {
+  return this->assets.particle[particleIndex]->RecordComputeCommands(currentFrame);
 }
 
 void MainRenderer::HandleResize() {
@@ -1866,6 +1856,24 @@ void MainRenderer::SetModelData(Utilities_UI::ModelData *pModelData) {
 }
 
 MainRenderer::Tools MainRenderer::GetTools() { return this->tools; }
+
+std::vector<VkCommandBuffer> MainRenderer::RecordCompute(int frame)
+{
+  std::vector<VkCommandBuffer> computeBuffers;
+
+  for (auto& vertexCompute : this->gltfCompute) {
+    if (vertexCompute != nullptr) {
+      computeBuffers.push_back(vertexCompute->RecordComputeCommands(frame));
+    }
+  }
+
+  for (auto& particleCompute : this->assets.particle) {
+    if (particleCompute != nullptr) {
+      computeBuffers.push_back(particleCompute->RecordComputeCommands(frame));
+    }
+  }
+  return computeBuffers;
+}
 
 void MainRenderer::Destroy() { this->Destroy_MainRenderer(); }
 

@@ -363,7 +363,19 @@ void ComputeVertex::CreateDescriptorSets() {
                          writeDescriptorSets.data(), 0, VK_NULL_HANDLE);
 }
 
-void ComputeVertex::RecordComputeCommands(int frame) {
+VkCommandBuffer ComputeVertex::RecordComputeCommands(int frame) {
+
+  // compute command buffer begin info
+  VkCommandBufferBeginInfo computeBeginInfo{};
+  computeBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+  // reset command buffer
+  validate_vk_result(vkResetCommandBuffer(this->commandBuffers[frame],
+    /*VkCommandBufferResetFlagBits*/ 0));
+
+  // begin command buffer
+  validate_vk_result(
+    vkBeginCommandBuffer(this->commandBuffers[frame], &computeBeginInfo));
 
   vkCmdBindPipeline(this->commandBuffers[frame], VK_PIPELINE_BIND_POINT_COMPUTE,
                     this->pipelineData.pipeline);
@@ -376,6 +388,12 @@ void ComputeVertex::RecordComputeCommands(int frame) {
   vkCmdDispatch(this->commandBuffers[frame],
                 (static_cast<uint32_t>(this->model->vertexCount) + 255) / 256,
                 1, 1);
+
+  // end compute command buffer
+  validate_vk_result(vkEndCommandBuffer(this->commandBuffers[frame]));
+
+  return this->commandBuffers[frame];
+
 }
 
 // std::vector<gtp::Model::Vertex> ComputeVertex::RetrieveBufferData() {

@@ -24,7 +24,7 @@ private:
 
   // -- renderers
   struct Renderers {
-    MainRenderer mainRenderer;
+    //MainRenderer mainRenderer;
     DefaultRenderer* defaultRenderer = nullptr;
   };
 

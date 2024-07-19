@@ -11,6 +11,9 @@ void gtp::RenderBase::InitializeRenderBase(EngineCore *engineCorePtr) {
   // load default assets
   this->assets.LoadDefaultAssets(engineCorePtr);
 
+  this->SetTextureOffset(
+      static_cast<uint32_t>(this->assets.defaultTextures.size()));
+
   // create geometry nodes buffer
   this->BuildGeometryNodesBuffer();
 
@@ -963,18 +966,16 @@ void gtp::RenderBase::LoadGltfCompute(gtp::Model *pModel) {
   this->assets.gltfCompute.push_back(computeVtx);
 }
 
-void gtp::RenderBase::UpdateDefaultRayTracingPipeline()
-{
+void gtp::RenderBase::UpdateDefaultRayTracingPipeline() {
   // -- pipeline and layout
   this->pipelineData.Destroy(this->pEngineCore);
 
   this->CreateDefaultRayTracingPipeline();
 }
 
-void gtp::RenderBase::UpdateDefaultDescriptorSet()
-{
+void gtp::RenderBase::UpdateDefaultDescriptorSet() {
   // image count
-  uint32_t imageCount{ 0 };
+  uint32_t imageCount{0};
 
   for (int i = 0; i < this->assets.defaultTextures.size(); i++) {
     imageCount += static_cast<uint32_t>(this->assets.defaultTextures.size());
@@ -982,20 +983,20 @@ void gtp::RenderBase::UpdateDefaultDescriptorSet()
 
   for (int i = 0; i < assets.models.size(); i++) {
     std::cout << "update descriptor set model names: "
-      << this->assets.models[i]->modelName;
+              << this->assets.models[i]->modelName;
     imageCount += static_cast<uint32_t>(assets.models[i]->textures.size());
   }
 
   VkAccelerationStructureKHR topLevelAccelerationStructureKHR =
-    this->GetTopLevelAccelerationStructureKHR();
+      this->GetTopLevelAccelerationStructureKHR();
 
   VkWriteDescriptorSetAccelerationStructureKHR
-    descriptorAccelerationStructureInfo{};
+      descriptorAccelerationStructureInfo{};
   descriptorAccelerationStructureInfo.sType =
-    VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+      VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
   descriptorAccelerationStructureInfo.accelerationStructureCount = 1;
   descriptorAccelerationStructureInfo.pAccelerationStructures =
-    &topLevelAccelerationStructureKHR;
+      &topLevelAccelerationStructureKHR;
   // &this->TLAS.accelerationStructureKHR;
 
   VkWriteDescriptorSet accelerationStructureWrite{};
@@ -1006,10 +1007,10 @@ void gtp::RenderBase::UpdateDefaultDescriptorSet()
   accelerationStructureWrite.dstBinding = 0;
   accelerationStructureWrite.descriptorCount = 1;
   accelerationStructureWrite.descriptorType =
-    VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+      VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
 
   VkDescriptorImageInfo storageImageDescriptor{
-      VK_NULL_HANDLE, defaultColorStorageImage.view, VK_IMAGE_LAYOUT_GENERAL };
+      VK_NULL_HANDLE, defaultColorStorageImage.view, VK_IMAGE_LAYOUT_GENERAL};
 
   // storage/result image write
   VkWriteDescriptorSet storageImageWrite{};
@@ -1022,7 +1023,7 @@ void gtp::RenderBase::UpdateDefaultDescriptorSet()
 
   VkDescriptorImageInfo colorIDStorageImageDescriptor{
       VK_NULL_HANDLE, tools.objectMouseSelect->GetIDImage().view,
-      VK_IMAGE_LAYOUT_GENERAL };
+      VK_IMAGE_LAYOUT_GENERAL};
 
   // storage/result image write
   VkWriteDescriptorSet colorIDStorageImageWrite{};
@@ -1055,7 +1056,7 @@ void gtp::RenderBase::UpdateDefaultDescriptorSet()
 
   // geometry_nodes_buffer
   VkDescriptorBufferInfo geometry_nodes_BufferDescriptor =
-    this->GetGeometryNodesBufferDescriptor();
+      this->GetGeometryNodesBufferDescriptor();
 
   // geometry descriptor write info
   VkWriteDescriptorSet geometry_nodes_bufferWrite{};
@@ -1068,7 +1069,7 @@ void gtp::RenderBase::UpdateDefaultDescriptorSet()
 
   // geometry_nodes_indices
   VkDescriptorBufferInfo geometry_nodes_indicesDescriptor =
-    this->GetGeometryNodesIndexBufferDescriptor();
+      this->GetGeometryNodesIndexBufferDescriptor();
   // VkDescriptorBufferInfo geometry_nodes_indicesDescriptor{
   //     this->buffers.geometry_nodes_indices.bufferData.buffer, 0,
   //     this->buffers.geometry_nodes_indices.bufferData.size};
@@ -1078,7 +1079,7 @@ void gtp::RenderBase::UpdateDefaultDescriptorSet()
   geometry_nodes_indicesWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   geometry_nodes_indicesWrite.dstSet = pipelineData.descriptorSet;
   geometry_nodes_indicesWrite.descriptorType =
-    VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+      VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   geometry_nodes_indicesWrite.dstBinding = 5;
   geometry_nodes_indicesWrite.pBufferInfo = &geometry_nodes_indicesDescriptor;
   geometry_nodes_indicesWrite.descriptorCount = 1;
@@ -1086,7 +1087,7 @@ void gtp::RenderBase::UpdateDefaultDescriptorSet()
   VkDescriptorImageInfo glassTextureDescriptor{
       this->assets.coloredGlassTexture.sampler,
       this->assets.coloredGlassTexture.view,
-      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 
   // glass texture image write
   VkWriteDescriptorSet glassTextureWrite{};
@@ -1099,35 +1100,35 @@ void gtp::RenderBase::UpdateDefaultDescriptorSet()
 
   VkDescriptorImageInfo cubemapTextureDescriptor{
       this->assets.cubemap.sampler, this->assets.cubemap.view,
-      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 
   // cubemap texture image write
   VkWriteDescriptorSet cubemapTextureWrite{};
   cubemapTextureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   cubemapTextureWrite.dstSet = pipelineData.descriptorSet;
   cubemapTextureWrite.descriptorType =
-    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   cubemapTextureWrite.dstBinding = 7;
   cubemapTextureWrite.pImageInfo = &cubemapTextureDescriptor;
   cubemapTextureWrite.descriptorCount = 1;
 
   std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
-    // Binding 0: Top level acceleration structure
-    accelerationStructureWrite,
-    // Binding 1: Ray tracing result image
-    storageImageWrite,
-    // Binding 1: Ray tracing result image
-    colorIDStorageImageWrite,
-    // Binding 2: Uniform data
-    uniformBufferWrite,
-    // Binding 3: geometry_nodes_buffer write
-    geometry_nodes_bufferWrite,
-    // Binding 4: geometry_nodes_indices write
-    geometry_nodes_indicesWrite,
-    // Binding 5: glass texture image write
-    glassTextureWrite,
-    // Binding 6: cubemap texture image write
-    cubemapTextureWrite };
+      // Binding 0: Top level acceleration structure
+      accelerationStructureWrite,
+      // Binding 1: Ray tracing result image
+      storageImageWrite,
+      // Binding 1: Ray tracing result image
+      colorIDStorageImageWrite,
+      // Binding 2: Uniform data
+      uniformBufferWrite,
+      // Binding 3: geometry_nodes_buffer write
+      geometry_nodes_bufferWrite,
+      // Binding 4: geometry_nodes_indices write
+      geometry_nodes_indicesWrite,
+      // Binding 5: glass texture image write
+      glassTextureWrite,
+      // Binding 6: cubemap texture image write
+      cubemapTextureWrite};
 
   // Image descriptors for the image array
   std::vector<VkDescriptorImageInfo> textureDescriptors{};
@@ -1156,16 +1157,16 @@ void gtp::RenderBase::UpdateDefaultDescriptorSet()
   writeDescriptorImgArray.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   writeDescriptorImgArray.dstBinding = 8;
   writeDescriptorImgArray.descriptorType =
-    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   writeDescriptorImgArray.descriptorCount =
-    static_cast<uint32_t>(textureDescriptors.size());
+      static_cast<uint32_t>(textureDescriptors.size());
   writeDescriptorImgArray.dstSet = this->pipelineData.descriptorSet;
   writeDescriptorImgArray.pImageInfo = textureDescriptors.data();
   writeDescriptorSets.push_back(writeDescriptorImgArray);
 
   vkUpdateDescriptorSets(this->pEngineCore->devices.logical,
-    static_cast<uint32_t>(writeDescriptorSets.size()),
-    writeDescriptorSets.data(), 0, VK_NULL_HANDLE);
+                         static_cast<uint32_t>(writeDescriptorSets.size()),
+                         writeDescriptorSets.data(), 0, VK_NULL_HANDLE);
 }
 
 /*  initialize constructor  */
@@ -1226,6 +1227,10 @@ void gtp::RenderBase::DestroyRenderBase() {
   this->tools.shader->DestroyShader();
   // -- object mouse select
   this->tools.objectMouseSelect->DestroyObjectMouseSelect();
+}
+
+Utilities_UI::ModelData *gtp::RenderBase::GetModelData() {
+  return &this->assets.modelData;
 }
 
 void gtp::RenderBase::SetModelData(Utilities_UI::ModelData *pModelData) {
@@ -1352,7 +1357,7 @@ void gtp::RenderBase::HandleLoadModel(gtp::FileLoadingFlags loadingFlags) {
   this->assets.modelData.loadModelFilepath = " ";
 }
 
-void gtp::RenderBase::HandleResize(){
+void gtp::RenderBase::HandleResize() {
   // Delete allocated resources
   this->defaultColorStorageImage.Destroy(this->pEngineCore);
 
@@ -1364,6 +1369,266 @@ void gtp::RenderBase::HandleResize(){
 
   // Update descriptor
   this->UpdateDefaultDescriptorSet();
+}
+
+std::vector<VkCommandBuffer> gtp::RenderBase::RecordCompute(int frame) {
+  std::vector<VkCommandBuffer> computeBuffers;
+
+  for (auto &vertexCompute : this->assets.gltfCompute) {
+    if (vertexCompute != nullptr) {
+      computeBuffers.push_back(vertexCompute->RecordComputeCommands(frame));
+    }
+  }
+
+  for (auto &particleCompute : this->assets.particle) {
+    if (particleCompute != nullptr) {
+      computeBuffers.push_back(particleCompute->RecordComputeCommands(frame));
+    }
+  }
+  return computeBuffers;
+}
+
+void gtp::RenderBase::UpdateAnimations(float deltaTime) {
+  for (size_t i = 0; i < this->assets.models.size(); ++i) {
+    // check animated index to check against model list for animated models
+    if (this->assets.modelData.animatedModelIndex[i] == 1) {
+      // get current model animation
+      int activeAnimation = this->assets.modelData.activeAnimation[i][0];
+      // verify current model is being animated
+      if (this->assets.modelData.isAnimated[i]) {
+        this->assets.models[i]->updateAnimation(
+            activeAnimation, deltaTime,
+            &this->assets.gltfCompute[i]->jointBuffer);
+      }
+    }
+  }
+}
+
+void gtp::RenderBase::DeleteModel() {
+  // model idx
+  int modelIdx = this->assets.modelData.modelIndex;
+
+  std::cout << " deleting model" << std::endl;
+
+  std::cout << "\tname: " << this->assets.models[modelIdx]->modelName
+            << std::endl;
+  std::cout << "\tindex: " << this->assets.modelData.modelIndex << std::endl;
+
+  // wait for device idle
+  vkDeviceWaitIdle(this->pEngineCore->devices.logical);
+
+  // clear blas instances 'buffer'
+  this->ClearBottomLevelAccelerationStructureInstances();
+  // this->tlasData.bottomLevelAccelerationStructureInstances.clear();
+
+  // destroy particle class if one is associated
+  if (this->assets.models[this->assets.modelData.modelIndex]->isParticle) {
+    this->assets.particle[this->assets.modelData.modelIndex]->DestroyParticle();
+  }
+
+  // erase model index associated particle
+  this->assets.particle.erase(this->assets.particle.begin() +
+                              this->assets.modelData.modelIndex);
+
+  // destroy model
+  this->assets.models[this->assets.modelData.modelIndex]->destroy(
+      this->pEngineCore->devices.logical);
+
+  // not sure prob delete
+  if (this->assets.modelData.modelIndex < this->assets.models.size()) {
+    this->assets.models.erase(this->assets.models.begin() +
+                              this->assets.modelData.modelIndex);
+  }
+
+  // update bottom level acceleration structures
+  // for (int i = 0; i < this->bottomLevelAccelerationStructures.size(); i++) {
+  //  // accel. structure
+  //  pEngineCore->coreExtensions->vkDestroyAccelerationStructureKHR(
+  //      pEngineCore->devices.logical,
+  //      this->bottomLevelAccelerationStructures[i]
+  //          ->accelerationStructure.accelerationStructureKHR,
+  //      nullptr);
+
+  //  // scratch buffer
+  //  this->bottomLevelAccelerationStructures[i]
+  //      ->accelerationStructure.scratchBuffer.destroy(
+  //          this->pEngineCore->devices.logical);
+
+  //  // accel structure buffer and memory
+  //  vkDestroyBuffer(pEngineCore->devices.logical,
+  //                  this->bottomLevelAccelerationStructures[i]
+  //                      ->accelerationStructure.buffer,
+  //                  nullptr);
+  //  vkFreeMemory(pEngineCore->devices.logical,
+  //               this->bottomLevelAccelerationStructures[i]
+  //                   ->accelerationStructure.memory,
+  //               nullptr);
+  //}
+
+  this->HandleModelDeleteBottomLevel(
+      static_cast<int>(this->assets.defaultTextures.size()),
+      this->assets.models);
+
+  // update texture offset
+  // this->assets.textureOffset =
+  //    static_cast<uint32_t>(this->assets.defaultTextures.size());
+
+  //// create vector of blas pointers to reassign mainRenderer member of blas
+  //// pointers with
+  // std::vector<Utilities_AS::BLASData *> tempLevelAccelerationStructures;
+  //
+  //// clear g node buffer
+  // this->geometryNodes.clear();
+  //// clear g node index buffer
+  // this->geometryNodesIndices.clear();
+  //// clear bottom level acceleration structures "buffer"
+  // this->bottomLevelAccelerationStructures.clear();
+  //
+  // for (int i = 0; i < this->assets.models.size(); i++) {
+  //   CreateBLAS(this->assets.models[i]);
+  // }
+  //
+  //// update g nodes buffer with updated vector of g nodes
+  // this->buffers.geometry_nodes_buffer.copyTo(
+  //     this->geometryNodes.data(), static_cast<uint32_t>(geometryNodes.size())
+  //     *
+  //                                     sizeof(Utilities_AS::GeometryNode));
+  //
+  //// update g node indices buffer with updated vector of g node indices
+  // this->buffers.geometry_nodes_indices.copyTo(
+  //     this->geometryNodesIndices.data(),
+  //     static_cast<uint32_t>(geometryNodesIndices.size()) * sizeof(int));
+
+  // erase models / modelData assignments
+
+  if (this->assets.modelData.modelIndex <
+      this->assets.modelData.activeAnimation.size()) {
+    this->assets.modelData.activeAnimation.erase(
+        this->assets.modelData.activeAnimation.begin() +
+        this->assets.modelData.modelIndex);
+  }
+
+  std::cout << "this->assets.modelData.animatedModelIndex.size(): "
+            << this->assets.modelData.animatedModelIndex.size() << std::endl;
+
+  std::cout << "this->assets.modelData.modelIndex: "
+            << this->assets.modelData.modelIndex << std::endl;
+
+  if (this->assets.modelData.modelIndex <
+      this->assets.modelData.animatedModelIndex.size()) {
+    this->assets.modelData.animatedModelIndex.erase(
+        this->assets.modelData.animatedModelIndex.begin() +
+        this->assets.modelData.modelIndex);
+  }
+
+  std::cout << "post resize\nthis->assets.modelData.animatedModelIndex.size(): "
+            << this->assets.modelData.animatedModelIndex.size() << std::endl;
+
+  std::cout << "this->assets.modelData.modelIndex: "
+            << this->assets.modelData.modelIndex << std::endl;
+
+  if (this->assets.modelData.modelIndex <
+      this->assets.modelData.animationNames.size()) {
+    this->assets.modelData.animationNames.erase(
+        this->assets.modelData.animationNames.begin() +
+        this->assets.modelData.modelIndex);
+  }
+
+  if (this->assets.modelData.modelIndex <
+      this->assets.modelData.modelName.size()) {
+    this->assets.modelData.modelName.erase(
+        this->assets.modelData.modelName.begin() +
+        this->assets.modelData.modelIndex);
+  }
+
+  if (this->assets.modelData.modelIndex <
+      this->assets.modelData.isAnimated.size()) {
+    this->assets.modelData.isAnimated.erase(
+        this->assets.modelData.isAnimated.begin() +
+        this->assets.modelData.modelIndex);
+  }
+
+  // if (this->assets.modelData.modelIndex <
+  //     this->assets.modelData.semiTransparentFlag.size()) {
+  //   this->assets.modelData.semiTransparentFlag.erase(
+  //       this->assets.modelData.semiTransparentFlag.begin() +
+  //       this->assets.modelData.modelIndex);
+  // }
+
+  if (this->assets.modelData.modelIndex <
+      this->assets.modelData.transformMatrices.size()) {
+    this->assets.modelData.transformMatrices.erase(
+        this->assets.modelData.transformMatrices.begin() +
+        this->assets.modelData.modelIndex);
+  }
+
+  if (this->assets.modelData.modelIndex <
+      this->assets.modelData.transformValues.size()) {
+    this->assets.modelData.transformValues.erase(
+        this->assets.modelData.transformValues.begin() +
+        this->assets.modelData.modelIndex);
+  }
+
+  if (this->assets.modelData.modelIndex <
+      this->assets.modelData.updateBLAS.size()) {
+    this->assets.modelData.updateBLAS.erase(
+        this->assets.modelData.updateBLAS.begin() +
+        this->assets.modelData.modelIndex);
+  }
+
+  if (this->assets.gltfCompute[this->assets.modelData.modelIndex] != nullptr) {
+    this->assets.gltfCompute[this->assets.modelData.modelIndex]
+        ->Destroy_ComputeVertex();
+  }
+  if (this->assets.modelData.modelIndex < this->assets.gltfCompute.size()) {
+    this->assets.gltfCompute.erase(this->assets.gltfCompute.begin() +
+                                   this->assets.modelData.modelIndex);
+  }
+
+  //// accel. structure
+  // pEngineCore->coreExtensions->vkDestroyAccelerationStructureKHR(
+  //     pEngineCore->devices.logical, this->TLAS.accelerationStructureKHR,
+  //     nullptr);
+
+  //// scratch buffer
+  // buffers.tlas_scratch.destroy(this->pEngineCore->devices.logical);
+
+  //// instances buffer
+  // buffers.tlas_instancesBuffer.destroy(this->pEngineCore->devices.logical);
+
+  //// accel. structure buffer and memory
+  // vkDestroyBuffer(pEngineCore->devices.logical, this->TLAS.buffer, nullptr);
+  // vkFreeMemory(pEngineCore->devices.logical, this->TLAS.memory, nullptr);
+
+  //// transforms buffer
+  // this->buffers.transformBuffer.destroy(this->pEngineCore->devices.logical);
+
+  // this->assets.modelData.modelIndex = 0;
+
+  // vkDeviceWaitIdle(this->pEngineCore->devices.logical);
+
+  // UpdateBLAS();
+  // CreateTLAS();
+
+  //// acceleration structures class update acceleration structures
+  // this->accelerationStructures.RebuildAccelerationStructures(
+  //     this->assets.models.size(), this->assets.modelData);
+
+  this->HandleModelDeleteTopLevel(this->assets.models, this->assets.modelData,
+                                  this->assets.particle);
+
+  this->UpdateDefaultDescriptorSet();
+
+  vkDeviceWaitIdle(this->pEngineCore->devices.logical);
+
+  this->assets.modelData.deleteModel = false;
+
+  std::cout << "model successfully deleted!" << std::endl;
+}
+
+void gtp::RenderBase::RebuildAS() {
+  this->RebuildAccelerationStructures(
+      static_cast<int>(this->assets.models.size()), this->assets.modelData);
 }
 
 void gtp::RenderBase::Tools::InitializeTools(EngineCore *engineCorePtr) {
@@ -1382,7 +1647,8 @@ void gtp::RenderBase::Assets::LoadDefaultAssets(EngineCore *engineCorePtr) {
   this->defaultTextures.push_back(this->cubemap);
 
   // update texture offset for shader
-  this->textureOffset = static_cast<uint32_t>(this->defaultTextures.size());
+  // this->GetTextureOffset =
+  // static_cast<uint32_t>(this->defaultTextures.size());
 
   // -- load glass texture just because why not load a ktx
   this->coloredGlassTexture = gtp::TextureLoader(engineCorePtr);
@@ -1435,12 +1701,12 @@ void gtp::RenderBase::Assets::LoadDefaultAssets(EngineCore *engineCorePtr) {
   // this->LoadParticle("", gtp::FileLoadingFlags::None,
   //                    Utilities_Renderer::ModelLoadingFlags::None, nullptr);
 
-  for (int i = 0; i < this->modelData.animatedModelIndex.size(); i++) {
-    std::cout << "\nanimated model index[" << i
-              << "]: " << this->modelData.animatedModelIndex[i] << std::endl;
-  }
-  std::cout << "this->modelData.animatedModelIndex.size(): "
-            << this->modelData.animatedModelIndex.size() << std::endl;
+  // for (int i = 0; i < this->modelData.animatedModelIndex.size(); i++) {
+  //   std::cout << "\nanimated model index[" << i
+  //             << "]: " << this->modelData.animatedModelIndex[i] << std::endl;
+  // }
+  // std::cout << "this->modelData.animatedModelIndex.size(): "
+  //           << this->modelData.animatedModelIndex.size() << std::endl;
 }
 
 void gtp::RenderBase::Assets::DestroyDefaultAssets(EngineCore *engineCorePtr) {
