@@ -12,8 +12,8 @@ glm::vec3 randomTorusPosition(float outerRadius, float innerRadius) {
   float u = rFloat(0.0f, 2.0f * glm::pi<float>());
   float v = rFloat(0.0f, 2.0f * glm::pi<float>());
   float x = (outerRadius + innerRadius * cos(v)) * cos(u);
-  float z = (outerRadius + innerRadius * cos(v)) * sin(u);  // swapped y with z
-  float y = innerRadius * sin(v) / 4;                       // swapped z with y
+  float z = (outerRadius + innerRadius * cos(v)) * sin(u); // swapped y with z
+  float y = innerRadius * sin(v) / 4;                      // swapped z with y
   return glm::vec3(x, y, z);
 }
 
@@ -177,7 +177,9 @@ void MainRenderer::LoadModel(
           ? 1
           : 0;
 
-  tempModel->semiTransparentFlag = static_cast<int>(isSemiTransparent);
+  if (isSemiTransparent || this->assets.modelData.loadModelSemiTransparent) {
+    tempModel->semiTransparentFlag = static_cast<int>(true);
+  }
 
   // Set "isAnimated" flag and add to list
   // referenced by blas/tlas/compute vertex
@@ -405,12 +407,11 @@ void MainRenderer::LoadAssets() {
   animatedTransformMatrices.scale =
       glm::scale(glm::mat4(1.0f), glm::vec3(0.05f));
 
-  this->LoadModel(
-      "C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/"
-      "assets/models/Fox2/Fox2.gltf",
-      gtp::FileLoadingFlags::None,
-      Utilities_Renderer::ModelLoadingFlags::Animated,
-      &animatedTransformMatrices);
+  this->LoadModel("C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/"
+                  "assets/models/Fox2/Fox2.gltf",
+                  gtp::FileLoadingFlags::None,
+                  Utilities_Renderer::ModelLoadingFlags::Animated,
+                  &animatedTransformMatrices);
 
   // -- load scene
   this->LoadModel(
@@ -1828,7 +1829,6 @@ void MainRenderer::HandleLoadModel(gtp::FileLoadingFlags loadingFlags) {
   // call main renderer load model function
   this->LoadModel(this->assets.modelData.loadModelFilepath, loadingFlags);
 
-  
   // update main renderer geometry nodes buffer
   // this->UpdateGeometryNodesBuffer(
   //    this->assets.models[this->assets.models.size() - 1]);
@@ -1848,6 +1848,9 @@ void MainRenderer::HandleLoadModel(gtp::FileLoadingFlags loadingFlags) {
 
   // set main renderer model data load model flag to false
   this->assets.modelData.loadModel = false;
+
+  // set main renderer model data semi transparency load flag to false
+  this->assets.modelData.loadModelSemiTransparent = false;
 
   // set main renderer model data load model file path to " "
   this->assets.modelData.loadModelFilepath = " ";

@@ -155,7 +155,8 @@ void Engine::HandleUI() {
 void Engine::RetrieveColorID() {
   if (this->pEngineCore->camera->mouseOnWindow) {
     if (this->isLMBPressed) {
-      this->renderers.mainRenderer.GetTools().objectMouseSelect.RetrieveObjectID();
+      this->renderers.mainRenderer.GetTools()
+          .objectMouseSelect.RetrieveObjectID();
       this->isLMBPressed = false;
     }
   }
@@ -177,30 +178,6 @@ void Engine::LoadModel() {
             ? gtp::FileLoadingFlags::PreTransformVertices
             : gtp::FileLoadingFlags::None;
 
-    //// call main renderer load model function
-    // this->renderers.mainRenderer.LoadModel(
-    //     this->renderers.mainRenderer.assets.modelData.loadModelFilepath,
-    //     loadingFlags);
-
-    //// update main renderer geometry nodes buffer
-    // this->renderers.mainRenderer.UpdateGeometryNodesBuffer(
-    //     this->renderers.mainRenderer.assets
-    //         .models[this->renderers.mainRenderer.assets.models.size() - 1]);
-
-    //// output loaded model name
-    // std::cout
-    //     << "loaded model name from engine: "
-    //     << this->renderers.mainRenderer.assets
-    //            .models[this->renderers.mainRenderer.assets.models.size() - 1]
-    //            ->modelName
-    //     << std::endl;
-
-    //// set main renderer model data load model flag to false
-    // this->renderers.mainRenderer.assets.modelData.loadModel = false;
-
-    //// set main renderer model data load model file path to " "
-    // this->renderers.mainRenderer.assets.modelData.loadModelFilepath = " ";
-
     // handle renderer part of load model
     this->renderers.mainRenderer.HandleLoadModel(loadingFlags);
 
@@ -208,7 +185,7 @@ void Engine::LoadModel() {
     this->UI.loadModelFlags.preMultiplyColors = false;
     this->UI.loadModelFlags.preTransform = false;
     this->UI.loadModelFlags.loadModelName = "none";
-
+    
     // set ui model data to main renderer model data
     this->UI.SetModelData(this->renderers.mainRenderer.GetModelData());
   }

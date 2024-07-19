@@ -5,6 +5,14 @@
 
 class Utilities_Renderer {
 public:
+  struct StorageImage {
+    VkDeviceMemory memory;
+    VkImage image;
+    VkImageView view;
+    VkFormat format;
+    void Destroy(EngineCore *engineCorePtr);
+  };
+
   // -- pipeline data struct
   struct PipelineData {
     VkPipeline pipeline{};
@@ -12,6 +20,7 @@ public:
     VkDescriptorSet descriptorSet{};
     VkDescriptorSetLayout descriptorSetLayout{};
     VkDescriptorPool descriptorPool{};
+    void Destroy(EngineCore* pEngineCore);
   };
 
   // -- shader binding table data
@@ -30,6 +39,8 @@ public:
 
     // -- shader groups
     std::vector<VkRayTracingShaderGroupCreateInfoKHR> shaderGroups{};
+
+    void Destroy(EngineCore* pEngineCore);
   };
 
   // -- uniform data struct
@@ -82,4 +93,11 @@ public:
 
     return tempVertexBuffer;
   }
+
+  // -- create storage image
+  //@brief creates a storage image
+  static void
+  CreateColorStorageImage(EngineCore *pEngineCore,
+                          Utilities_Renderer::StorageImage *storageImage,
+                          std::string name);
 };

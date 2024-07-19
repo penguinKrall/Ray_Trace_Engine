@@ -948,6 +948,9 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
     ImGui::Checkbox("Flip Y", &this->loadModelFlags.flipY);
     ImGui::Checkbox("Pre Transform Vertices",
                     &this->loadModelFlags.preTransform);
+    ImGui::Checkbox("Semi Transparency",
+      &this->modelData.loadModelSemiTransparent);
+
     if (ImGui::Button("Load Model") &&
         this->loadModelFlags.loadModelName != "none") {
       this->modelData.loadModel = true;

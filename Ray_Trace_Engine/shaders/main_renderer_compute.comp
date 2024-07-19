@@ -87,7 +87,7 @@ void main() {
     v.position = vec4(newPosition.x, newPosition.y, newPosition.z, 1.0f);
 
     //normal
-    v.normal = normalize(boneTransform * v.normal);
+    v.normal = boneTransform * v.normal;
     
     //tangent
     float w = v.tangent.w;

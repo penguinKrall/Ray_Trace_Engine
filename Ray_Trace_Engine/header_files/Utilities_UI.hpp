@@ -30,6 +30,7 @@ public:
 
   struct ModelData {
     bool loadModel = false;
+    bool loadModelSemiTransparent = false;
     bool deleteModel = false;
     bool rotateUpdated = false;
     bool translateUpdated = false;
