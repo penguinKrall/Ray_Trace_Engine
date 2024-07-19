@@ -25,7 +25,7 @@ void gtp::RenderBase::InitializeRenderBase(EngineCore *engineCorePtr) {
   this->CreateDefaultUniformBuffer();
 
   // create default pipeline
-  this->CreateDefaultPipeline();
+  this->CreateDefaultRayTracingPipeline();
 
   // create shader binding table
   this->CreateShaderBindingTable();
@@ -46,7 +46,7 @@ void gtp::RenderBase::CreateDefaultColorStorageImage() {
       "render_base_default_color_storage_image_");
 }
 
-void gtp::RenderBase::CreateDefaultPipeline() {
+void gtp::RenderBase::CreateDefaultRayTracingPipeline() {
   // image count
   uint32_t imageCount{0};
 
@@ -900,6 +900,274 @@ void gtp::RenderBase::RebuildCommandBuffers(int frame, bool showObjectColorID) {
   }
 }
 
+void gtp::RenderBase::SetupModelDataTransforms(
+    Utilities_UI::TransformMatrices *pTransformMatrices) {
+
+  // transform matrices
+  Utilities_UI::TransformMatrices transformMatrices{};
+
+  // transform values
+  // related to UI slider floats that will be used to manipulate transform
+  // matrices
+  Utilities_UI::TransformValues transformValues{};
+
+  // assign transform matrices if passed in on load
+  // pre transforms
+  if (pTransformMatrices != nullptr) {
+    transformMatrices.rotate = pTransformMatrices->rotate;
+
+    transformMatrices.translate = pTransformMatrices->translate;
+
+    transformMatrices.scale = pTransformMatrices->scale;
+  }
+  // rotate transform values
+  //  Extract the upper 3x3 part of the matrix
+  glm::mat3 rotationMatrix = glm::mat3(transformMatrices.rotate);
+
+  // Normalize the columns to remove scaling
+  rotationMatrix[0] = glm::normalize(rotationMatrix[0]);
+  rotationMatrix[1] = glm::normalize(rotationMatrix[1]);
+  rotationMatrix[2] = glm::normalize(rotationMatrix[2]);
+
+  // Convert the 3x3 rotation matrix to a quaternion
+  glm::quat rotationQuaternion = glm::quat_cast(rotationMatrix);
+
+  // Convert the quaternion to a vec4 (xyzw)
+  glm::vec4 rotationVec4 =
+      glm::vec4(rotationQuaternion.x, rotationQuaternion.y,
+                rotationQuaternion.z, rotationQuaternion.w);
+
+  // Assign it to transformValues.rotate
+  transformValues.rotate = rotationVec4;
+
+  // translate transform values
+  transformValues.translate = glm::vec4(transformMatrices.translate[3]);
+
+  // scale transform values
+  transformValues.scale =
+      glm::vec4(transformMatrices.scale * glm::vec4(1.0f)).x;
+
+  // add transform values/matrices to lists
+  this->assets.modelData.transformMatrices.push_back(transformMatrices);
+  this->assets.modelData.transformValues.push_back(transformValues);
+}
+
+void gtp::RenderBase::LoadGltfCompute(gtp::Model *pModel) {
+
+  ComputeVertex *computeVtx = nullptr;
+
+  if (!pModel->animations.empty()) {
+    computeVtx = new ComputeVertex(pEngineCore, pModel);
+  }
+
+  this->assets.gltfCompute.push_back(computeVtx);
+}
+
+void gtp::RenderBase::UpdateDefaultRayTracingPipeline()
+{
+  // -- pipeline and layout
+  this->pipelineData.Destroy(this->pEngineCore);
+
+  this->CreateDefaultRayTracingPipeline();
+}
+
+void gtp::RenderBase::UpdateDefaultDescriptorSet()
+{
+  // image count
+  uint32_t imageCount{ 0 };
+
+  for (int i = 0; i < this->assets.defaultTextures.size(); i++) {
+    imageCount += static_cast<uint32_t>(this->assets.defaultTextures.size());
+  }
+
+  for (int i = 0; i < assets.models.size(); i++) {
+    std::cout << "update descriptor set model names: "
+      << this->assets.models[i]->modelName;
+    imageCount += static_cast<uint32_t>(assets.models[i]->textures.size());
+  }
+
+  VkAccelerationStructureKHR topLevelAccelerationStructureKHR =
+    this->GetTopLevelAccelerationStructureKHR();
+
+  VkWriteDescriptorSetAccelerationStructureKHR
+    descriptorAccelerationStructureInfo{};
+  descriptorAccelerationStructureInfo.sType =
+    VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+  descriptorAccelerationStructureInfo.accelerationStructureCount = 1;
+  descriptorAccelerationStructureInfo.pAccelerationStructures =
+    &topLevelAccelerationStructureKHR;
+  // &this->TLAS.accelerationStructureKHR;
+
+  VkWriteDescriptorSet accelerationStructureWrite{};
+  accelerationStructureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  // The specialized acceleration structure descriptor has to be chained
+  accelerationStructureWrite.pNext = &descriptorAccelerationStructureInfo;
+  accelerationStructureWrite.dstSet = pipelineData.descriptorSet;
+  accelerationStructureWrite.dstBinding = 0;
+  accelerationStructureWrite.descriptorCount = 1;
+  accelerationStructureWrite.descriptorType =
+    VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+
+  VkDescriptorImageInfo storageImageDescriptor{
+      VK_NULL_HANDLE, defaultColorStorageImage.view, VK_IMAGE_LAYOUT_GENERAL };
+
+  // storage/result image write
+  VkWriteDescriptorSet storageImageWrite{};
+  storageImageWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  storageImageWrite.dstSet = pipelineData.descriptorSet;
+  storageImageWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+  storageImageWrite.dstBinding = 1;
+  storageImageWrite.pImageInfo = &storageImageDescriptor;
+  storageImageWrite.descriptorCount = 1;
+
+  VkDescriptorImageInfo colorIDStorageImageDescriptor{
+      VK_NULL_HANDLE, tools.objectMouseSelect->GetIDImage().view,
+      VK_IMAGE_LAYOUT_GENERAL };
+
+  // storage/result image write
+  VkWriteDescriptorSet colorIDStorageImageWrite{};
+  colorIDStorageImageWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  colorIDStorageImageWrite.dstSet = pipelineData.descriptorSet;
+  colorIDStorageImageWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+  colorIDStorageImageWrite.dstBinding = 2;
+  colorIDStorageImageWrite.pImageInfo = &colorIDStorageImageDescriptor;
+  colorIDStorageImageWrite.descriptorCount = 1;
+
+  // ubo descriptor info
+  VkDescriptorBufferInfo uboDescriptor{};
+  uboDescriptor.buffer = buffers.ubo.bufferData.buffer;
+  uboDescriptor.offset = 0;
+  uboDescriptor.range = buffers.ubo.bufferData.size;
+
+  // ubo descriptor write info
+  VkWriteDescriptorSet uniformBufferWrite{};
+  uniformBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  uniformBufferWrite.dstSet = pipelineData.descriptorSet;
+  uniformBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  uniformBufferWrite.dstBinding = 3;
+  uniformBufferWrite.pBufferInfo = &uboDescriptor;
+  uniformBufferWrite.descriptorCount = 1;
+
+  // geometry_nodes_buffer
+  // VkDescriptorBufferInfo geometry_nodes_BufferDescriptor{
+  //    this->buffers.geometry_nodes_buffer.bufferData.buffer, 0,
+  //    this->buffers.geometry_nodes_buffer.bufferData.size};
+
+  // geometry_nodes_buffer
+  VkDescriptorBufferInfo geometry_nodes_BufferDescriptor =
+    this->GetGeometryNodesBufferDescriptor();
+
+  // geometry descriptor write info
+  VkWriteDescriptorSet geometry_nodes_bufferWrite{};
+  geometry_nodes_bufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  geometry_nodes_bufferWrite.dstSet = pipelineData.descriptorSet;
+  geometry_nodes_bufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  geometry_nodes_bufferWrite.dstBinding = 4;
+  geometry_nodes_bufferWrite.pBufferInfo = &geometry_nodes_BufferDescriptor;
+  geometry_nodes_bufferWrite.descriptorCount = 1;
+
+  // geometry_nodes_indices
+  VkDescriptorBufferInfo geometry_nodes_indicesDescriptor =
+    this->GetGeometryNodesIndexBufferDescriptor();
+  // VkDescriptorBufferInfo geometry_nodes_indicesDescriptor{
+  //     this->buffers.geometry_nodes_indices.bufferData.buffer, 0,
+  //     this->buffers.geometry_nodes_indices.bufferData.size};
+
+  // geometry descriptor write info
+  VkWriteDescriptorSet geometry_nodes_indicesWrite{};
+  geometry_nodes_indicesWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  geometry_nodes_indicesWrite.dstSet = pipelineData.descriptorSet;
+  geometry_nodes_indicesWrite.descriptorType =
+    VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  geometry_nodes_indicesWrite.dstBinding = 5;
+  geometry_nodes_indicesWrite.pBufferInfo = &geometry_nodes_indicesDescriptor;
+  geometry_nodes_indicesWrite.descriptorCount = 1;
+
+  VkDescriptorImageInfo glassTextureDescriptor{
+      this->assets.coloredGlassTexture.sampler,
+      this->assets.coloredGlassTexture.view,
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+
+  // glass texture image write
+  VkWriteDescriptorSet glassTextureWrite{};
+  glassTextureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  glassTextureWrite.dstSet = pipelineData.descriptorSet;
+  glassTextureWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  glassTextureWrite.dstBinding = 6;
+  glassTextureWrite.pImageInfo = &glassTextureDescriptor;
+  glassTextureWrite.descriptorCount = 1;
+
+  VkDescriptorImageInfo cubemapTextureDescriptor{
+      this->assets.cubemap.sampler, this->assets.cubemap.view,
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+
+  // cubemap texture image write
+  VkWriteDescriptorSet cubemapTextureWrite{};
+  cubemapTextureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  cubemapTextureWrite.dstSet = pipelineData.descriptorSet;
+  cubemapTextureWrite.descriptorType =
+    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  cubemapTextureWrite.dstBinding = 7;
+  cubemapTextureWrite.pImageInfo = &cubemapTextureDescriptor;
+  cubemapTextureWrite.descriptorCount = 1;
+
+  std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
+    // Binding 0: Top level acceleration structure
+    accelerationStructureWrite,
+    // Binding 1: Ray tracing result image
+    storageImageWrite,
+    // Binding 1: Ray tracing result image
+    colorIDStorageImageWrite,
+    // Binding 2: Uniform data
+    uniformBufferWrite,
+    // Binding 3: geometry_nodes_buffer write
+    geometry_nodes_bufferWrite,
+    // Binding 4: geometry_nodes_indices write
+    geometry_nodes_indicesWrite,
+    // Binding 5: glass texture image write
+    glassTextureWrite,
+    // Binding 6: cubemap texture image write
+    cubemapTextureWrite };
+
+  // Image descriptors for the image array
+  std::vector<VkDescriptorImageInfo> textureDescriptors{};
+
+  for (int i = 0; i < this->assets.defaultTextures.size(); i++) {
+    VkDescriptorImageInfo descriptor{};
+    descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    descriptor.sampler = this->assets.defaultTextures[i].sampler;
+    descriptor.imageView = this->assets.defaultTextures[i].view;
+    textureDescriptors.push_back(descriptor);
+  }
+
+  if (!assets.models.empty()) {
+    for (int i = 0; i < assets.models.size(); i++) {
+      for (int j = 0; j < assets.models[i]->textures.size(); j++) {
+        VkDescriptorImageInfo descriptor{};
+        descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        descriptor.sampler = assets.models[i]->textures[j].sampler;
+        descriptor.imageView = assets.models[i]->textures[j].view;
+        textureDescriptors.push_back(descriptor);
+      }
+    }
+  }
+
+  VkWriteDescriptorSet writeDescriptorImgArray{};
+  writeDescriptorImgArray.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  writeDescriptorImgArray.dstBinding = 8;
+  writeDescriptorImgArray.descriptorType =
+    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  writeDescriptorImgArray.descriptorCount =
+    static_cast<uint32_t>(textureDescriptors.size());
+  writeDescriptorImgArray.dstSet = this->pipelineData.descriptorSet;
+  writeDescriptorImgArray.pImageInfo = textureDescriptors.data();
+  writeDescriptorSets.push_back(writeDescriptorImgArray);
+
+  vkUpdateDescriptorSets(this->pEngineCore->devices.logical,
+    static_cast<uint32_t>(writeDescriptorSets.size()),
+    writeDescriptorSets.data(), 0, VK_NULL_HANDLE);
+}
+
 /*  initialize constructor  */
 gtp::RenderBase::RenderBase(EngineCore *engineCorePtr)
     : gtp::AccelerationStructures(engineCorePtr) {
@@ -958,6 +1226,144 @@ void gtp::RenderBase::DestroyRenderBase() {
   this->tools.shader->DestroyShader();
   // -- object mouse select
   this->tools.objectMouseSelect->DestroyObjectMouseSelect();
+}
+
+void gtp::RenderBase::SetModelData(Utilities_UI::ModelData *pModelData) {
+  this->assets.modelData = *pModelData;
+  this->assets.modelData.isUpdated = false;
+}
+
+void gtp::RenderBase::RetrieveObjectID() {
+  this->tools.objectMouseSelect->RetrieveObjectID();
+}
+
+void gtp::RenderBase::LoadModel(
+    std::string filename, uint32_t fileLoadingFlags,
+    Utilities_Renderer::ModelLoadingFlags modelLoadingFlags,
+    Utilities_UI::TransformMatrices *pTransformMatrices) {
+  // model instance pointer to initialize and add to list
+  auto *tempModel = new gtp::Model();
+
+  // model index
+  auto modelIdx = static_cast<int>(this->assets.models.size());
+
+  // -- Load From File ---- gtp::Model function
+  tempModel->loadFromFile(filename, pEngineCore, pEngineCore->queue.graphics,
+                          fileLoadingFlags);
+
+  // set semi transparent flag
+  const bool isSemiTransparent =
+      modelLoadingFlags ==
+              Utilities_Renderer::ModelLoadingFlags::SemiTransparent
+          ? 1
+          : 0;
+
+  if (isSemiTransparent || this->assets.modelData.loadModelSemiTransparent) {
+    tempModel->semiTransparentFlag = static_cast<int>(true);
+  }
+
+  // Set "isAnimated" flag and add to list
+  // referenced by blas/tlas/compute vertex
+  const bool isAnimated = tempModel->animations.empty() ? false : true;
+
+  this->assets.modelData.animatedModelIndex.push_back(
+      static_cast<int>(isAnimated));
+
+  // add animated toggle to list
+  this->assets.modelData.isAnimated.push_back(false);
+
+  // push back update blas
+  this->assets.modelData.updateBLAS.push_back(false);
+
+  // add active animation and animation name to their lists.
+  // assign 0 and "none" if model is not animated
+  std::vector<std::string> tempNames;
+  std::vector<int> tempAnimationIndex;
+
+  if (tempModel->animations.empty()) {
+    tempAnimationIndex.push_back(0);
+    this->assets.modelData.activeAnimation.push_back(tempAnimationIndex);
+    tempNames.push_back("none");
+    this->assets.modelData.animationNames.push_back(tempNames);
+  }
+
+  else {
+    tempAnimationIndex.push_back(0);
+    this->assets.modelData.activeAnimation.push_back(tempAnimationIndex);
+    for (int i = 0; i < tempModel->animations.size(); i++) {
+      tempNames.push_back(tempModel->animations[i].name);
+      std::cout << tempModel->animations[i].name << std::endl;
+    }
+    this->assets.modelData.animationNames.push_back(tempNames);
+  }
+
+  // add model name to model data's model name list
+  this->assets.modelData.modelName.push_back(tempModel->modelName);
+
+  // add model to model list
+  this->assets.models.push_back(tempModel);
+
+  // transform values
+  // related to UI slider floats that will be used to manipulate transform
+  this->SetupModelDataTransforms(pTransformMatrices);
+
+  // load gltf -- internally conditional if model contains animations else ==
+  // nullptr
+  LoadGltfCompute(tempModel);
+
+  // create bottom level acceleration structure for model
+  // CreateBLAS(tempModel);
+
+  // acceleration structures class refactor
+  this->BuildBottomLevelAccelerationStructure(tempModel);
+
+  // not a particle
+  this->assets.particle.push_back(nullptr);
+}
+
+void gtp::RenderBase::HandleLoadModel(gtp::FileLoadingFlags loadingFlags) {
+  // call main renderer load model function
+  this->LoadModel(this->assets.modelData.loadModelFilepath, loadingFlags);
+
+  // update main renderer geometry nodes buffer
+  // this->UpdateGeometryNodesBuffer(
+  //    this->assets.models[this->assets.models.size() - 1]);
+
+  // acceleration structure class rebuild geometry buffer
+  this->RebuildGeometryBuffer(
+      this->assets.models[this->assets.models.size() - 1], this->assets.models,
+      this->assets.modelData, this->assets.particle);
+
+  this->UpdateDefaultRayTracingPipeline();
+  this->CreateDefaultDescriptorSet();
+
+  // output loaded model name
+  std::cout << "loaded model name from engine: "
+            << this->assets.models[this->assets.models.size() - 1]->modelName
+            << std::endl;
+
+  // set main renderer model data load model flag to false
+  this->assets.modelData.loadModel = false;
+
+  // set main renderer model data semi transparency load flag to false
+  this->assets.modelData.loadModelSemiTransparent = false;
+
+  // set main renderer model data load model file path to " "
+  this->assets.modelData.loadModelFilepath = " ";
+}
+
+void gtp::RenderBase::HandleResize(){
+  // Delete allocated resources
+  this->defaultColorStorageImage.Destroy(this->pEngineCore);
+
+  // recreate object id resources
+  this->tools.objectMouseSelect->HandleResize();
+
+  // recreate renderer storage image
+  this->CreateDefaultColorStorageImage();
+
+  // Update descriptor
+  this->UpdateDefaultDescriptorSet();
 }
 
 void gtp::RenderBase::Tools::InitializeTools(EngineCore *engineCorePtr) {

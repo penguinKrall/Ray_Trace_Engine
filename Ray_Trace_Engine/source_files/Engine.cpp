@@ -185,7 +185,7 @@ void Engine::LoadModel() {
     this->UI.loadModelFlags.preMultiplyColors = false;
     this->UI.loadModelFlags.preTransform = false;
     this->UI.loadModelFlags.loadModelName = "none";
-    
+
     // set ui model data to main renderer model data
     this->UI.SetModelData(this->renderers.mainRenderer.GetModelData());
   }
@@ -223,6 +223,8 @@ void Engine::HandleResize() {
       RecreateCoreSwapchain();
       // recreate god knows what
       renderers.mainRenderer.HandleResize();
+      // default renderer resize
+      this->renderers.defaultRenderer->Resize();
       // recreate ui framebuffers
       UI.RecreateFramebuffers();
       // Flaggy McFlaggerson
@@ -572,4 +574,4 @@ void Engine::Draw() {
   }
 }
 
-}  // namespace gtp
+} // namespace gtp

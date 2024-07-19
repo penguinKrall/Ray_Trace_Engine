@@ -7,3 +7,8 @@ void gtp::DefaultRenderer::Destroy() {
   // destroy base class resources
   this->DestroyRenderBase();
 }
+
+void gtp::DefaultRenderer::Resize()
+{
+  this->HandleResize();
+}

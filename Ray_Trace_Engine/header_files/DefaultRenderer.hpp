@@ -11,6 +11,9 @@ class DefaultRenderer : private RenderBase {
 
   // -- destroy
   void Destroy();
+
+  void Resize();
+
 };
 
 }  // namespace gtp

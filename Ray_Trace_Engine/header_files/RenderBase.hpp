@@ -91,7 +91,7 @@ class RenderBase : private AccelerationStructures {
   void CreateDefaultColorStorageImage();
 
   // create default pipeline
-  void CreateDefaultPipeline();
+  void CreateDefaultRayTracingPipeline();
 
   // create shader binding table
   void CreateShaderBindingTable();
@@ -110,6 +110,15 @@ class RenderBase : private AccelerationStructures {
 
   void RebuildCommandBuffers(int frame, bool showObjectColorID);
 
+  void SetupModelDataTransforms(
+    Utilities_UI::TransformMatrices* pTransformMatrices);
+
+  void LoadGltfCompute(gtp::Model* pModel);
+
+  void UpdateDefaultRayTracingPipeline();
+
+  void UpdateDefaultDescriptorSet();
+
  public:
   /*	base class public variables	*/
 
@@ -117,8 +126,30 @@ class RenderBase : private AccelerationStructures {
   // default constructor
   RenderBase(EngineCore* engineCorePtr);
 
+  // update default uniform buffer
   void UpdateDefaultUniformBuffer(float deltaTime, glm::vec4 lightPosition);
 
+  //destroy render base class and resources
   void DestroyRenderBase();
+
+  // set assets model data struct // primary interface between renderer and ui via engine
+  void SetModelData(Utilities_UI::ModelData* pModelData);
+
+  // retrieve object id
+  //@brief uses object mouse select class color map and window input to find which object is under mouse when LMB pressed
+  void RetrieveObjectID();
+
+  // load model
+  void LoadModel(std::string filename, uint32_t fileLoadingFlags = 0,
+    Utilities_Renderer::ModelLoadingFlags modelLoadingFlags =
+    Utilities_Renderer::ModelLoadingFlags::None,
+    Utilities_UI::TransformMatrices* pTransformMatrices = nullptr);
+
+  // handle load model
+  void HandleLoadModel(gtp::FileLoadingFlags loadingFlags);
+
+  // handle resize
+  void HandleResize();
+
 };
 }  // namespace gtp
