@@ -11,7 +11,7 @@ VkResult Engine::InitEngine() {
   this->InitCore();
 
   // init xy pos
-  this->InitXYPos();
+  this->inputPosition.InitializeMousePosition(800.0f, 600.0f);
 
   // init ui
   this->InitUI();
@@ -25,7 +25,7 @@ VkResult Engine::InitEngine() {
   this->loadingScreen = gtp::LoadingScreen(this->pEngineCore);
 
   // draw loading screen
-  if (!glfwWindowShouldClose(windowGLFW)) {
+  if (!glfwWindowShouldClose(CoreGLFWwindow())) {
     this->loadingScreen.Draw(&this->UI, "Loading Renderer...");
   }
 
@@ -33,7 +33,7 @@ VkResult Engine::InitEngine() {
   this->InitRenderers();
 
   // update loading screen
-  if (!glfwWindowShouldClose(windowGLFW)) {
+  if (!glfwWindowShouldClose(CoreGLFWwindow())) {
     this->loadingScreen.Draw(&this->UI, "Successfully Loaded Renderer!");
   }
 
@@ -55,18 +55,18 @@ VkResult Engine::InitEngine() {
   return VK_SUCCESS;
 }
 
-void Engine::InitXYPos() {
-  lastX = float(this->width) / 2.0f;
-  lastY = float(this->height) / 2.0f;
-
-  posX = float(this->width) / 2.0f;
-  posY = float(this->height) / 2.0f;
-}
+// void Engine::InitXYPos() {
+//   lastX = float(this->GetWindowDimensions().width) / 2.0f;
+//   lastY = float(this->GetWindowDimensions().height) / 2.0f;
+//
+//   posX = float(this->GetWindowDimensions().width) / 2.0f;
+//   posY = float(this->GetWindowDimensions().height) / 2.0f;
+// }
 
 // -- Run
 void Engine::Run() {
   // main loop
-  while (!glfwWindowShouldClose(windowGLFW)) {
+  while (!glfwWindowShouldClose(CoreGLFWwindow())) {
     // poll events
     glfwPollEvents();
 
@@ -159,7 +159,9 @@ void Engine::RetrieveColorID() {
     if (this->isLMBPressed) {
       // this->renderers.mainRenderer.GetTools()
       //     .objectMouseSelect.RetrieveObjectID();
-      this->renderers.defaultRenderer->ObjectID();
+      this->renderers.defaultRenderer->ObjectID(
+          static_cast<int>(inputPosition.mousePosX),
+          static_cast<int>(inputPosition.mousePosY));
       this->isLMBPressed = false;
     }
   }
@@ -248,57 +250,62 @@ void Engine::HandleResize() {
 void Engine::userInput() {
   // float deltaTime = deltaTime;
 
-  glfwGetCursorPos(windowGLFW, &posX, &posY);
+  glfwGetCursorPos(CoreGLFWwindow(), &inputPosition.mousePosX,
+                   &inputPosition.mousePosY);
 
   // Print mouse coordinates (you can use them as needed)
-  // printf("Mouse Coordinates: %.2f, %.2f\n", posX, posY);
+  // printf("Mouse Coordinates: %.2f, %.2f\n", mousePosX, mousePosY);
 
-  auto xoffset = static_cast<float>(posX - lastX);
-  auto yoffset = static_cast<float>(lastY - posY);
+  auto xoffset =
+      static_cast<float>(inputPosition.mousePosX - inputPosition.lastX);
+  auto yoffset =
+      static_cast<float>(inputPosition.lastY - inputPosition.mousePosY);
 
-  lastX = posX;
-  lastY = posY;
+  inputPosition.lastX = inputPosition.mousePosX;
+  inputPosition.lastY = inputPosition.mousePosY;
 
-  if (glfwGetMouseButton(windowGLFW, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_TRUE) {
+  if (glfwGetMouseButton(CoreGLFWwindow(), GLFW_MOUSE_BUTTON_RIGHT) ==
+      GLFW_TRUE) {
     camera->viewUpdated = true;
     camera->ProcessMouseMovement(xoffset, yoffset);
   }
 
-  if (glfwGetMouseButton(windowGLFW, GLFW_MOUSE_BUTTON_LEFT) == GLFW_TRUE) {
+  if (glfwGetMouseButton(CoreGLFWwindow(), GLFW_MOUSE_BUTTON_LEFT) ==
+      GLFW_TRUE) {
     this->isLMBPressed = true;
   }
 
-  // if (glfwGetKey(windowGLFW, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+  // if (glfwGetKey(CoreGLFWwindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
   //   camera->viewUpdated = true;
-  //   glfwSetWindowShouldClose(windowGLFW, true);
+  //   glfwSetWindowShouldClose(CoreGLFWwindow(), true);
   // }
 
-  if (glfwGetKey(windowGLFW, GLFW_KEY_W) == GLFW_PRESS) {
+  if (glfwGetKey(CoreGLFWwindow(), GLFW_KEY_W) == GLFW_PRESS) {
     camera->viewUpdated = true;
     camera->ProcessKeyboard(Movement::FORWARD, deltaTime);
   }
 
-  if (glfwGetKey(windowGLFW, GLFW_KEY_S) == GLFW_PRESS) {
+  if (glfwGetKey(CoreGLFWwindow(), GLFW_KEY_S) == GLFW_PRESS) {
     camera->viewUpdated = true;
     camera->ProcessKeyboard(Movement::BACKWARD, deltaTime);
   }
 
-  if (glfwGetKey(windowGLFW, GLFW_KEY_A) == GLFW_PRESS) {
+  if (glfwGetKey(CoreGLFWwindow(), GLFW_KEY_A) == GLFW_PRESS) {
     camera->viewUpdated = true;
     camera->ProcessKeyboard(Movement::LEFT, deltaTime);
   }
 
-  if (glfwGetKey(windowGLFW, GLFW_KEY_D) == GLFW_PRESS) {
+  if (glfwGetKey(CoreGLFWwindow(), GLFW_KEY_D) == GLFW_PRESS) {
     camera->viewUpdated = true;
     camera->ProcessKeyboard(Movement::RIGHT, deltaTime);
   }
 
-  if (glfwGetKey(windowGLFW, GLFW_KEY_UP) == GLFW_TRUE) {
+  if (glfwGetKey(CoreGLFWwindow(), GLFW_KEY_UP) == GLFW_TRUE) {
     camera->viewUpdated = true;
     camera->ProcessKeyboard(Movement::UP, deltaTime);
   }
 
-  if (glfwGetKey(windowGLFW, GLFW_KEY_DOWN) == GLFW_TRUE) {
+  if (glfwGetKey(CoreGLFWwindow(), GLFW_KEY_DOWN) == GLFW_TRUE) {
     camera->viewUpdated = true;
     camera->ProcessKeyboard(Movement::DOWN, deltaTime);
   }
@@ -485,7 +492,7 @@ void Engine::Draw() {
     // this->renderers.mainRenderer.RebuildCommandBuffers(
     //    currentFrame, this->UI.rendererData.showIDImage);
 
-    this->renderers.defaultRenderer->RebuildCommands(
+    this->renderers.defaultRenderer->GraphicsCommands(
         currentFrame, this->UI.rendererData.showIDImage);
 
     /*---------------------------------*/
@@ -546,6 +553,14 @@ void Engine::Draw() {
     // Update current frame index
     this->currentFrame = (this->currentFrame + 1) % frame_draws;
   }
+}
+
+void Engine::InputPosition::InitializeMousePosition(float width, float height) {
+  lastX = width / 2.0f;
+  lastY = height / 2.0f;
+
+  mousePosX = width / 2.0f;
+  mousePosY = height / 2.0f;
 }
 
 } // namespace gtp

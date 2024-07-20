@@ -4,6 +4,17 @@
 
 // -- class to contain ui data -- dear_imgui
 class CoreUI {
+private:
+  //render dimensions
+  struct RenderDimensions {
+    VkExtent2D extent{};
+    VkRect2D renderArea{};
+    VkViewport viewport{};
+    VkRect2D scissor{};
+    VkClearValue colorClearValue{};
+    VkClearValue depthClearValue{};
+  };
+  RenderDimensions renderDimensions{};
 
 public:
   // -- core pointer

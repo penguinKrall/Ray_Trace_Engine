@@ -30,7 +30,7 @@ VkShaderModule Shader::loadShaderModule(const char *fileName, VkDevice device,
     moduleCreateInfo.pCode =
         reinterpret_cast<const uint32_t *>(fileBuffer.data());
 
-    pEngineCore->add(
+    pEngineCore->AddObject(
         [this, &moduleCreateInfo, &shaderModule]() {
           return pEngineCore->objCreate.VKCreateShaderModule(
               &moduleCreateInfo, nullptr, &shaderModule);

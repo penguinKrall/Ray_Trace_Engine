@@ -136,7 +136,7 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
   bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
   // create buffer
-  this->pEngineCore->add(
+  this->pEngineCore->AddObject(
       [pEngineCore, &bufferCreateInfo, &stagingBuffer]() {
         return pEngineCore->objCreate.VKCreateBuffer(&bufferCreateInfo, nullptr,
                                                      &stagingBuffer);
@@ -152,7 +152,7 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
                                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
   // allocate buffer memory
-  this->pEngineCore->add(
+  this->pEngineCore->AddObject(
       [pEngineCore, &memAllocInfo, &stagingMemory]() {
         return pEngineCore->objCreate.VKAllocateMemory(&memAllocInfo, nullptr,
                                                        &stagingMemory);
@@ -190,7 +190,7 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
                           VK_IMAGE_USAGE_SAMPLED_BIT;
 
   // create image
-  this->pEngineCore->add(
+  this->pEngineCore->AddObject(
       [pEngineCore, &imageCreateInfo, this]() {
         return pEngineCore->objCreate.VKCreateImage(&imageCreateInfo, nullptr,
                                                     &this->image);
@@ -206,7 +206,7 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
       memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   // allocate memory for image
-  this->pEngineCore->add(
+  this->pEngineCore->AddObject(
       [pEngineCore, &memAllocInfo, this]() {
         return pEngineCore->objCreate.VKAllocateMemory(&memAllocInfo, nullptr,
                                                        &this->deviceMemory);
@@ -218,7 +218,7 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
 
   VkCommandBuffer copyCmd;
 
-  this->pEngineCore->add(
+  this->pEngineCore->AddObject(
       [pEngineCore, &copyCmd]() {
         return copyCmd = pEngineCore->objCreate.VKCreateCommandBuffer(
                    VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -379,7 +379,7 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
   // vkCreateSampler(pEngineCore->devices.logical, &samplerInfo, nullptr,
   // &sampler);
 
-  this->pEngineCore->add(
+  this->pEngineCore->AddObject(
       [pEngineCore, &samplerInfo, this]() {
         return pEngineCore->objCreate.VKCreateSampler(&samplerInfo, nullptr,
                                                       &sampler);
@@ -397,7 +397,7 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
   viewInfo.subresourceRange.layerCount = 1;
   viewInfo.subresourceRange.levelCount = mipLevels;
 
-  this->pEngineCore->add(
+  this->pEngineCore->AddObject(
       [pEngineCore, &viewInfo, this]() {
         return pEngineCore->objCreate.VKCreateImageView(&viewInfo, nullptr,
                                                         &view);

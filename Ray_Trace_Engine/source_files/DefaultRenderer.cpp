@@ -18,9 +18,9 @@ void gtp::DefaultRenderer::ModelDataSet(Utilities_UI::ModelData *pModelData) {
   this->SetModelData(pModelData);
 }
 
-void gtp::DefaultRenderer::ObjectID()
+void gtp::DefaultRenderer::ObjectID(int mousePosX, int mousePosY)
 {
-  this->RetrieveObjectID();
+  this->RetrieveObjectID(mousePosX, mousePosY);
 }
 
 void gtp::DefaultRenderer::LoadNewModel(gtp::FileLoadingFlags loadingFlags)
@@ -48,7 +48,7 @@ void gtp::DefaultRenderer::UpdateShaderBuffers(float deltaTime, float timer, glm
   this->RebuildAS();
 }
 
-void gtp::DefaultRenderer::RebuildCommands(int frame, bool showObjectColorID)
+void gtp::DefaultRenderer::GraphicsCommands(int frame, bool showObjectColorID)
 {
   this->RebuildCommandBuffers(frame, showObjectColorID);
 }

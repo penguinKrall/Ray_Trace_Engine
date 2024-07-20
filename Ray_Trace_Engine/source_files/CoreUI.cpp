@@ -14,13 +14,17 @@ CoreUI::CoreUI(EngineCore *pEngineCore) {
   // check version
   IMGUI_CHECKVERSION();
 
+  int width = 0;
+  int height = 0;
+
+  glfwGetWindowSize(this->pEngineCore->CoreGLFWwindow(), &width, &height);
   //// 2: initialize imgui library
   backends.io = &ImGui::GetIO();
-  backends.io->DisplaySize.x = static_cast<float>(this->pEngineCore->width);
-  backends.io->DisplaySize.y = static_cast<float>(this->pEngineCore->height);
+  backends.io->DisplaySize.x = static_cast<float>(width);
+  backends.io->DisplaySize.y = static_cast<float>(height);
 
   // initialize ImGui for GLFW
-  ImGui_ImplGlfw_InitForVulkan(pEngineCore->windowGLFW, true);
+  ImGui_ImplGlfw_InitForVulkan(pEngineCore->CoreGLFWwindow(), true);
 
   // init for vulkan
   ImGui_ImplVulkan_InitInfo imguiInitInfo = {};
@@ -159,7 +163,7 @@ void CoreUI::CreateFontImage() {
   targetImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
   // create image
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &targetImageCreateInfo]() {
         return pEngineCore->objCreate.VKCreateImage(&targetImageCreateInfo,
                                                     nullptr, &fontImage.image);
@@ -179,7 +183,7 @@ void CoreUI::CreateFontImage() {
       memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   // allocate image memory
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &memoryAllocateInfo]() {
         return pEngineCore->objCreate.VKAllocateMemory(
             &memoryAllocateInfo, nullptr, &fontImage.memory);
@@ -204,7 +208,7 @@ void CoreUI::CreateFontImage() {
   fontImageViewCreateInfo.subresourceRange.layerCount = 1;
 
   // create image view and map name/handle for debug
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &fontImageViewCreateInfo]() {
         return pEngineCore->objCreate.VKCreateImageView(
             &fontImageViewCreateInfo, nullptr, &fontImage.view);
@@ -231,7 +235,7 @@ void CoreUI::CreateFontSampler() {
   samplerInfo.anisotropyEnable = VK_TRUE;
   samplerInfo.maxAnisotropy = 8;
 
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &samplerInfo]() {
         return pEngineCore->objCreate.VKCreateSampler(&samplerInfo, nullptr,
                                                       &fontImage.sampler);
@@ -299,7 +303,7 @@ void CoreUI::CreateUIRenderPass() {
   renderPassCreateInfo.pDependencies = subpassDependencies.data();
 
   // create render pass
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &renderPassCreateInfo]() {
         return pEngineCore->objCreate.VKCreateRenderPass(
             &renderPassCreateInfo, nullptr, &renderData.renderPass);
@@ -324,7 +328,7 @@ void CoreUI::CreateUIPipeline() {
   pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
 
   // create pipeline layout
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &pipelineLayoutCreateInfo]() {
         return pEngineCore->objCreate.VKCreatePipelineLayout(
             &pipelineLayoutCreateInfo, nullptr, &renderData.pipelineLayout);
@@ -388,9 +392,9 @@ void CoreUI::CreateUIPipeline() {
   viewportStateCreateInfo.sType =
       VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
   viewportStateCreateInfo.viewportCount = 1;
-  viewportStateCreateInfo.pViewports = &pEngineCore->viewport;
+  viewportStateCreateInfo.pViewports = &renderDimensions.viewport;
   viewportStateCreateInfo.scissorCount = 1;
-  viewportStateCreateInfo.pScissors = &pEngineCore->scissor;
+  viewportStateCreateInfo.pScissors = &renderDimensions.scissor;
   viewportStateCreateInfo.flags = 0;
 
   VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo{};
@@ -488,7 +492,7 @@ void CoreUI::CreateUIPipeline() {
 
   pipelineCreateInfo.pVertexInputState = &vertexInputState;
 
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &pipelineCreateInfo]() {
         return pEngineCore->objCreate.VKCreateGraphicsPipeline(
             renderData.pipelineCache, 1, &pipelineCreateInfo, nullptr,
@@ -505,7 +509,7 @@ void CoreUI::CreateUIFramebuffer() {
   // std::cout << "msaa levels: " << rdz.core.components.msaaSamples <<
   // std::endl;
 
-  glfwGetWindowSize(pEngineCore->windowGLFW, &width, &height);
+  glfwGetWindowSize(pEngineCore->CoreGLFWwindow(), &width, &height);
 
   renderData.framebuffer.resize(frame_draws);
 
@@ -530,7 +534,7 @@ void CoreUI::CreateUIFramebuffer() {
     // Create a modified name by appending the counter value
     std::string modifiedName = std::format("{}{}", "UIFramebuffer", idx);
 
-    pEngineCore->add(
+    pEngineCore->AddObject(
         [this, &framebufferCreateInfo, &idx]() {
           return pEngineCore->objCreate.VKCreateFramebuffer(
               &framebufferCreateInfo, nullptr, &renderData.framebuffer[idx]);
@@ -564,7 +568,7 @@ void CoreUI::CreateResources() {
   gtp::Buffer stagingBuffer;
 
   // create staging buffer
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &stagingBuffer, &uploadSize]() {
         return stagingBuffer.CreateBuffer(
             pEngineCore->devices.physical, pEngineCore->devices.logical,
@@ -578,7 +582,7 @@ void CoreUI::CreateResources() {
       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
   // create staging buffer memory
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &stagingBuffer]() {
         return stagingBuffer.AllocateBufferMemory(
             pEngineCore->devices.physical, pEngineCore->devices.logical,
@@ -675,7 +679,7 @@ void CoreUI::CreateFontImageDescriptor() {
   descriptorPoolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 
   // create descriptor pool
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &descriptorPoolInfo]() {
         return pEngineCore->objCreate.VKCreateDescriptorPool(
             &descriptorPoolInfo, nullptr, &descriptor.descriptorPool);
@@ -694,7 +698,7 @@ void CoreUI::CreateFontImageDescriptor() {
       setLayoutBindings.data()};
 
   // create descriptor set layout
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &descriptorLayoutCreateInfo]() {
         return pEngineCore->objCreate.VKCreateDescriptorSetLayout(
             &descriptorLayoutCreateInfo, nullptr,
@@ -878,20 +882,20 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
                ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBackground |
                    ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove);
 
-  ImGui::SetWindowPos(ImVec2(0, 0));  // set position to top left
+  ImGui::SetWindowPos(ImVec2(0, 0)); // set position to top left
   ImGui::SetWindowSize(ImVec2(
       static_cast<float>(pEngineCore->swapchainData.swapchainExtent2D.width),
-      100));  // set size of top left window
+      100)); // set size of top left window
 
   // top left window menu bar
   // file/close
   if (ImGui::BeginMenuBar()) {
     if (ImGui::BeginMenu("File", true)) {
       if (ImGui::MenuItem("Exit", "Esc")) {
-        glfwSetWindowShouldClose(pEngineCore->windowGLFW, true);
+        glfwSetWindowShouldClose(pEngineCore->CoreGLFWwindow(), true);
       }
 
-      ImGui::EndMenu();  // End "File" drop-down menu
+      ImGui::EndMenu(); // End "File" drop-down menu
     }
 
     // Place this line after rendering the menu bar
@@ -902,7 +906,7 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
     ImGui::Text("framerate: %.3f ms/frame (%.1f FPS)",
                 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
-    ImGui::EndMenuBar();  // End main menu bar
+    ImGui::EndMenuBar(); // End main menu bar
   }
 
   ImGui::End();
@@ -949,7 +953,7 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
     ImGui::Checkbox("Pre Transform Vertices",
                     &this->loadModelFlags.preTransform);
     ImGui::Checkbox("Semi Transparency",
-      &this->modelData.loadModelSemiTransparent);
+                    &this->modelData.loadModelSemiTransparent);
 
     if (ImGui::Button("Load Model") &&
         this->loadModelFlags.loadModelName != "none") {
@@ -1137,29 +1141,28 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
 
 void CoreUI::DrawUI(const VkCommandBuffer commandBuffer, int currentFrame) {
   // set viewport and scissor
-  pEngineCore->extent.width =
-      pEngineCore->swapchainData.swapchainExtent2D.width;
-  pEngineCore->extent.height =
-      pEngineCore->swapchainData.swapchainExtent2D.height;
+  renderDimensions.extent = {
+      pEngineCore->swapchainData.swapchainExtent2D.width,
+      pEngineCore->swapchainData.swapchainExtent2D.height};
 
-  pEngineCore->viewport.width =
+  renderDimensions.viewport.width =
       static_cast<float>(pEngineCore->swapchainData.swapchainExtent2D.width);
-  pEngineCore->viewport.height =
+  renderDimensions.viewport.height =
       static_cast<float>(pEngineCore->swapchainData.swapchainExtent2D.height);
 
-  pEngineCore->viewport.minDepth = 0.0f;
-  pEngineCore->viewport.maxDepth = 1.0f;
+  renderDimensions.viewport.minDepth = 0.0f;
+  renderDimensions.viewport.maxDepth = 1.0f;
 
-  pEngineCore->scissor.extent.width =
+  renderDimensions.scissor.extent.width =
       pEngineCore->swapchainData.swapchainExtent2D.width;
-  pEngineCore->scissor.extent.height =
+  renderDimensions.scissor.extent.height =
       pEngineCore->swapchainData.swapchainExtent2D.height;
 
-  pEngineCore->renderArea = {{0, 0}, pEngineCore->extent};
+  renderDimensions.renderArea = {{0, 0}, renderDimensions.extent};
 
-  vkCmdSetViewport(commandBuffer, 0, 1, &pEngineCore->viewport);
+  vkCmdSetViewport(commandBuffer, 0, 1, &renderDimensions.viewport);
 
-  vkCmdSetScissor(commandBuffer, 0, 1, &pEngineCore->scissor);
+  vkCmdSetScissor(commandBuffer, 0, 1, &renderDimensions.scissor);
 
   // render area
   VkRect2D renderArea = {{0},
@@ -1167,10 +1170,10 @@ void CoreUI::DrawUI(const VkCommandBuffer commandBuffer, int currentFrame) {
                           pEngineCore->swapchainData.swapchainExtent2D.height}};
 
   // clear values (unused rn - renderpass does not clear attachments)
-  pEngineCore->colorClearValue.color = {0.0f, 0.0f, 0.0f, 0.0f};
+  renderDimensions.colorClearValue.color = {0.0f, 0.0f, 0.0f, 0.0f};
 
   std::vector<VkClearValue> clearValue = {
-      pEngineCore->colorClearValue,
+      renderDimensions.colorClearValue,
       // pEngineCore->depthClearValue,
       // pEngineCore->colorClearValue
   };

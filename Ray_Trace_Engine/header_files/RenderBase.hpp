@@ -141,7 +141,7 @@ public:
   // retrieve object id
   //@brief uses object mouse select class color map and window input to find
   //which object is under mouse when LMB pressed
-  void RetrieveObjectID();
+  void RetrieveObjectID(int posX, int posY);
 
   // load model
   void LoadModel(std::string filename, uint32_t fileLoadingFlags = 0,

@@ -6,14 +6,14 @@
 #include <CoreWindow.hpp>
 #include <Utilities_CreateObject.hpp>
 #include <stb_image.h>
-//#include <LoadingScreen.hpp>
+// #include <LoadingScreen.hpp>
 
-class EngineCore : public CoreDebug,
-                   public CoreWindow,
+class EngineCore : private CoreDebug,
+                   private CoreWindow,
                    public CoreDevice,
                    public CoreSwapchain {
 private:
-  //gtp::LoadingScreen loadingScreen;
+  // gtp::LoadingScreen loadingScreen;
 
 public:
   // instance pointer
@@ -107,10 +107,21 @@ public:
     bufferDeviceAI.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
     bufferDeviceAI.buffer = buffer;
     return coreExtensions->vkGetBufferDeviceAddressKHR(
-      pEngineCore->devices.logical, &bufferDeviceAI);
+        pEngineCore->devices.logical, &bufferDeviceAI);
   }
+
+  //void InitXYPos();
 
   // -- destroy core
   // destroys core related objects
   void DestroyCore();
+
+  GLFWwindow *CoreGLFWwindow();
+  template <typename Func>
+  inline void AddObject(Func createFunc, const std::string &name);
 };
+
+template <typename Func>
+inline void EngineCore::AddObject(Func createFunc, const std::string &name) {
+  this->pCoreDebug->add(createFunc, name);
+}

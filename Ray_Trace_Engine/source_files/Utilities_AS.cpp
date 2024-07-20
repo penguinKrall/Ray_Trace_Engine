@@ -13,7 +13,7 @@ void Utilities_AS::createScratchBuffer(EngineCore *pEngineCore,
                                        gtp::Buffer *buffer, VkDeviceSize size,
                                        std::string name) {
   // create buffer
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [pEngineCore, buffer, size]() {
         return buffer->CreateBuffer(
             pEngineCore->devices.physical, pEngineCore->devices.logical,
@@ -25,7 +25,7 @@ void Utilities_AS::createScratchBuffer(EngineCore *pEngineCore,
       "scratchBuffer_" + name);
 
   // allocate memory
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [pEngineCore, buffer, name]() {
         return buffer->AllocateBufferMemory(pEngineCore->devices.physical,
                                             pEngineCore->devices.logical,
@@ -58,7 +58,7 @@ void Utilities_AS::createAccelerationStructureBuffer(
       VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
   // create buffer
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [pEngineCore, &bufferCreateInfo, buffer]() {
         return pEngineCore->objCreate.VKCreateBuffer(&bufferCreateInfo, nullptr,
                                                      buffer);
@@ -86,7 +86,7 @@ void Utilities_AS::createAccelerationStructureBuffer(
   std::string bufferNameWithSuffix = bufferName + "Memory";
 
   // create object/map handle
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [pEngineCore, &memoryAllocateInfo, memory]() {
         return pEngineCore->objCreate.VKAllocateMemory(&memoryAllocateInfo,
                                                        nullptr, memory);
@@ -124,7 +124,7 @@ void Utilities_AS::createStorageImage(EngineCore *pEngineCore,
   imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
   // create image
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [pEngineCore, &imageCreateInfo, &storageImage]() {
         return pEngineCore->objCreate.VKCreateImage(&imageCreateInfo, nullptr,
                                                     &storageImage->image);
@@ -143,7 +143,7 @@ void Utilities_AS::createStorageImage(EngineCore *pEngineCore,
   memoryAllocateInfo.memoryTypeIndex = pEngineCore->getMemoryType(
       memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [pEngineCore, &memoryAllocateInfo, &storageImage]() {
         return pEngineCore->objCreate.VKAllocateMemory(
             &memoryAllocateInfo, nullptr, &storageImage->memory);
@@ -171,7 +171,7 @@ void Utilities_AS::createStorageImage(EngineCore *pEngineCore,
   imageViewCreateInfo.image = storageImage->image;
 
   // create image view and map name/handle for debug
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [pEngineCore, &imageViewCreateInfo, &storageImage]() {
         return pEngineCore->objCreate.VKCreateImageView(
             &imageViewCreateInfo, nullptr, &storageImage->view);
@@ -331,7 +331,7 @@ void Utilities_AS::createBLAS(
       VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
 
   // create acceleration structure
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [pEngineCore, &BLAS, &accelerationStructureCreateInfo]() {
         return pEngineCore->objCreate.VKCreateAccelerationStructureKHR(
             &accelerationStructureCreateInfo, nullptr,

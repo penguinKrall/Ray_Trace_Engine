@@ -18,7 +18,7 @@ class DefaultRenderer : private RenderBase {
 
   void ModelDataSet(Utilities_UI::ModelData* pModelData);
 
-  void ObjectID();
+  void ObjectID(int mousePosX, int mousePosY);
 
   void LoadNewModel(gtp::FileLoadingFlags loadingFlags);
 
@@ -28,7 +28,7 @@ class DefaultRenderer : private RenderBase {
 
   void UpdateShaderBuffers(float deltaTime, float timer, glm::vec4 lightPosition);
 
-  void RebuildCommands(int frame, bool showObjectColorID);
+  void GraphicsCommands(int frame, bool showObjectColorID);
 };
 
 }  // namespace gtp

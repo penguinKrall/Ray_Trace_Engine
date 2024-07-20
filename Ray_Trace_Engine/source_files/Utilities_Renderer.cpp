@@ -23,7 +23,7 @@ void Utilities_Renderer::CreateColorStorageImage(
   imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
   // create image
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [pEngineCore, &imageCreateInfo, &storageImage]() {
         return pEngineCore->objCreate.VKCreateImage(&imageCreateInfo, nullptr,
                                                     &storageImage->image);
@@ -42,7 +42,7 @@ void Utilities_Renderer::CreateColorStorageImage(
   memoryAllocateInfo.memoryTypeIndex = pEngineCore->getMemoryType(
       memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [pEngineCore, &memoryAllocateInfo, &storageImage]() {
         return pEngineCore->objCreate.VKAllocateMemory(
             &memoryAllocateInfo, nullptr, &storageImage->memory);
@@ -70,7 +70,7 @@ void Utilities_Renderer::CreateColorStorageImage(
   imageViewCreateInfo.image = storageImage->image;
 
   // create image view and map name/handle for debug
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [pEngineCore, &imageViewCreateInfo, &storageImage]() {
         return pEngineCore->objCreate.VKCreateImageView(
             &imageViewCreateInfo, nullptr, &storageImage->view);

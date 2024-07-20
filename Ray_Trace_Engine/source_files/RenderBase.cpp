@@ -168,7 +168,7 @@ void gtp::RenderBase::CreateDefaultRayTracingPipeline() {
   descriptorSetLayoutCreateInfo.pNext = &setLayoutBindingFlags;
 
   // create descriptor set layout
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &descriptorSetLayoutCreateInfo]() {
         return pEngineCore->objCreate.VKCreateDescriptorSetLayout(
             &descriptorSetLayoutCreateInfo, nullptr,
@@ -183,7 +183,7 @@ void gtp::RenderBase::CreateDefaultRayTracingPipeline() {
   pipelineLayoutCreateInfo.pSetLayouts = &pipelineData.descriptorSetLayout;
 
   // create pipeline layout
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &pipelineLayoutCreateInfo]() {
         return pEngineCore->objCreate.VKCreatePipelineLayout(
             &pipelineLayoutCreateInfo, nullptr, &pipelineData.pipelineLayout);
@@ -290,7 +290,7 @@ void gtp::RenderBase::CreateDefaultRayTracingPipeline() {
   rayTracingPipelineCreateInfo.layout = pipelineData.pipelineLayout;
 
   // create raytracing pipeline
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &rayTracingPipelineCreateInfo]() {
         return pEngineCore->objCreate.VKCreateRaytracingPipeline(
             &rayTracingPipelineCreateInfo, nullptr, &pipelineData.pipeline);
@@ -457,7 +457,7 @@ void gtp::RenderBase::CreateDefaultDescriptorSet() {
   descriptorPoolCreateInfo.maxSets = 1;
 
   // create descriptor pool
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &descriptorPoolCreateInfo]() {
         return pEngineCore->objCreate.VKCreateDescriptorPool(
             &descriptorPoolCreateInfo, nullptr,
@@ -482,7 +482,7 @@ void gtp::RenderBase::CreateDefaultDescriptorSet() {
   descriptorSetAllocateInfo.pNext = &variableDescriptorCountAllocInfo;
 
   // create descriptor set
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &descriptorSetAllocateInfo]() {
         return pEngineCore->objCreate.VKAllocateDescriptorSet(
             &descriptorSetAllocateInfo, nullptr,
@@ -1238,8 +1238,8 @@ void gtp::RenderBase::SetModelData(Utilities_UI::ModelData *pModelData) {
   this->assets.modelData.isUpdated = false;
 }
 
-void gtp::RenderBase::RetrieveObjectID() {
-  this->tools.objectMouseSelect->RetrieveObjectID();
+void gtp::RenderBase::RetrieveObjectID(int posX, int posY) {
+  this->tools.objectMouseSelect->RetrieveObjectID(posX, posY);
 }
 
 void gtp::RenderBase::LoadModel(

@@ -27,17 +27,20 @@
 // #include <set>
 
 class CoreWindow {
+private:
+  VkExtent3D windowExtent = {800, 600, 1};
+
 public:
-  int width = 0;
-  int height = 0;
+  //int width = 0;
+  //int height = 0;
 
   CoreWindow();
 
-  double lastX = 0.0f;
-  double lastY = 0.0f;
+  //double lastX = 0.0f;
+  //double lastY = 0.0f;
 
-  double posX = 0.0f;
-  double posY = 0.0f;
+  //double posX = 0.0f;
+  //double posY = 0.0f;
 
   VkClearValue colorClearValue{};
   VkClearValue depthClearValue{};
@@ -62,5 +65,11 @@ public:
   // funcs
   GLFWwindow *
   initWindow(std::string wName = "vulkan_raytracing project window");
+
+  // get window dimensions
+  //@brief returns vkextent3d - width/height/depth uint32
+  VkExtent3D GetWindowDimensions();
+  void SetWindowDimensions(uint32_t width = 800, uint32_t height = 600, uint32_t depth = 1);
+
   void destroyWindow();
 };

@@ -202,7 +202,7 @@ VkResult EngineCore::CreateBuffer(VkBufferUsageFlags usageFlags,
   buffer->bufferData.memoryPropertyFlags = memoryPropertyFlags;
 
   // create buffer object
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, buffer, usageFlags, size]() {
         return buffer->CreateBuffer(this->pEngineCore->devices.physical,
                                     this->pEngineCore->devices.logical,
@@ -212,7 +212,7 @@ VkResult EngineCore::CreateBuffer(VkBufferUsageFlags usageFlags,
       buffer->bufferData.bufferName);
 
   // allocate buffer memory object
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, buffer]() {
         return buffer->AllocateBufferMemory(
             this->pEngineCore->devices.physical,
@@ -706,6 +706,17 @@ void EngineCore::RecreateSyncObjects() {
 //   // -- -- -- -- END LOADING SCREEN  -- -- -- -- //
 // }
 
+//void EngineCore::InitXYPos()
+//{
+//  
+//    lastX = float(this->GetWindowDimensions().width) / 2.0f;
+//    lastY = float(this->GetWindowDimensions().height) / 2.0f;
+//
+//    posX = float(this->GetWindowDimensions().width) / 2.0f;
+//    posY = float(this->GetWindowDimensions().height) / 2.0f;
+//  
+//}
+
 // -- destroy
 void EngineCore::DestroyCore() {
   // swapchain
@@ -725,4 +736,9 @@ void EngineCore::DestroyCore() {
 
   // window
   destroyWindow();
+}
+
+GLFWwindow* EngineCore::CoreGLFWwindow()
+{
+  return this->windowGLFW;
 }

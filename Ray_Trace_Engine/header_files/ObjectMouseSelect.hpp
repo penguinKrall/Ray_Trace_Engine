@@ -55,7 +55,7 @@ public:
 
   void HandleResize();
 
-  void RetrieveObjectID();
+  void RetrieveObjectID(int posX, int posY);
 
   // -- destroy
   void DestroyObjectMouseSelect();

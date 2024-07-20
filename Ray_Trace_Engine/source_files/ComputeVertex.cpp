@@ -188,7 +188,7 @@ void ComputeVertex::CreateComputePipeline() {
   descriptorSetLayoutCreateInfo.pBindings = bindings.data();
 
   // create descriptor set layout
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &descriptorSetLayoutCreateInfo]() {
         return pEngineCore->objCreate.VKCreateDescriptorSetLayout(
             &descriptorSetLayoutCreateInfo, nullptr,
@@ -204,7 +204,7 @@ void ComputeVertex::CreateComputePipeline() {
   pipelineLayoutCreateInfo.pSetLayouts = &pipelineData.descriptorSetLayout;
 
   // create pipeline layout
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &pipelineLayoutCreateInfo]() {
         return pEngineCore->objCreate.VKCreatePipelineLayout(
             &pipelineLayoutCreateInfo, nullptr, &pipelineData.pipelineLayout);
@@ -261,7 +261,7 @@ void ComputeVertex::CreateDescriptorSets() {
   descriptorPoolCreateInfo.maxSets = 1;
 
   // create descriptor pool
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &descriptorPoolCreateInfo]() {
         return pEngineCore->objCreate.VKCreateDescriptorPool(
             &descriptorPoolCreateInfo, nullptr,
@@ -277,7 +277,7 @@ void ComputeVertex::CreateDescriptorSets() {
   descriptorSetAllocateInfo.descriptorSetCount = 1;
 
   // create descriptor set
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &descriptorSetAllocateInfo]() {
         return pEngineCore->objCreate.VKAllocateDescriptorSet(
             &descriptorSetAllocateInfo, nullptr,

@@ -114,7 +114,7 @@ void TextureLoader::loadFromFile(std::string filename, VkFormat format,
 
     // create staging buffer
     // add handle id and name to map
-    pEngineCore->add(
+    pEngineCore->AddObject(
         [this, &bufferCreateInfo, &stagingBuffer]() {
           return pEngineCore->objCreate.VKCreateBuffer(&bufferCreateInfo,
                                                        nullptr, &stagingBuffer);
@@ -135,7 +135,7 @@ void TextureLoader::loadFromFile(std::string filename, VkFormat format,
 
     // allocate staging buffer memory
     // add handle and id to map
-    pEngineCore->add(
+    pEngineCore->AddObject(
         [this, &bufferMemoryAllocateInfo, &stagingMemory]() {
           return pEngineCore->objCreate.VKAllocateMemory(
               &bufferMemoryAllocateInfo, nullptr, &stagingMemory);
@@ -210,7 +210,7 @@ void TextureLoader::loadFromFile(std::string filename, VkFormat format,
 
     // create image
     // add handle and name to map
-    pEngineCore->add(
+    pEngineCore->AddObject(
         [this, &imageCreateInfo]() {
           return pEngineCore->objCreate.VKCreateImage(&imageCreateInfo, nullptr,
                                                       &image);
@@ -242,7 +242,7 @@ void TextureLoader::loadFromFile(std::string filename, VkFormat format,
     // std::invalid_argument("failed to ");
     // }
 
-    pEngineCore->add(
+    pEngineCore->AddObject(
         [this, &imageMemoryAllocateInfo]() {
           return pEngineCore->objCreate.VKAllocateMemory(
               &imageMemoryAllocateInfo, nullptr, &imageMemory);
@@ -318,7 +318,7 @@ void TextureLoader::loadFromFile(std::string filename, VkFormat format,
     imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
     // create mappable image
-    pEngineCore->add(
+    pEngineCore->AddObject(
         [this, &imageCreateInfo, &mappableImage]() {
           return pEngineCore->objCreate.VKCreateImage(&imageCreateInfo, nullptr,
                                                       &mappableImage);
@@ -347,7 +347,7 @@ void TextureLoader::loadFromFile(std::string filename, VkFormat format,
 
     // allocate mappable image memory
     // add handle id and name to map
-    pEngineCore->add(
+    pEngineCore->AddObject(
         [this, &imageMemoryAllocateInfo, &mappableMemory]() {
           return pEngineCore->objCreate.VKAllocateMemory(
               &imageMemoryAllocateInfo, nullptr, &mappableMemory);
@@ -440,7 +440,7 @@ void TextureLoader::loadFromFile(std::string filename, VkFormat format,
 
   // create sampler
   // adds sampler handle id and name to map
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &samplerCreateInfo]() {
         return pEngineCore->objCreate.VKCreateSampler(&samplerCreateInfo,
                                                       nullptr, &sampler);
@@ -458,7 +458,7 @@ void TextureLoader::loadFromFile(std::string filename, VkFormat format,
 
   // create image view
   // adds imageview handle id and name to map
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &viewCreateInfo]() {
         return pEngineCore->objCreate.VKCreateImageView(&viewCreateInfo,
                                                         nullptr, &view);
@@ -1072,7 +1072,7 @@ void TextureLoader::LoadCubemap(std::string cubeMapFolderPath) {
   gtp::Buffer stagingBuffer;
 
   // create staging buffer
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &stagingBuffer, &cubemapImageSize]() {
         return stagingBuffer.CreateBuffer(
             pEngineCore->devices.physical, pEngineCore->devices.logical,
@@ -1086,7 +1086,7 @@ void TextureLoader::LoadCubemap(std::string cubeMapFolderPath) {
       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
   // create staging buffer memory
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &stagingBuffer]() {
         return stagingBuffer.AllocateBufferMemory(
             pEngineCore->devices.physical, pEngineCore->devices.logical,
@@ -1134,7 +1134,7 @@ void TextureLoader::LoadCubemap(std::string cubeMapFolderPath) {
 
   // create image
   // add handle and name to map
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &imageCreateInfo]() {
         return pEngineCore->objCreate.VKCreateImage(&imageCreateInfo, nullptr,
                                                     &image);
@@ -1159,7 +1159,7 @@ void TextureLoader::LoadCubemap(std::string cubeMapFolderPath) {
                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   // allocate image memory
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &imageMemoryAllocateInfo]() {
         return pEngineCore->objCreate.VKAllocateMemory(&imageMemoryAllocateInfo,
                                                        nullptr, &imageMemory);
@@ -1188,7 +1188,7 @@ void TextureLoader::LoadCubemap(std::string cubeMapFolderPath) {
   viewCreateInfo.subresourceRange.layerCount = 6;
 
   // create image view
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &viewCreateInfo]() {
         return pEngineCore->objCreate.VKCreateImageView(&viewCreateInfo,
                                                         nullptr, &view);
@@ -1267,7 +1267,7 @@ void TextureLoader::LoadCubemap(std::string cubeMapFolderPath) {
 
   // create sampler
   // adds sampler handle id and name to map
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &samplerCreateInfo]() {
         return pEngineCore->objCreate.VKCreateSampler(&samplerCreateInfo,
                                                       nullptr, &sampler);

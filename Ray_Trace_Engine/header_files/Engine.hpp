@@ -2,7 +2,7 @@
 
 #include <CoreUI.hpp>
 #include <EngineCore.hpp>
-#include <MainRenderer.hpp>
+//#include <MainRenderer.hpp>
 #include <LoadingScreen.hpp>
 #include <DefaultRenderer.hpp>
 
@@ -12,6 +12,18 @@ namespace gtp {
 //@brief contains core objects and renderers
 class Engine : private EngineCore {
 private:
+
+  struct InputPosition {
+    double lastX = 0.0f;
+    double lastY = 0.0f;
+
+    double mousePosX = 0.0f;
+    double mousePosY = 0.0f;
+
+    void InitializeMousePosition(float width, float height);
+  };
+  InputPosition inputPosition{};
+
   float deltaTime = 0.0f;
   float lastTime = 0.0f;
   float timer = 0.0f;
@@ -66,7 +78,7 @@ public:
   VkResult InitEngine();
 
   // -- init X and Y pos
-  void InitXYPos();
+  //void InitXYPos();
 
   // -- draw
   //@brief handles update ubos, record command buffers, queue submit, and

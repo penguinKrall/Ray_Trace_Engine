@@ -28,10 +28,10 @@ GLFWwindow *CoreWindow::initWindow(std::string wName) {
   glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
   glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // no border
 
-  this->width = 800;
-  this->height = 600;
+  //this->width = 800;
+  //this->height = 600;
 
-  windowGLFW = glfwCreateWindow(width, height, "gtp engine", nullptr, nullptr);
+  windowGLFW = glfwCreateWindow(this->windowExtent.width, this->windowExtent.height, "gtp engine", nullptr, nullptr);
 
   glfwSetWindowPos(windowGLFW, mode->width / 4, mode->height / 4);
 
@@ -42,6 +42,16 @@ GLFWwindow *CoreWindow::initWindow(std::string wName) {
   }
 
   return windowGLFW;
+}
+
+VkExtent3D CoreWindow::GetWindowDimensions()
+{
+  return this->windowExtent;
+}
+
+void CoreWindow::SetWindowDimensions(uint32_t width, uint32_t height, uint32_t depth)
+{
+  this->windowExtent = { width, height, depth };
 }
 
 void CoreWindow::destroyWindow() { glfwDestroyWindow(windowGLFW); }

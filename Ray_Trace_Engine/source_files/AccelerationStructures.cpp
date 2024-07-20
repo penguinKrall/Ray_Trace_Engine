@@ -4,7 +4,7 @@ void gtp::AccelerationStructures::CreateScratchBuffer(gtp::Buffer &buffer,
                                                       VkDeviceSize size,
                                                       std::string name) {
   // create buffer
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &buffer, size]() {
         return buffer.CreateBuffer(
             pEngineCore->devices.physical, pEngineCore->devices.logical,
@@ -16,7 +16,7 @@ void gtp::AccelerationStructures::CreateScratchBuffer(gtp::Buffer &buffer,
       "scratchBuffer_" + name);
 
   // allocate memory
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &buffer, name]() {
         return buffer.AllocateBufferMemory(pEngineCore->devices.physical,
                                            pEngineCore->devices.logical,
@@ -48,7 +48,7 @@ void gtp::AccelerationStructures::CreateAccelerationStructureBuffer(
       VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
   // create buffer
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &bufferCreateInfo, &accelerationStructure]() {
         return pEngineCore->objCreate.VKCreateBuffer(
             &bufferCreateInfo, nullptr, &accelerationStructure.buffer);
@@ -77,7 +77,7 @@ void gtp::AccelerationStructures::CreateAccelerationStructureBuffer(
   std::string bufferNameWithSuffix = bufferName + "Memory";
 
   // create object/map handle
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &memoryAllocateInfo, &accelerationStructure]() {
         return pEngineCore->objCreate.VKAllocateMemory(
             &memoryAllocateInfo, nullptr, &accelerationStructure.memory);
@@ -236,7 +236,7 @@ void gtp::AccelerationStructures::CreateBottomLevelAccelerationStructure(
       VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
 
   // create acceleration structure
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &bottomLevelASData, &accelerationStructureCreateInfo]() {
         return pEngineCore->objCreate.VKCreateAccelerationStructureKHR(
             &accelerationStructureCreateInfo, nullptr,
@@ -562,7 +562,7 @@ void gtp::AccelerationStructures::CreateTopLevelAccelerationStructure(
       VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
 
   // -- create acceleration structure
-  pEngineCore->add(
+  pEngineCore->AddObject(
       [this, &accelerationStructureCreateInfo]() {
         return pEngineCore->objCreate.VKCreateAccelerationStructureKHR(
             &accelerationStructureCreateInfo, nullptr,
