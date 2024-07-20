@@ -108,7 +108,7 @@ void Engine::Run() {
 //@note destroys objects created related to renderers and core
 void Engine::Terminate() {
   // wait idle before destroy
-  vkDeviceWaitIdle(devices.logical);
+  vkDeviceWaitIdle(this->LogicalDevice());
 
   // loading screen
   this->loadingScreen.DestroyLoadingScreen();
@@ -151,7 +151,7 @@ void Engine::HandleUI() {
   this->UI.UpdateBuffers();
 
   // draw UI
-  this->UI.DrawUI(commandBuffers.graphics[currentFrame], currentFrame);
+  this->UI.DrawUI(this->GraphicsCommandBuffer(currentFrame), currentFrame);
 }
 
 void Engine::RetrieveColorID() {
@@ -228,7 +228,7 @@ void Engine::HandleResize() {
   // if (camera->activeWindow) {
   if (camera->framebufferResized) {
     // wait idle
-    vkDeviceWaitIdle(devices.logical);
+    vkDeviceWaitIdle(this->LogicalDevice());
     // recreate semaphores, fences
     RecreateSyncObjects();
     // recreate swapchain, swapchain images/views
@@ -350,11 +350,12 @@ void Engine::BeginGraphicsCommandBuffer(int currentFrame) {
 
   // begin command buffer
   validate_vk_result(vkBeginCommandBuffer(
-      pEngineCore->commandBuffers.graphics[currentFrame], &cmdBufInfo));
+      this->GraphicsCommandBuffer(currentFrame), &cmdBufInfo));
 }
 
 void Engine::EndGraphicsCommandBuffer(int currentFrame) {
-  validate_vk_result(vkEndCommandBuffer(commandBuffers.graphics[currentFrame]));
+  validate_vk_result(
+      vkEndCommandBuffer(this->GraphicsCommandBuffer(currentFrame)));
 }
 
 void Engine::Draw() {
@@ -367,7 +368,7 @@ void Engine::Draw() {
   if (camera->activeWindow) {
     //  if (camera->framebufferResized) {
     //    // wait idle
-    //    vkDeviceWaitIdle(devices.logical);
+    //    vkDeviceWaitIdle(this->LogicalDevice());
     //    // recreate semaphores, fences
     //    RecreateSyncObjects();
     //    // recreate swapchain, swapchain images/views
@@ -389,15 +390,19 @@ void Engine::Draw() {
     //---COMPUTE QUEUE-----//
     //---------------------//
 
-    // wait for fences
-    if (vkWaitForFences(devices.logical, 1, &sync.computeFences[currentFrame],
-                        VK_TRUE,
-                        std::numeric_limits<uint64_t>::max()) != VK_SUCCESS) {
-      throw std::invalid_argument("failed to wait for compute fences");
-    }
+    //// wait for fences
+    this->ComputeFence(currentFrame);
+    // if (vkWaitForFences(this->LogicalDevice(), 1,
+    // &sync.computeFences[currentFrame],
+    //                     VK_TRUE,
+    //                     std::numeric_limits<uint64_t>::max()) != VK_SUCCESS)
+    //                     {
+    //   throw std::invalid_argument("failed to wait for compute fences");
+    // }
 
-    // reset fences
-    vkResetFences(devices.logical, 1, &sync.computeFences[currentFrame]);
+    //// reset fences
+    // vkResetFences(this->LogicalDevice(), 1,
+    // &sync.computeFences[currentFrame]);
 
     ///* record compute commands section */
     //// compute command buffer vector
@@ -411,6 +416,10 @@ void Engine::Draw() {
         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT};
 
     //  compute submit info
+
+    std::vector<VkSemaphore> computeSemaphores = {
+        this->ComputeSemaphore(currentFrame)};
+
     VkSubmitInfo computeSubmitInfo{};
     computeSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     computeSubmitInfo.pWaitDstStageMask = computeWaitStages.data();
@@ -427,25 +436,25 @@ void Engine::Draw() {
                                      &computeSubmitInfo,
                                      sync.computeFences[currentFrame]));
 
-    // vkDeviceWaitIdle(this->pEngineCore->devices.logical);
+    // vkDeviceWaitIdle(this->pEngineCore->this->LogicalDevice());
 
     //------------------------//
     //-----GRAPHICS QUEUE----//
     //----------------------//
 
-    // vkDeviceWaitIdle(this->pEngineCore->devices.logical);
+    // vkDeviceWaitIdle(this->pEngineCore->this->LogicalDevice());
 
     // wait for draw fences
-    validate_vk_result(vkWaitForFences(devices.logical, 1,
+    validate_vk_result(vkWaitForFences(this->LogicalDevice(), 1,
                                        &sync.drawFences[currentFrame], VK_TRUE,
                                        std::numeric_limits<uint64_t>::max()));
 
-    validate_vk_result(
-        vkResetFences(devices.logical, 1, &sync.drawFences[currentFrame]));
+    validate_vk_result(vkResetFences(this->LogicalDevice(), 1,
+                                     &sync.drawFences[currentFrame]));
 
     // acquire next image
     VkResult acquireImageResult = vkAcquireNextImageKHR(
-        devices.logical, swapchainData.swapchainKHR, UINT64_MAX,
+        this->LogicalDevice(), swapchainData.swapchainKHR, UINT64_MAX,
         sync.presentFinishedSemaphore[currentFrame], VK_NULL_HANDLE,
         &imageIndex);
 
@@ -517,20 +526,28 @@ void Engine::Draw() {
         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
-    std::vector<VkSemaphore> graphicsSemaphores = {
-        sync.computeFinishedSemaphore[currentFrame],
-        sync.presentFinishedSemaphore[currentFrame]};
+    std::vector<VkSemaphore> graphicsWaitSemaphores = {
+        this->ComputeSemaphore(currentFrame),
+        this->PresentSemaphore(currentFrame)};
+
+    std::vector<VkSemaphore> graphicsSignalSemaphores = {
+        this->RenderFinishedSemaphore(currentFrame)};
+
+    std::vector<VkCommandBuffer> graphicsCommandBuffer = {
+        this->GraphicsCommandBuffer(currentFrame)};
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.pWaitDstStageMask = waitStages.data();
     submitInfo.waitSemaphoreCount =
-        static_cast<uint32_t>(graphicsSemaphores.size());
-    submitInfo.pWaitSemaphores = graphicsSemaphores.data();
-    submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores = &sync.renderFinishedSemaphore[currentFrame];
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffers.graphics[currentFrame];
+        static_cast<uint32_t>(graphicsWaitSemaphores.size());
+    submitInfo.pWaitSemaphores = graphicsWaitSemaphores.data();
+    submitInfo.signalSemaphoreCount =
+        static_cast<uint32_t>(graphicsSignalSemaphores.size());
+    submitInfo.pSignalSemaphores = graphicsSignalSemaphores.data();
+    submitInfo.commandBufferCount =
+        static_cast<uint32_t>(graphicsCommandBuffer.size());
+    submitInfo.pCommandBuffers = graphicsCommandBuffer.data();
 
     // Submit command buffers to the graphics queue
     validate_vk_result(vkQueueSubmit(queue.graphics, 1, &submitInfo,

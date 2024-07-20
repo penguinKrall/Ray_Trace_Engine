@@ -154,7 +154,7 @@ void EngineCore::InitCore() {
   // create command pool
   add(
       [this]() {
-        return createCommandPool(devices.logical,
+        return createCommandPool(GetLogicalDevice(),
                                  queue.queueFamilyIndices.graphics);
       },
       "commandPool");
@@ -706,16 +706,97 @@ void EngineCore::RecreateSyncObjects() {
 //   // -- -- -- -- END LOADING SCREEN  -- -- -- -- //
 // }
 
-//void EngineCore::InitXYPos()
+// void EngineCore::InitXYPos()
 //{
-//  
-//    lastX = float(this->GetWindowDimensions().width) / 2.0f;
-//    lastY = float(this->GetWindowDimensions().height) / 2.0f;
 //
-//    posX = float(this->GetWindowDimensions().width) / 2.0f;
-//    posY = float(this->GetWindowDimensions().height) / 2.0f;
-//  
-//}
+//     lastX = float(this->GetWindowDimensions().width) / 2.0f;
+//     lastY = float(this->GetWindowDimensions().height) / 2.0f;
+//
+//     posX = float(this->GetWindowDimensions().width) / 2.0f;
+//     posY = float(this->GetWindowDimensions().height) / 2.0f;
+//
+// }
+
+VkDevice EngineCore::LogicalDevice()
+{
+  return this->GetLogicalDevice();
+}
+
+VkCommandBuffer EngineCore::GraphicsCommandBuffer(int frame)
+{
+  return commandBuffers.graphics[frame];
+}
+
+void EngineCore::ComputeFence(int frame)
+{
+  // wait for fences
+  if (vkWaitForFences(this->LogicalDevice(), 1, &sync.computeFences[frame],
+    VK_TRUE,
+    std::numeric_limits<uint64_t>::max()) != VK_SUCCESS) {
+    throw std::invalid_argument("failed to wait for compute fences");
+  }
+
+  // reset fences
+  vkResetFences(this->LogicalDevice(), 1, &sync.computeFences[frame]);
+}
+
+void EngineCore::SubmitComputeQueue(VkSubmitInfo computeSubmitInfo, int frame)
+{
+  // submit compute queue
+  validate_vk_result(vkQueueSubmit(queue.compute, 1,
+    &computeSubmitInfo,
+    sync.computeFences[frame]));
+}
+
+VkSemaphore EngineCore::ComputeSemaphore(int frame)
+{
+  return this->sync.computeFinishedSemaphore[frame];
+}
+
+VkSemaphore EngineCore::RenderFinishedSemaphore(int frame)
+{
+  return this->sync.renderFinishedSemaphore[frame];
+}
+
+VkSemaphore EngineCore::PresentSemaphore(int frame)
+{
+  return this->sync.presentFinishedSemaphore[frame];
+}
+
+VkResult EngineCore::AcquireImageResult(int frame, uint32_t *imageIndex)
+{
+  VkResult result = vkAcquireNextImageKHR(
+    this->LogicalDevice(), swapchainData.swapchainKHR, UINT64_MAX,
+    sync.presentFinishedSemaphore[frame], VK_NULL_HANDLE,
+    imageIndex);
+
+  return VkResult();
+}
+
+void EngineCore::DrawFence(int frame)
+{
+  // wait for draw fences
+  validate_vk_result(vkWaitForFences(this->LogicalDevice(), 1,
+    &sync.drawFences[frame], VK_TRUE,
+    std::numeric_limits<uint64_t>::max()));
+
+  validate_vk_result(
+    vkResetFences(this->LogicalDevice(), 1, &sync.drawFences[frame]));
+}
+
+void EngineCore::SubmitGraphicsQueue(VkSubmitInfo submitInfo, int frame)
+{
+  // Submit command buffers to the graphics queue
+  validate_vk_result(vkQueueSubmit(queue.graphics, 1, &submitInfo,
+    sync.drawFences[frame]));
+}
+
+void EngineCore::PresentQueue(VkPresentInfoKHR presentInfo, int frame)
+{
+  // Present the rendered image to the screen
+  validate_vk_result(vkQueuePresentKHR(queue.graphics, &presentInfo));
+}
+
 
 // -- destroy
 void EngineCore::DestroyCore() {
@@ -738,7 +819,4 @@ void EngineCore::DestroyCore() {
   destroyWindow();
 }
 
-GLFWwindow* EngineCore::CoreGLFWwindow()
-{
-  return this->windowGLFW;
-}
+GLFWwindow *EngineCore::CoreGLFWwindow() { return this->windowGLFW; }

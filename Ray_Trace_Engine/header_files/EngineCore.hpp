@@ -112,6 +112,38 @@ public:
 
   //void InitXYPos();
 
+  //get logical device
+  VkDevice LogicalDevice();
+
+  VkCommandBuffer GraphicsCommandBuffer(int frame);
+
+  // handle compute fence wait/reset
+  void ComputeFence(int frame);
+  
+  // submit compute queue
+  void SubmitComputeQueue(VkSubmitInfo computeSubmitInfo, int frame);
+
+  //return current compute semaphore
+  VkSemaphore ComputeSemaphore(int frame);
+
+  //return current draw semaphore
+  VkSemaphore RenderFinishedSemaphore(int frame);
+
+  //return current present semaphore
+  VkSemaphore PresentSemaphore(int frame);
+
+  //acquire image
+  VkResult AcquireImageResult(int frame, uint32_t* imageIndex);
+
+  //handle draw fence wait/reset
+  void DrawFence(int frame);
+
+  // submit graphics queue
+  void SubmitGraphicsQueue(VkSubmitInfo submitInfo, int frame);
+
+  //present queue
+  void PresentQueue(VkPresentInfoKHR presentInfo, int frame);
+
   // -- destroy core
   // destroys core related objects
   void DestroyCore();

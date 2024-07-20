@@ -6,6 +6,9 @@
 
 //--class to handle devices and components
 class CoreDevice : public Commands {
+private:
+
+
 public:
   CoreExtensions *coreExtensions = new CoreExtensions();
 
@@ -49,11 +52,7 @@ public:
   // member struct
   Devices devices{};
   DeviceData deviceData{};
-  // DeviceExtensions deviceExtensions{};
   DeviceProperties deviceProperties{};
-
-  // rt class
-  // CoreExtensions coreExtensions;
 
   // -- GET PHYSICAL DEVICE
   VkResult getPhysicalDevice(VkInstance instance);

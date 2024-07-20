@@ -24,6 +24,8 @@ private:
   };
   InputPosition inputPosition{};
 
+  uint32_t currentFrame = 0;
+
   float deltaTime = 0.0f;
   float lastTime = 0.0f;
   float timer = 0.0f;

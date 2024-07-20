@@ -6,7 +6,7 @@
 class Commands {
 public:
   // -- current frame
-  uint32_t currentFrame = 0;
+  //uint32_t currentFrame = 0;
 
   struct Queue {
     // Queue family properties of the physical device

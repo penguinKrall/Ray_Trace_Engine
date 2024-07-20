@@ -1,5 +1,6 @@
 #pragma once
 
+#include <AccelerationStructures.hpp>
 #include <ComputeVertex.hpp>
 #include <EngineCore.hpp>
 #include <ObjectMouseSelect.hpp>
@@ -10,43 +11,24 @@
 #include <Utilities_Renderer.hpp>
 #include <Utilities_UI.hpp>
 #include <glTFModel.hpp>
-#include <AccelerationStructures.hpp>
 
 #define VK_GLTF_MATERIAL_IDS
 
 class MainRenderer {
  private:
-
-   //acceleration structures
-   gtp::AccelerationStructures accelerationStructures;
+  // acceleration structures
+  gtp::AccelerationStructures accelerationStructures;
 
   // tlas particle update refactor later
-  bool updateTLAS = false;
-
-  std::vector<VkAccelerationStructureInstanceKHR> blasInstances;
-
-  // -- geometry node vector
-  std::vector<Utilities_AS::GeometryNode> geometryNodes;
-
-  // -- geometry node index vector
-  std::vector<Utilities_AS::GeometryIndex> geometryNodesIndices;
+  //bool updateTLAS = false;
 
   // -- buffers
   struct Buffers {
-    gtp::Buffer transformBuffer{};
-    gtp::Buffer geometry_nodes_buffer{};
-    gtp::Buffer geometry_nodes_indices{};
-    gtp::Buffer blas_scratch{};
-    gtp::Buffer tlas_scratch{};
-    gtp::Buffer tlas_instancesBuffer{};
     gtp::Buffer ubo{};
   };
 
   // -- shader binding table data
   Utilities_Renderer::ShaderBindingTableData shaderBindingTableData{};
-
-  // -- top level acceleration structure
-  Utilities_AS::AccelerationStructure TLAS{};
 
   // -- core pointer
   EngineCore *pEngineCore = nullptr;
@@ -56,12 +38,6 @@ class MainRenderer {
 
   // -- uniform data
   Utilities_Renderer::UniformData uniformData{};
-
-  // -- bottom level acceleration structures
-  std::vector<Utilities_AS::BLASData *> bottomLevelAccelerationStructures;
-
-  // -- TLAS data
-  Utilities_AS::TLASData tlasData{};
 
   // -- Buffers
   Buffers buffers;
@@ -83,7 +59,6 @@ class MainRenderer {
 
   // -- assets data struct
   struct Assets {
-    uint32_t textureOffset = 0;
     std::vector<gtp::TextureLoader> defaultTextures;
 
     // models
@@ -122,23 +97,11 @@ class MainRenderer {
   // -- load assets
   void LoadAssets();
 
-  // -- create BLAS
-  void CreateBLAS(gtp::Model *pModel);
-
-  // -- create top level acceleration structure
-  void CreateTLAS();
-
   // -- load gltf compute
   void LoadGltfCompute(gtp::Model *pModel);
 
-  // -- handle particle tlas instances
-  void InitializeParticleBLASInstances(int particleIdx);
-
   // -- create storage image
   void CreateStorageImages();
-
-  // -- create color id image buffer
-  // void CreateColorIDImageBuffer();
 
   // -- create uniform buffer
   void CreateUniformBuffer();
@@ -159,9 +122,8 @@ class MainRenderer {
   void BuildCommandBuffers();
 
   // -- create geometry nodes buffer
-  void CreateGeometryNodesBuffer();
+  // void CreateGeometryNodesBuffer();
 
- public:
   /* tools */
   struct Tools {
     gtp::ObjectMouseSelect objectMouseSelect;
@@ -169,6 +131,7 @@ class MainRenderer {
 
   Tools tools{};
 
+ public:
   // -- constructor
   MainRenderer();
 
@@ -177,10 +140,6 @@ class MainRenderer {
 
   // -- get main renderer compute instances
   std::vector<ComputeVertex *> GetComputeInstances();
-
-  // -- retrieve object id from image
-  // -- copy object id image to buffer
-  // void RetrieveObjectIDFromImage();
 
   // -- update uniform buffer
   void UpdateUniformBuffer(float deltaTime, glm::vec4 lightPosition);
@@ -191,17 +150,8 @@ class MainRenderer {
   // -- rebuild command buffers
   void RebuildCommandBuffers(int frame, bool showObjectColorID);
 
-  // -- update BLAS
-  void UpdateBLAS();
-
-  // -- update TLAS
-  void UpdateTLAS();
-
-  //// -- create geometry nodes buffer
-  // void CreateGeometryNodesBuffer();
-
-  // -- update geometry nodes buffer
-  void UpdateGeometryNodesBuffer(gtp::Model *pModel);
+  // -- handle acceleration structure update
+  void HandleAccelerationStructureUpdate();
 
   // -- delete model
   void DeleteModel();
@@ -213,8 +163,8 @@ class MainRenderer {
   void UpdateAnimations(float deltaTime);
 
   // -- record particle compute commands
-  std::vector<VkCommandBuffer> RecordParticleComputeCommands(
-      int currentFrame, std::vector<VkCommandBuffer> computeCommandBuffer);
+  VkCommandBuffer RecordParticleComputeCommands(
+    int currentFrame, int particleIndex);
 
   // -- handle window resize
   void HandleResize();
@@ -227,6 +177,11 @@ class MainRenderer {
 
   // -- set renderer asset model data
   void SetModelData(Utilities_UI::ModelData *pModelData);
+
+  // -- get tools
+  MainRenderer::Tools GetTools();
+
+  std::vector<VkCommandBuffer> RecordCompute(int frame);
 
   // -- Destroy
   void Destroy();
