@@ -1,15 +1,15 @@
 #include "main.hpp"
+#include <memory>
 
 int main() {
+  auto createAndRunEngine = []() {
+    auto engine = std::make_unique<gtp::Engine>();
+    engine->InitEngine();
+    engine->Run();
+    engine->Terminate();
+  };
 
-  // engine contains core components for device/window/swapchain creation
-  auto engine = new gtp::Engine();
-
-  // init
-  engine->InitEngine();
-
-  // run
-  engine->Run();
-
-  engine->Terminate();
+  // Call the lambda
+  createAndRunEngine();
+  return 0;
 }

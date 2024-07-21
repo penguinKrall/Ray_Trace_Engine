@@ -86,25 +86,29 @@ private:
     EngineCore *pEngineCore = nullptr;
 
     // default color 1 bit storage image
-    Utilities_Renderer::StorageImage defaultColor_1_bit{};
+    Utilities_Renderer::StorageImage *defaultColor_1_bit{};
 
     // multisample
     // color
     Utilities_Renderer::StorageImage multisampleImage_8_bit{};
     // resolve
-    Utilities_Renderer::StorageImage resolveImage_1_bit{};
+    Utilities_Renderer::StorageImage multisampleImageResolve_1_bit{};
 
     // default constructor
     StorageImages(EngineCore *engineCorePtr) {
-      this->pEngineCore = pEngineCore;
-      this->CreateStorageImages(engineCorePtr);
+      this->pEngineCore = engineCorePtr;
+      this->CreateStorageImages();
     }
 
     // color storage image for ray trace pipeline
-    void CreateDefaultColorStorageImage(EngineCore *engineCorePtr);
+    void CreateDefaultColorStorageImage();
+
+    // create multisample
+    //@brief creates 8 bit and 1 bit resolve
+    void CreateMultisampleResources();
 
     // create storage images
-    void CreateStorageImages(EngineCore *engineCorePtr);
+    void CreateStorageImages();
   };
 
   StorageImages *storageImages;
