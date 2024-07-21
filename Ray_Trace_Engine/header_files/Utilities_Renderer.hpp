@@ -20,7 +20,7 @@ public:
     VkDescriptorSet descriptorSet{};
     VkDescriptorSetLayout descriptorSetLayout{};
     VkDescriptorPool descriptorPool{};
-    void Destroy(EngineCore* pEngineCore);
+    void Destroy(EngineCore *pEngineCore);
   };
 
   // -- shader binding table data
@@ -40,7 +40,7 @@ public:
     // -- shader groups
     std::vector<VkRayTracingShaderGroupCreateInfoKHR> shaderGroups{};
 
-    void Destroy(EngineCore* pEngineCore);
+    void Destroy(EngineCore *pEngineCore);
   };
 
   // -- uniform data struct
@@ -99,5 +99,6 @@ public:
   static void
   CreateColorStorageImage(EngineCore *pEngineCore,
                           Utilities_Renderer::StorageImage *storageImage,
-                          std::string name);
+                          VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT,
+                          std::string name = "none");
 };

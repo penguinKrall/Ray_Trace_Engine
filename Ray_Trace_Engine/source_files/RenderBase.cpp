@@ -22,7 +22,7 @@ void gtp::RenderBase::InitializeRenderBase(EngineCore *engineCorePtr) {
       this->assets.models, this->assets.modelData, this->assets.particle);
 
   // create default color storage image
-  this->CreateDefaultColorStorageImage();
+  this->storageImages.CreateDefaultColorStorageImage(this->pEngineCore);
 
   // create default uniform buffer
   this->CreateDefaultUniformBuffer();
@@ -43,11 +43,11 @@ void gtp::RenderBase::InitializeRenderBase(EngineCore *engineCorePtr) {
   this->CreateDefaultCommandBuffers();
 }
 
-void gtp::RenderBase::CreateDefaultColorStorageImage() {
-  Utilities_Renderer::CreateColorStorageImage(
-      this->pEngineCore, &this->defaultColorStorageImage,
-      "render_base_default_color_storage_image_");
-}
+// void gtp::RenderBase::CreateDefaultColorStorageImage() {
+//   Utilities_Renderer::CreateColorStorageImage(
+//       this->pEngineCore, &this->storageImages.defaultColor_1_bit,
+//       "render_base_default_color_storage_image_");
+// }
 
 void gtp::RenderBase::CreateDefaultRayTracingPipeline() {
   // image count
@@ -512,7 +512,8 @@ void gtp::RenderBase::CreateDefaultDescriptorSet() {
       VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
 
   VkDescriptorImageInfo storageImageDescriptor{
-      VK_NULL_HANDLE, defaultColorStorageImage.view, VK_IMAGE_LAYOUT_GENERAL};
+      VK_NULL_HANDLE, storageImages.defaultColor_1_bit.view,
+      VK_IMAGE_LAYOUT_GENERAL};
 
   // storage/result image write
   VkWriteDescriptorSet storageImageWrite{};
@@ -755,9 +756,9 @@ void gtp::RenderBase::CreateDefaultCommandBuffers() {
 
     // prepare ray tracing output image as transfer source
     gtp::Utilities_EngCore::setImageLayout(
-        pEngineCore->commandBuffers.graphics[i], defaultColorStorageImage.image,
-        VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-        subresourceRange);
+        pEngineCore->commandBuffers.graphics[i],
+        storageImages.defaultColor_1_bit.image, VK_IMAGE_LAYOUT_GENERAL,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresourceRange);
 
     VkImageCopy copyRegion{};
     copyRegion.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
@@ -769,7 +770,7 @@ void gtp::RenderBase::CreateDefaultCommandBuffers() {
                          1};
 
     vkCmdCopyImage(pEngineCore->commandBuffers.graphics[i],
-                   defaultColorStorageImage.image,
+                   storageImages.defaultColor_1_bit.image,
                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                    pEngineCore->swapchainData.swapchainImages.image[i],
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
@@ -783,7 +784,8 @@ void gtp::RenderBase::CreateDefaultCommandBuffers() {
 
     // transition ray tracing output image back to general layout
     gtp::Utilities_EngCore::setImageLayout(
-        pEngineCore->commandBuffers.graphics[i], defaultColorStorageImage.image,
+        pEngineCore->commandBuffers.graphics[i],
+        storageImages.defaultColor_1_bit.image,
         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
         subresourceRange);
 
@@ -833,7 +835,7 @@ void gtp::RenderBase::RebuildCommandBuffers(int frame, bool showObjectColorID) {
   if (!showObjectColorID) {
     gtp::Utilities_EngCore::setImageLayout(
         pEngineCore->commandBuffers.graphics[frame],
-        defaultColorStorageImage.image, VK_IMAGE_LAYOUT_GENERAL,
+        storageImages.defaultColor_1_bit.image, VK_IMAGE_LAYOUT_GENERAL,
         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresourceRange);
 
     VkImageCopy copyRegion{};
@@ -846,7 +848,7 @@ void gtp::RenderBase::RebuildCommandBuffers(int frame, bool showObjectColorID) {
                          1};
 
     vkCmdCopyImage(pEngineCore->commandBuffers.graphics[frame],
-                   defaultColorStorageImage.image,
+                   storageImages.defaultColor_1_bit.image,
                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                    pEngineCore->swapchainData.swapchainImages.image[frame],
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
@@ -861,8 +863,9 @@ void gtp::RenderBase::RebuildCommandBuffers(int frame, bool showObjectColorID) {
     // transition ray tracing output image back to general layout
     gtp::Utilities_EngCore::setImageLayout(
         pEngineCore->commandBuffers.graphics[frame],
-        defaultColorStorageImage.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-        VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
+        storageImages.defaultColor_1_bit.image,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
+        subresourceRange);
   }
 
   else {
@@ -1010,7 +1013,8 @@ void gtp::RenderBase::UpdateDefaultDescriptorSet() {
       VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
 
   VkDescriptorImageInfo storageImageDescriptor{
-      VK_NULL_HANDLE, defaultColorStorageImage.view, VK_IMAGE_LAYOUT_GENERAL};
+      VK_NULL_HANDLE, storageImages.defaultColor_1_bit.view,
+      VK_IMAGE_LAYOUT_GENERAL};
 
   // storage/result image write
   VkWriteDescriptorSet storageImageWrite{};
@@ -1218,7 +1222,7 @@ void gtp::RenderBase::DestroyRenderBase() {
   // -- uniform buffer
   this->buffers.ubo.destroy(this->pEngineCore->GetLogicalDevice());
   // -- default color storage image
-  this->defaultColorStorageImage.Destroy(this->pEngineCore);
+  this->storageImages.defaultColor_1_bit.Destroy(this->pEngineCore);
   // -- acceleration structures
   this->DestroyAccelerationStructures();
   // -- assets
@@ -1359,13 +1363,13 @@ void gtp::RenderBase::HandleLoadModel(gtp::FileLoadingFlags loadingFlags) {
 
 void gtp::RenderBase::HandleResize() {
   // Delete allocated resources
-  this->defaultColorStorageImage.Destroy(this->pEngineCore);
+  this->storageImages.defaultColor_1_bit.Destroy(this->pEngineCore);
 
   // recreate object id resources
   this->tools.objectMouseSelect->HandleResize();
 
   // recreate renderer storage image
-  this->CreateDefaultColorStorageImage();
+  this->storageImages.CreateDefaultColorStorageImage(this->pEngineCore);
 
   // Update descriptor
   this->UpdateDefaultDescriptorSet();
@@ -1641,8 +1645,7 @@ void gtp::RenderBase::Tools::InitializeTools(EngineCore *engineCorePtr) {
 void gtp::RenderBase::Assets::LoadDefaultAssets(EngineCore *engineCorePtr) {
   // cubemap and default textures
   this->cubemap = gtp::TextureLoader(engineCorePtr);
-  this->cubemap.LoadCubemap(
-      "/assets/textures/cubemaps/industrial_sunset_checker_ground");
+  this->cubemap.LoadCubemap("/assets/textures/cubemaps/dsgf");
 
   this->defaultTextures.push_back(this->cubemap);
 
@@ -1739,4 +1742,17 @@ void gtp::RenderBase::Assets::DestroyDefaultAssets(EngineCore *engineCorePtr) {
 
   // ktx texture
   this->coloredGlassTexture.DestroyTextureLoader();
+}
+
+void gtp::RenderBase::StorageImages::CreateDefaultColorStorageImage(
+    EngineCore * engineCorePtr) {
+  Utilities_Renderer::CreateColorStorageImage(
+    engineCorePtr, &this->defaultColor_1_bit, VK_SAMPLE_COUNT_1_BIT,
+      "render_base_default_color_storage_image_1_bit");
+}
+
+void gtp::RenderBase::StorageImages::CreateStorageImages(EngineCore* engineCorePtr)
+{
+  //create default color storage image
+  this->CreateDefaultColorStorageImage(engineCorePtr);
 }

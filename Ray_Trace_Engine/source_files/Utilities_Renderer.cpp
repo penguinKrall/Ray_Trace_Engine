@@ -1,7 +1,7 @@
 #include "Utilities_Renderer.hpp"
 
 void Utilities_Renderer::CreateColorStorageImage(
-    EngineCore *pEngineCore, Utilities_Renderer::StorageImage *storageImage,
+    EngineCore *pEngineCore, Utilities_Renderer::StorageImage *storageImage, VkSampleCountFlagBits samples,
     std::string name) {
   // image create info
   VkImageCreateInfo imageCreateInfo{};
@@ -16,7 +16,7 @@ void Utilities_Renderer::CreateColorStorageImage(
   imageCreateInfo.extent.depth = 1;
   imageCreateInfo.mipLevels = 1;
   imageCreateInfo.arrayLayers = 1;
-  imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+  imageCreateInfo.samples = samples;
   imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
   imageCreateInfo.usage =
       VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT;

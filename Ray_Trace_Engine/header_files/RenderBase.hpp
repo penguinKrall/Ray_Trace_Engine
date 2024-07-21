@@ -54,7 +54,7 @@ private:
   Tools tools{};
 
   struct Assets {
-    //uint32_t textureOffset = 0;
+    // uint32_t textureOffset = 0;
     std::vector<gtp::TextureLoader> defaultTextures;
 
     // models
@@ -81,13 +81,36 @@ private:
   Assets assets{};
 
   // default color storage image
-  Utilities_Renderer::StorageImage defaultColorStorageImage{};
+  struct StorageImages {
+    // core pointer
+    EngineCore *pEngineCore = nullptr;
+
+    // default color 1 bit storage image
+    Utilities_Renderer::StorageImage defaultColor_1_bit{};
+
+    // multisample
+    // color
+    Utilities_Renderer::StorageImage multisampleImage_8_bit{};
+    // resolve
+    Utilities_Renderer::StorageImage resolveImage_1_bit{};
+
+    // default constructor
+    StorageImages(EngineCore *engineCorePtr) {
+      this->pEngineCore = pEngineCore;
+      this->CreateStorageImages(engineCorePtr);
+    }
+
+    // color storage image for ray trace pipeline
+    void CreateDefaultColorStorageImage(EngineCore *engineCorePtr);
+
+    // create storage images
+    void CreateStorageImages(EngineCore *engineCorePtr);
+  };
+
+  StorageImages *storageImages;
 
   // -- pipeline data
   Utilities_Renderer::PipelineData pipelineData{};
-
-  // color storage image for ray trace pipeline
-  void CreateDefaultColorStorageImage();
 
   // create default pipeline
   void CreateDefaultRayTracingPipeline();
@@ -140,7 +163,7 @@ public:
 
   // retrieve object id
   //@brief uses object mouse select class color map and window input to find
-  //which object is under mouse when LMB pressed
+  // which object is under mouse when LMB pressed
   void RetrieveObjectID(int posX, int posY);
 
   // load model
