@@ -331,7 +331,10 @@ void Engine::InitRenderers() {
   // outtput to loading screen
   this->loadingScreen.Draw(&this->UI, "Loading Default Renderer");
 
-  this->renderers.defaultRenderer = new DefaultRenderer(this->pEngineCore);
+  auto uniqueDefaultRendererPtr =
+      std::make_unique<DefaultRenderer>(this->pEngineCore);
+  this->renderers.defaultRenderer = uniqueDefaultRendererPtr.release();
+
   std::cout << "\nfinished initializing Default Renderer "
                "class\n'''''''''''''''''''''''''''''''''''''''''''''''\n"
             << std::endl;

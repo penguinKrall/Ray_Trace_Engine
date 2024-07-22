@@ -79,19 +79,21 @@ void Texture::destroy() {
   vkDestroySampler(pEngineCore->devices.logical, sampler, nullptr);
 }
 
-void Texture::fromglTfImage(tinygltf::Image &gltfimage,
-                            TextureSampler textureSampler,
-                            EngineCore *pEngineCore, VkQueue copyQueue) {
+void Texture::LoadTextureFromGLTF(tinygltf::Image &gltfimage,
+                                  TextureSampler textureSampler,
+                                  EngineCore *pEngineCore, VkQueue copyQueue) {
   this->pEngineCore = pEngineCore;
 
   unsigned char *buffer = nullptr;
   VkDeviceSize bufferSize = 0;
   bool deleteBuffer = false;
   if (gltfimage.component == 3) {
-    // Most devices don't support RGB only on Vulkan so convert if necessary
-    // TODO: Check actual format support and transform only if required
     bufferSize = gltfimage.width * gltfimage.height * 4;
-    buffer = new unsigned char[bufferSize];
+    // buffer = new unsigned char[bufferSize];
+    auto uniqueBufferPtr =
+        std::make_unique<unsigned char>(static_cast<unsigned char>(bufferSize));
+    buffer = uniqueBufferPtr.release();
+
     unsigned char *rgba = buffer;
     unsigned char *rgb = &gltfimage.image[0];
     for (int32_t i = 0; i < gltfimage.width * gltfimage.height; ++i) {
@@ -141,7 +143,7 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
         return pEngineCore->objCreate.VKCreateBuffer(&bufferCreateInfo, nullptr,
                                                      &stagingBuffer);
       },
-      "temporary staging buffer - glTFModel.cpp - fromglTFImage() " +
+      "temporary staging buffer - glTFModel.cpp - LoadTextureFromGLTF() " +
           gltfimage.name);
 
   vkGetBufferMemoryRequirements(pEngineCore->devices.logical, stagingBuffer,
@@ -158,7 +160,7 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
                                                        &stagingMemory);
       },
       "allocated temporary staging buffer memory - glTFModel.cpp - "
-      "fromglTFImage() " +
+      "LoadTextureFromGLTF() " +
           gltfimage.name);
 
   // bind buffer memory
@@ -376,8 +378,6 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
   samplerInfo.maxLod = (float)mipLevels;
   samplerInfo.maxAnisotropy = 8.0f;
   samplerInfo.anisotropyEnable = VK_TRUE;
-  // vkCreateSampler(pEngineCore->devices.logical, &samplerInfo, nullptr,
-  // &sampler);
 
   this->pEngineCore->AddObject(
       [pEngineCore, &samplerInfo, this]() {
@@ -407,9 +407,6 @@ void Texture::fromglTfImage(tinygltf::Image &gltfimage,
   descriptor.sampler = sampler;
   descriptor.imageView = view;
   descriptor.imageLayout = imageLayout;
-
-  if (deleteBuffer)
-    delete[] buffer;
 }
 
 // Primitive
@@ -939,7 +936,8 @@ void Model::loadTextures(tinygltf::Model &gltfModel, EngineCore *pEngineCore,
       textureSampler = textureSamplers[tex.sampler];
     }
     gtp::Texture texture;
-    texture.fromglTfImage(image, textureSampler, pEngineCore, transferQueue);
+    texture.LoadTextureFromGLTF(image, textureSampler, pEngineCore,
+                                transferQueue);
     texture.index = static_cast<uint32_t>(textures.size());
     textures.push_back(texture);
   }
@@ -954,6 +952,9 @@ VkSamplerAddressMode Model::getVkWrapMode(int32_t wrapMode) {
     return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
   case 33648:
     return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+
+  default:
+    break;
   }
 
   std::cerr << "Unknown wrap mode for getVkWrapMode: " << wrapMode << std::endl;
@@ -975,6 +976,8 @@ VkFilter Model::getVkFilterMode(int32_t filterMode) {
     return VK_FILTER_LINEAR;
   case 9987:
     return VK_FILTER_LINEAR;
+  default:
+    break;
   }
 
   std::cerr << "Unknown filter mode for getVkFilterMode: " << filterMode
@@ -1075,8 +1078,8 @@ void Model::loadMaterials(tinygltf::Model &gltfModel) {
     // recent tinygltf headers
     if (mat.extensions.find("KHR_materials_pbrSpecularGlossiness") !=
         mat.extensions.end()) {
-      //std::cout << "*************************SPECULAR EXTENSION FOUND"
-      //          << std::endl;
+      // std::cout << "*************************SPECULAR EXTENSION FOUND"
+      //           << std::endl;
       auto ext = mat.extensions.find("KHR_materials_pbrSpecularGlossiness");
       if (ext->second.Has("specularGlossinessTexture")) {
         auto index = ext->second.Get("specularGlossinessTexture").Get("index");

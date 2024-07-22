@@ -65,7 +65,7 @@ struct Texture {
   uint32_t index;
   void updateDescriptor();
   void destroy();
-  void fromglTfImage(tinygltf::Image &gltfimage, TextureSampler textureSampler,
+  void LoadTextureFromGLTF(tinygltf::Image &gltfimage, TextureSampler textureSampler,
                      EngineCore *pEngineCore, VkQueue copyQueue);
 };
 

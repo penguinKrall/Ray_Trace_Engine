@@ -1,6 +1,9 @@
 #include "CoreDevice.hpp"
 
-CoreDevice::CoreDevice() {}
+CoreDevice::CoreDevice() {
+  auto uniqueExtensionsPtr = std::make_unique<CoreExtensions>();
+  this->coreExtensions = uniqueExtensionsPtr.release();
+}
 
 uint32_t CoreDevice::getMemoryType(uint32_t typeBits,
                                    VkMemoryPropertyFlags properties,
@@ -121,17 +124,7 @@ VkResult CoreDevice::getPhysicalDevice(VkInstance instance) {
     for (const auto &extension : coreExtensions->deviceExtensions.properties) {
       coreExtensions->deviceExtensions.supported.emplace_back(
           extension.extensionName);
-      // std::cout << "  Extension Name: " << extension.extensionName <<
-      // std::endl; std::cout << "  Spec Version: " << extension.specVersion <<
-      // std::endl;
     }
-
-    // std::cout << std::endl << "supported device extensions: " << std::endl;
-    // int supDevIDX = 0;
-    // for (const auto& str : coreExtensions->deviceExtensions.supported) {
-    //	std::cout << " [" << supDevIDX << "]" << str.c_str() << std::endl;
-    //	++supDevIDX;
-    // }
 
     // convert std::string to char*
     coreExtensions->deviceExtensions.enabled.reserve(
@@ -162,11 +155,6 @@ VkResult CoreDevice::getPhysicalDevice(VkInstance instance) {
               << coreExtensions->deviceExtensions.supported.size() -
                      skippedExtCount
               << std::endl;
-
-    // for (int i = 0; i < coreExtensions->deviceExtensions.enabled.size(); i++)
-    // { std::cout << " [" << i << "]" <<
-    // coreExtensions->deviceExtensions.enabled[i] << std::endl;
-    // }
 
   }
 
@@ -217,10 +205,6 @@ VkResult CoreDevice::getPhysicalDevice(VkInstance instance) {
   deviceData.features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
   deviceData.features2.pNext =
       &deviceData.physicalDeviceDescriptorIndexingFeatures;
-
-  // vkGetPhysicalDeviceFeatures2(devices.physical, &deviceData.features2);
-
-  // deviceData.deviceCreatepNextChain = &deviceData.features2;
 
   // Output enabled features
   std::cout << std::endl << "Enabled Features:" << std::endl;
@@ -338,79 +322,6 @@ VkResult CoreDevice::getPhysicalDevice(VkInstance instance) {
   return VK_SUCCESS;
 }
 
-// -- get queue family indices
-// gtp::Utilities_EngCore::QueueFamilyIndices
-// CoreDevice::getQueueFamilyIndices(VkSurfaceKHR surface) {
-//
-//	//get queue family count
-//	gtp::Utilities_EngCore::QueueFamilyIndices indices;
-//	uint32_t queueFamilyCount = 0;
-//	vkGetPhysicalDeviceQueueFamilyProperties(devices.physical,
-//&queueFamilyCount, nullptr);
-//
-//	//get queue family properties and fill list
-//	std::vector<VkQueueFamilyProperties> queueFamilyList(queueFamilyCount);
-//	vkGetPhysicalDeviceQueueFamilyProperties(devices.physical,
-//&queueFamilyCount, queueFamilyList.data());
-//
-//	//count
-//	int idx = 0;
-//
-//	//iterate through queue family list and get index for each queue
-//	for (const auto& queueFamily : queueFamilyList) {
-//		//check presentation support
-//		VkBool32 presentationSupport = false;
-//		if (vkGetPhysicalDeviceSurfaceSupportKHR(devices.physical, idx,
-// surface, &presentationSupport) != VK_SUCCESS) { 			throw
-// std::invalid_argument("Device does not support presentation queue!");
-//		}
-//		//graphics
-//		if (queueFamily.queueCount > 0 && queueFamily.queueFlags &
-// VK_QUEUE_GRAPHICS_BIT) { 			indices.graphics = idx;
-//		}
-//		//compute
-//		if (queueFamily.queueCount > 0 && queueFamily.queueFlags &
-// VK_QUEUE_COMPUTE_BIT) { 			indices.compute = idx;
-//		}
-//		//presentation
-//		if (queueFamily.queueCount > 0 && presentationSupport) {
-//			indices.present = idx;
-//		}
-//		//transfer
-//		if (queueFamily.queueCount > 0 && queueFamily.queueFlags &
-// VK_QUEUE_TRANSFER_BIT) { 			indices.transfer = idx;
-//		}
-//		//if all queues are assigned, break
-//		if (validateQueueFamilyIndices()) {
-//			break;
-//		}
-//
-//		//inc. count
-//		idx++;
-//
-//	}
-//
-//	return indices;
-//
-//}
-
-// -- validate queue family indices
-// bool CoreDevice::validateQueueFamilyIndices() {
-//
-//	//see if all queues have been assigned
-//	if (queue.queueFamilyIndices.graphics >= 0 &&
-//		queue.queueFamilyIndices.compute >= 0 &&
-//		queue.queueFamilyIndices.present >= 0 &&
-//		queue.queueFamilyIndices.transfer >= 0) {
-//		return true;
-//	}
-//
-//	else {
-//		return false;
-//	}
-//
-//}
-
 VkDevice CoreDevice::GetLogicalDevice() { return this->devices.logical; }
 
 // -- check device extension support
@@ -462,9 +373,9 @@ VkDevice CoreDevice::createLogicalDevice(VkSurfaceKHR surface) {
   }
 
   // enable device features
-  // deviceData.features.samplerAnisotropy = VK_TRUE;
-  // deviceData.features.sampleRateShading = VK_TRUE;
-  // deviceData.features.shaderStorageImageMultisample = VK_TRUE;
+  deviceData.features.samplerAnisotropy = VK_TRUE;
+  deviceData.features.sampleRateShading = VK_TRUE;
+  deviceData.features.shaderStorageImageMultisample = VK_TRUE;
   deviceData.features.shaderInt64 = VK_TRUE;
 
   // If a pNext(Chain) has been passed, we need to add it to the device creation

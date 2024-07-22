@@ -479,7 +479,7 @@ void TextureLoader::DestroyTextureLoader() {
   }
 }
 
-void TextureLoader::fromglTfImage(tinygltf::Image &gltfimage, std::string path,
+void TextureLoader::LoadTextureFromGLTF(tinygltf::Image &gltfimage, std::string path,
                                   EngineCore *pEngineCore, VkQueue copyQueue) {
   bool isKtx = false;
 

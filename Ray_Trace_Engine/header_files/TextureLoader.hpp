@@ -57,7 +57,7 @@ public:
 
   void DestroyTextureLoader();
 
-  void fromglTfImage(tinygltf::Image &gltfimage, std::string path,
+  void LoadTextureFromGLTF(tinygltf::Image &gltfimage, std::string path,
                      EngineCore *pEngineCore, VkQueue copyQueue);
 
 // -- load texture file

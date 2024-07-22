@@ -1271,8 +1271,8 @@ void gtp::RenderBase::LoadModel(
   const bool isSemiTransparent =
       modelLoadingFlags ==
               Utilities_Renderer::ModelLoadingFlags::SemiTransparent
-          ? 1
-          : 0;
+          ? true
+          : false;
 
   if (isSemiTransparent || this->assets.modelData.loadModelSemiTransparent) {
     tempModel->semiTransparentFlag = static_cast<int>(true);

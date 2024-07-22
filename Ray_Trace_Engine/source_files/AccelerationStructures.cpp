@@ -314,7 +314,8 @@ void gtp::AccelerationStructures::CreateGeometryNodesBuffer() {
   }
 
   else {
-    nodeData = new GeometryNode();
+    auto uniqueNodePtr = std::make_unique<GeometryNode>();
+    nodeData = uniqueNodePtr.release();
     nodeBufSize = sizeof(GeometryNode);
   }
 

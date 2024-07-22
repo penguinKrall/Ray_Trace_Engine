@@ -10,7 +10,7 @@ private:
 
 
 public:
-  CoreExtensions *coreExtensions = new CoreExtensions();
+  CoreExtensions *coreExtensions = nullptr;
 
   //--ctor
   CoreDevice();

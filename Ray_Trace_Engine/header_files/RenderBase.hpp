@@ -54,7 +54,6 @@ private:
   Tools tools{};
 
   struct Assets {
-    // uint32_t textureOffset = 0;
     std::vector<gtp::TextureLoader> defaultTextures;
 
     // models
@@ -95,7 +94,7 @@ private:
     Utilities_Renderer::StorageImage multisampleImageResolve_1_bit{};
 
     // default constructor
-    StorageImages(EngineCore *engineCorePtr) {
+    explicit StorageImages(EngineCore *engineCorePtr) {
       this->pEngineCore = engineCorePtr;
       this->CreateStorageImages();
     }
@@ -148,7 +147,7 @@ public:
 
   /*	base class public functions	*/
   // default constructor
-  RenderBase(EngineCore *engineCorePtr);
+  explicit RenderBase(EngineCore *engineCorePtr);
 
   // update default uniform buffer
   void UpdateDefaultUniformBuffer(float deltaTime, glm::vec4 lightPosition);

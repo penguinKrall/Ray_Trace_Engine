@@ -140,8 +140,6 @@ void EngineCore::InitCore() {
   add([this]() { return createLogicalDevice(surface); }, "logicalDevice");
 
   // initialize camera
-  /*camera = new gtp::Camera(glm::vec3(0.0f, 5.0f, 5.0f),
-                           glm::vec3(0.0f, 1.0f, 0.0f), windowGLFW);*/
   auto uniqueCameraPtr = std::make_unique<gtp::Camera>(glm::vec3(0.0f, 5.0f, 5.0f),
     glm::vec3(0.0f, 1.0f, 0.0f), windowGLFW);
 
