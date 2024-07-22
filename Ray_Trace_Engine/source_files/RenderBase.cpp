@@ -21,8 +21,10 @@ void gtp::RenderBase::InitializeRenderBase(EngineCore *engineCorePtr) {
   this->BuildTopLevelAccelerationStructure(
       this->assets.models, this->assets.modelData, this->assets.particle);
 
-  // create default color storage image
-  this->storageImages = new StorageImages(this->pEngineCore);
+  // create storage images by initializing StorageImages struct with constructor
+  auto uniqueStorageImages =
+      std::make_unique<gtp::RenderBase::StorageImages>(this->pEngineCore);
+  this->storageImages = uniqueStorageImages.release();
 
   // create default uniform buffer
   this->CreateDefaultUniformBuffer();
@@ -963,7 +965,9 @@ void gtp::RenderBase::LoadGltfCompute(gtp::Model *pModel) {
   ComputeVertex *computeVtx = nullptr;
 
   if (!pModel->animations.empty()) {
-    computeVtx = new ComputeVertex(pEngineCore, pModel);
+    auto uniqueComputeVertex =
+        std::make_unique<ComputeVertex>(this->pEngineCore, pModel);
+    computeVtx = uniqueComputeVertex.release();
   }
 
   this->assets.gltfCompute.push_back(computeVtx);
@@ -1250,8 +1254,11 @@ void gtp::RenderBase::LoadModel(
     std::string filename, uint32_t fileLoadingFlags,
     Utilities_Renderer::ModelLoadingFlags modelLoadingFlags,
     Utilities_UI::TransformMatrices *pTransformMatrices) {
+
   // model instance pointer to initialize and add to list
-  auto *tempModel = new gtp::Model();
+  gtp::Model *tempModel = nullptr;
+  auto uniqueModelPtr = std::make_unique<gtp::Model>();
+  tempModel = uniqueModelPtr.release();
 
   // model index
   auto modelIdx = static_cast<int>(this->assets.models.size());
@@ -1636,10 +1643,15 @@ void gtp::RenderBase::RebuildAS() {
 }
 
 void gtp::RenderBase::Tools::InitializeTools(EngineCore *engineCorePtr) {
+
   // initialize object select
-  this->objectMouseSelect = new gtp::ObjectMouseSelect(engineCorePtr);
+  auto uniqueObjectMousePtr =
+      std::make_unique<gtp::ObjectMouseSelect>(engineCorePtr);
+  this->objectMouseSelect = uniqueObjectMousePtr.release();
+
   // shader
-  shader = new gtp::Shader(engineCorePtr);
+  auto uniqueShaderPtr = std::make_unique<gtp::Shader>(engineCorePtr);
+  this->shader = uniqueShaderPtr.release();
 }
 
 void gtp::RenderBase::Assets::LoadDefaultAssets(EngineCore *engineCorePtr) {
