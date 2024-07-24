@@ -65,8 +65,9 @@ struct Texture {
   uint32_t index;
   void updateDescriptor();
   void destroy();
-  void LoadTextureFromGLTF(tinygltf::Image &gltfimage, TextureSampler textureSampler,
-                     EngineCore *pEngineCore, VkQueue copyQueue);
+  void LoadTextureFromGLTF(tinygltf::Image &gltfimage,
+                           TextureSampler textureSampler,
+                           EngineCore *pEngineCore, VkQueue copyQueue);
 };
 
 struct Material {

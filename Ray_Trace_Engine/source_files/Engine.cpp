@@ -3,7 +3,7 @@
 namespace gtp {
 
 // -- ctor
-Engine Engine::engine() { return Engine(); }
+Engine::Engine() { }
 
 // -- init
 VkResult Engine::InitEngine() {

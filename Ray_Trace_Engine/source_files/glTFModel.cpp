@@ -89,7 +89,6 @@ void Texture::LoadTextureFromGLTF(tinygltf::Image &gltfimage,
   bool deleteBuffer = false;
   if (gltfimage.component == 3) {
     bufferSize = gltfimage.width * gltfimage.height * 4;
-    // buffer = new unsigned char[bufferSize];
     auto uniqueBufferPtr =
         std::make_unique<unsigned char>(static_cast<unsigned char>(bufferSize));
     buffer = uniqueBufferPtr.release();
@@ -546,7 +545,10 @@ void Model::destroy(VkDevice device) {
 void Model::loadNode(gtp::Node *parent, const tinygltf::Node &node,
                      uint32_t nodeIndex, const tinygltf::Model &model,
                      LoaderInfo &loaderInfo, float globalscale) {
-  gtp::Node *newNode = new Node{};
+  gtp::Node *newNode = nullptr;
+  auto uniqueNodePtr = std::make_unique<Node>();
+  newNode = uniqueNodePtr.release();
+
   newNode->index = nodeIndex;
   newNode->parent = parent;
   newNode->name = node.name;
@@ -584,7 +586,10 @@ void Model::loadNode(gtp::Node *parent, const tinygltf::Node &node,
   // Node contains mesh data
   if (node.mesh > -1) {
     const tinygltf::Mesh mesh = model.meshes[node.mesh];
-    Mesh *newMesh = new Mesh(pEngineCore, newNode->matrix);
+    Mesh *newMesh = nullptr;
+    auto uniqueNewMesh = std::make_unique<Mesh>(pEngineCore, newNode->matrix);
+    newMesh = uniqueNewMesh.release();
+
     for (size_t j = 0; j < mesh.primitives.size(); j++) {
       const tinygltf::Primitive &primitive = mesh.primitives[j];
       uint32_t vertexStart = static_cast<uint32_t>(loaderInfo.vertexPos);
@@ -887,7 +892,9 @@ void Model::getNodeProps(const tinygltf::Node &node,
 
 void Model::loadSkins(tinygltf::Model &gltfModel) {
   for (tinygltf::Skin &source : gltfModel.skins) {
-    Skin *newSkin = new Skin{};
+    Skin *newSkin = nullptr;
+    auto uniqueNewSkin = std::make_unique<Skin>();
+    newSkin = uniqueNewSkin.release();
     newSkin->name = source.name;
 
     // Find skeleton root node

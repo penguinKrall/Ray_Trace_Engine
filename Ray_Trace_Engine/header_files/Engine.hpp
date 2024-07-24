@@ -2,9 +2,10 @@
 
 #include <CoreUI.hpp>
 #include <EngineCore.hpp>
-//#include <MainRenderer.hpp>
-#include <LoadingScreen.hpp>
+// #include <MainRenderer.hpp>
+#include <Being.hpp>
 #include <DefaultRenderer.hpp>
+#include <LoadingScreen.hpp>
 
 namespace gtp {
 
@@ -12,7 +13,6 @@ namespace gtp {
 //@brief contains core objects and renderers
 class Engine : private EngineCore {
 private:
-
   struct InputPosition {
     double lastX = 0.0f;
     double lastY = 0.0f;
@@ -38,11 +38,17 @@ private:
 
   // -- renderers
   struct Renderers {
-    //MainRenderer mainRenderer;
-    DefaultRenderer* defaultRenderer = nullptr;
+    // MainRenderer mainRenderer;
+    DefaultRenderer *defaultRenderer = nullptr;
+  };
+  Renderers renderers{};
+
+  // -- beings
+  struct Beings {
+    gtp::Being *character = nullptr;
   };
 
-  Renderers renderers{};
+  Beings beings{};
 
   // Loading Screen
   gtp::LoadingScreen loadingScreen;
@@ -73,14 +79,14 @@ private:
 
 public:
   // -- engine constructor
-  Engine engine();
+  Engine();
 
   // -- init engine
   //@brief calls inherited 'initCore' func and initializes renderers
   VkResult InitEngine();
 
   // -- init X and Y pos
-  //void InitXYPos();
+  // void InitXYPos();
 
   // -- draw
   //@brief handles update ubos, record command buffers, queue submit, and

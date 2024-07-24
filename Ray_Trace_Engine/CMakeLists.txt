@@ -18,7 +18,7 @@ find_program(glslc_executable NAMES glslc HINTS Vulkan::glslc)
 set(SHADER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shaders)
 set(SHADER_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/shaders/compiled)
 
-file(GLOB SHADERS
+file(GLOB SHADERS_FOR_COMPILE
   ${SHADER_SOURCE_DIR}/*.vert
   ${SHADER_SOURCE_DIR}/*.frag
   ${SHADER_SOURCE_DIR}/*.comp
@@ -34,7 +34,7 @@ file(GLOB SHADERS
   ${SHADER_SOURCE_DIR}/*.rmiss)
 
 
-foreach(source IN LISTS SHADERS)
+foreach(source IN LISTS SHADERS_FOR_COMPILE)
   get_filename_component(FILENAME ${source} NAME)
   add_custom_command(
     COMMAND
@@ -54,6 +54,14 @@ add_custom_target(shaders ALL DEPENDS ${SPV_SHADERS})
 # Project files
 include_directories(header_files)
 link_directories(source_files)
+
+# Project Core files
+include_directories(header_files/core)
+link_directories(source_files/core)
+
+# Being Files
+include_directories(header_files/being)
+link_directories(source_files/being)
 
 # Vulkan
 include_directories(dependencies/VULKAN/Include)
@@ -100,57 +108,102 @@ link_directories(dependencies/ktx/lib)
 
 # ImGui Source Files
 file(GLOB IMGUI_SOURCES 
-dependencies/imgui/*.cpp
+    dependencies/imgui/*.cpp
 )
 
 # ImGuiZMO Source Files
 file(GLOB IMGUI_ZMO_SOURCES 
-source_files/imguiZMO/*.cpp
+    source_files/imguiZMO/*.cpp
 )
 
 # ImGuiZMO Source Files
 file(GLOB IMGUI_FILE_DIALOGUE_SOURCES
-source_files/imguiFileDialogue/*.cpp
+    source_files/imguiFileDialogue/*.cpp
 )
 
 # TinyGLTF Source Files
 file(GLOB GLTF_SOURCES 
-dependencies/GLTF/*.cpp
+    dependencies/GLTF/*.cpp
+)
+
+# Being files
+file(GLOB BEING 
+    source_files/being/*.cpp
+    header_files/being/*.hpp
+)
+# character files
+file(GLOB CORE_HEADERS
+    header_files/core/*.hpp
+)
+
+#core source files
+file(GLOB CORE_SOURCES 
+    source_files/core/*.cpp
+)
+
+#json header
+file(GLOB JSON_HEADER 
+    header_files/json_hpp/*.hpp
 )
 
 # Project Files
 file(GLOB SOURCES
     header_files/*.h
     header_files/*.hpp
-    header_files/stb/*.hpp
     source_files/*.cpp
+    header_files/being/*.hpp
+    source_files/being/*.cpp
+    header_files/core/*.hpp
+    source_files/core/*.cpp
+    header_files/json_hpp/*.hpp
+    header_files/stb/*.hpp
     source_files/imguiZMO/*.cpp
     source_files/imguiFileDialogue/*.cpp
-    shaders/*.vert
-    shaders/*.frag
-    shaders/*.comp
-    shaders/*.geom
-    shaders/*.tesc
-    shaders/*.tese
-    shaders/*.mesh
-    shaders/*.task
-    shaders/*.rgen
-    shaders/*.rchit
-    shaders/*.rahit
-    shaders/*.rmiss
-    shaders/*.rint
-    shaders/*.glsl
+    ${SHADER_SOURCE_DIR}/*.vert
+    ${SHADER_SOURCE_DIR}/*.frag
+    ${SHADER_SOURCE_DIR}/*.comp
+    ${SHADER_SOURCE_DIR}/*.geom
+    ${SHADER_SOURCE_DIR}/*.tesc
+    ${SHADER_SOURCE_DIR}/*.tese
+    ${SHADER_SOURCE_DIR}/*.mesh
+    ${SHADER_SOURCE_DIR}/*.task
+    ${SHADER_SOURCE_DIR}/*.rgen
+    ${SHADER_SOURCE_DIR}/*.rchit
+    ${SHADER_SOURCE_DIR}/*.rahit
+    ${SHADER_SOURCE_DIR}/*.rint
+    ${SHADER_SOURCE_DIR}/*.rmiss
+    ${SHADER_SOURCE_DIR}/*.glsl
 )
 
-#
+# Shader Files
+file(GLOB SHADERS_LIST
+  ${SHADER_SOURCE_DIR}/*.vert
+  ${SHADER_SOURCE_DIR}/*.frag
+  ${SHADER_SOURCE_DIR}/*.comp
+  ${SHADER_SOURCE_DIR}/*.geom
+  ${SHADER_SOURCE_DIR}/*.tesc
+  ${SHADER_SOURCE_DIR}/*.tese
+  ${SHADER_SOURCE_DIR}/*.mesh
+  ${SHADER_SOURCE_DIR}/*.task
+  ${SHADER_SOURCE_DIR}/*.rgen
+  ${SHADER_SOURCE_DIR}/*.rchit
+  ${SHADER_SOURCE_DIR}/*.rahit
+  ${SHADER_SOURCE_DIR}/*.rint
+  ${SHADER_SOURCE_DIR}/*.rmiss
+  ${SHADER_SOURCE_DIR}/*.glsl)
+
 # Organize source files into folders
-source_group("Source Files\\ImGui" FILES ${IMGUI_SOURCES})
-source_group("Source Files\\ImGuiZMO" FILES ${IMGUI_ZMO_SOURCES})
-source_group("Source Files\\ImGuiFileDialogue" FILES ${IMGUI_FILE_DIALOGUE_SOURCES})
+source_group("Source Files\\dearImGui\\ImGui" FILES ${IMGUI_SOURCES})
+source_group("Source Files\\dearImGui\\ImGuiZMO" FILES ${IMGUI_ZMO_SOURCES})
+source_group("Source Files\\dearImGui\\ImGuiFileDialogue" FILES ${IMGUI_FILE_DIALOGUE_SOURCES})
 source_group("Source Files\\GLTF" FILES ${GLTF_SOURCES})
-source_group("Shaders" FILES ${SHADERS})
-source_group("Header Files" FILES ${HEADER_FILES})
+source_group("Shaders" FILES ${SHADERS_LIST})
+source_group("Being" FILES ${BEING})
 source_group("Source Files" FILES ${SOURCE_FILES})
+source_group("Source Files\\Core" FILES ${CORE_SOURCES})
+source_group("Header Files" FILES ${HEADER_FILES})
+source_group("Header Files\\Core" FILES ${CORE_HEADERS})
+source_group("Header Files\\json header" FILES ${JSON_HEADER})
 
 # Create executable target
 add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SOURCES} ${GLTF_SOURCES})

@@ -1,0 +1,38 @@
+#pragma once
+
+#include <glTFModel.hpp>
+#include <json.hpp>
+
+using json = nlohmann::json;
+
+namespace gtp {
+
+class Being {
+private:
+  // core pointer
+  EngineCore *pEngineCore = nullptr;
+
+  // character model
+  gtp::Model *defaultModel = nullptr;
+  std::string modelFilePath = "none";
+
+  // positiion for character model
+  glm::vec4 characterPosition = glm::vec4(0.0f);
+
+  void CreateBeing(std::string filePath);
+
+  // save modelFilePath to a JSON file
+  void SaveModelFilePath(const std::string &filename) const;
+
+  // load modelFilePath from a JSON file
+  void LoadModelFilePath(const std::string &filename);
+
+public:
+  // default constructor
+  explicit Being();
+
+  // create constructor
+  explicit Being(EngineCore *engineCorePtr = nullptr);
+};
+
+} // namespace gtp
