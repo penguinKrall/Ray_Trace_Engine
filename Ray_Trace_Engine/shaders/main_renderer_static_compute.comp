@@ -55,22 +55,17 @@ void main() {
     //declare vertex struct variable and assign value from vertex buffer
     Vtx v = outputSSBO.vtx[vID];
 
-    //apply rotation and transformation matrices
-    mat4 tMat = transformSSBO.transformMatrices.scale *
-                        transformSSBO.transformMatrices.translate *
-                        transformSSBO.transformMatrices.rotate;
     //position
-    vec4 newPosition =  tMat *
-                        vec4(v.position.xyz, 1.0f);
+    vec4 newPosition = vec4(v.position.xyz, 1.0f);
 
     v.position = vec4(newPosition.x, newPosition.y, newPosition.z, 1.0f);
 
     //normal
-    v.normal = normalize(tMat * v.normal);
+    v.normal = normalize(transformSSBO.transformMatrices.rotate * v.normal);
     
     //tangent
     float w = v.tangent.w;
-    v.tangent = normalize((tMat * vec4(v.tangent.xyz, 1.0f)));
+    v.tangent = normalize((vec4(v.tangent.xyz, 1.0f)));
     v.tangent.w = w;
     
     //assign declared vertex variable data to vertex
