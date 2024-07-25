@@ -22,7 +22,6 @@ struct GeometryNode {
   int textureIndexEmissive = -1;
   int semiTransparentFlag = 0;
   float objectIDColor;
-  glm::mat4 transformMatrix = glm::mat4(1.0f);
 };
 
 struct GeometryIndex {
