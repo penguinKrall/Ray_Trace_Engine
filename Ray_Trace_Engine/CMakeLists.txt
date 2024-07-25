@@ -163,7 +163,7 @@ file(GLOB SOURCES
     ${SHADER_SOURCE_DIR}/*.frag
     ${SHADER_SOURCE_DIR}/*.comp
     ${SHADER_SOURCE_DIR}/*.geom
-    ${SHADER_SOURCE_DIR}/*.tesc
+    ${SHADER_SOURCE_DIR}/*.tesc 
     ${SHADER_SOURCE_DIR}/*.tese
     ${SHADER_SOURCE_DIR}/*.mesh
     ${SHADER_SOURCE_DIR}/*.task

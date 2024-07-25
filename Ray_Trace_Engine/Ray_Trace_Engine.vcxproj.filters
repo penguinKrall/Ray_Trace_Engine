@@ -88,6 +88,9 @@
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\core\EngineCore.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\core\Save.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\core\main.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
@@ -121,7 +124,6 @@
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\dependencies\imgui\imgui_widgets.cpp">
       <Filter>Source Files\dearImGui\ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="source_files\core\Save.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\AccelerationStructures.hpp">
@@ -211,6 +213,9 @@
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\core\EngineCore.hpp">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\core\Save.hpp">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\glTFModel.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -220,7 +225,6 @@
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\main.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="header_files\core\Save.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\CMakeLists.txt" />
@@ -254,6 +258,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_shadow.rmiss">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_static_compute.comp">
       <Filter>Shaders</Filter>
     </None>
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\particle_compute.comp">

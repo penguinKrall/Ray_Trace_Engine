@@ -215,7 +215,9 @@ struct Model {
   struct Vertices {
     VkBuffer buffer = VK_NULL_HANDLE;
     VkDeviceMemory memory;
-  } vertices;
+  };
+
+  Vertices vertices{};
 
   struct Indices {
     VkBuffer buffer = VK_NULL_HANDLE;

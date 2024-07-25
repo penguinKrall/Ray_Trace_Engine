@@ -164,6 +164,10 @@ class AccelerationStructures {
   // -- build geometry nodes buffer
   void BuildGeometryNodesBuffer();
   
+  // -- update geometry nodes buffer
+  void UpdateGeometryNodesBuffer(gtp::Model* pModel, std::vector<gtp::Model*>& pModelList, Utilities_UI::ModelData& modelData,
+    std::vector<gtp::Particle*>& pParticleList);
+
   // -- handle model delete bottom level
   void HandleModelDeleteBottomLevel(int defaultTexCount, std::vector<gtp::Model*>& modelList);
 

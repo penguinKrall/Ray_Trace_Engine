@@ -10,9 +10,17 @@ ComputeVertex::ComputeVertex(EngineCore *pEngineCore, gtp::Model *modelPtr) {
 
   CreateTransformsBuffer();
 
-  CreateComputePipeline();
+  if (modelPtr->animations.size() > 0) {
+    this->CreateAnimationComputePipeline();
+    this->CreateAnimationPipelineDescriptorSet();
+  }
 
-  CreateDescriptorSets();
+  else {
+    this->CreateStaticComputePipeline();
+    this->CreateStaticPipelineDescriptorSet();
+    std::cout << "_ * _ * _ * _ * _ * _* created static compute pipeine!"
+              << std::endl;
+  }
 
   CreateCommandBuffers();
 
@@ -95,34 +103,38 @@ void ComputeVertex::CreateComputeBuffers() {
                                   pEngineCore->commandPools.graphics, true);
 
   // joint buffer
-  std::vector<glm::mat4> transforms;
+  if (!this->model->animations.empty()) {
 
-  for (auto &nodes : this->model->linearNodes) {
-    if (nodes->mesh) {
-      if (nodes->skin) {
-        std::cout << "\n\n**GLTF_COMPUTE joint buffer" << std::endl;
-        for (int i = 0; i < nodes->skin->joints.size(); i++) {
-          std::cout << "node[" << i << "]name: " << nodes->skin->joints[i]->name
-                    << std::endl;
-          transforms.push_back(nodes->mesh->uniformBlock.jointMatrix[i]);
+    std::vector<glm::mat4> transforms;
+
+    for (auto &nodes : this->model->linearNodes) {
+      if (nodes->mesh) {
+        if (nodes->skin) {
+          std::cout << "\n\n**GLTF_COMPUTE joint buffer" << std::endl;
+          for (int i = 0; i < nodes->skin->joints.size(); i++) {
+            std::cout << "node[" << i
+                      << "]name: " << nodes->skin->joints[i]->name << std::endl;
+            transforms.push_back(nodes->mesh->uniformBlock.jointMatrix[i]);
+          }
         }
       }
     }
+
+    size_t jointBufferSize = transforms.size() * sizeof(glm::mat4);
+
+    this->jointBuffer.bufferData.bufferName =
+        "gltf_compute_jointStorageBuffer_";
+    this->jointBuffer.bufferData.bufferMemoryName =
+        "gltf_compute_jointStorageBufferMemory_";
+
+    this->pEngineCore->CreateBuffer(
+        VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &this->jointBuffer, jointBufferSize, transforms.data());
   }
-
-  size_t jointBufferSize = transforms.size() * sizeof(glm::mat4);
-
-  this->jointBuffer.bufferData.bufferName = "gltf_compute_jointStorageBuffer_";
-  this->jointBuffer.bufferData.bufferMemoryName =
-      "gltf_compute_jointStorageBufferMemory_";
-
-  this->pEngineCore->CreateBuffer(
-      VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-          VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-          VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-      &this->jointBuffer, jointBufferSize, transforms.data());
 }
 
 void ComputeVertex::Destroy_ComputeVertex() {
@@ -151,7 +163,7 @@ void ComputeVertex::Destroy_ComputeVertex() {
   this->storageOutputBuffer.destroy(this->pEngineCore->devices.logical);
 }
 
-void ComputeVertex::CreateComputePipeline() {
+void ComputeVertex::CreateAnimationComputePipeline() {
 
   // descriptor binding
   VkDescriptorSetLayoutBinding inputStorageBufferLayoutBinding =
@@ -232,6 +244,81 @@ void ComputeVertex::CreateComputePipeline() {
       &computePipelineCreateInfo, nullptr, &this->pipelineData.pipeline));
 }
 
+void ComputeVertex::CreateStaticComputePipeline() {
+  // descriptor binding
+  VkDescriptorSetLayoutBinding inputStorageBufferLayoutBinding =
+      gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
+          0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT,
+          nullptr);
+
+  VkDescriptorSetLayoutBinding outputStorageBufferLayoutBinding =
+      gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
+          1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT,
+          nullptr);
+
+  VkDescriptorSetLayoutBinding transformsStorageBufferLayoutBinding =
+      gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
+          2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT,
+          nullptr);
+
+  // array of bindings
+  std::vector<VkDescriptorSetLayoutBinding> bindings(
+      {inputStorageBufferLayoutBinding, outputStorageBufferLayoutBinding,
+       transformsStorageBufferLayoutBinding});
+
+  // descriptor set layout create info
+  VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
+  descriptorSetLayoutCreateInfo.sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  descriptorSetLayoutCreateInfo.bindingCount =
+      static_cast<uint32_t>(bindings.size());
+  descriptorSetLayoutCreateInfo.pBindings = bindings.data();
+
+  // create descriptor set layout
+  pEngineCore->AddObject(
+      [this, &descriptorSetLayoutCreateInfo]() {
+        return pEngineCore->objCreate.VKCreateDescriptorSetLayout(
+            &descriptorSetLayoutCreateInfo, nullptr,
+            &pipelineData.descriptorSetLayout);
+      },
+      "ComputeVertex_DescriptorSetLayout");
+
+  // pipeline layout create info
+  VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
+  pipelineLayoutCreateInfo.sType =
+      VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+  pipelineLayoutCreateInfo.setLayoutCount = 1;
+  pipelineLayoutCreateInfo.pSetLayouts = &pipelineData.descriptorSetLayout;
+
+  // create pipeline layout
+  pEngineCore->AddObject(
+      [this, &pipelineLayoutCreateInfo]() {
+        return pEngineCore->objCreate.VKCreatePipelineLayout(
+            &pipelineLayoutCreateInfo, nullptr, &pipelineData.pipelineLayout);
+      },
+      "ComputeVertex_pipelineLayout");
+
+  // project directory for loading shader modules
+  std::filesystem::path projDirectory = std::filesystem::current_path();
+
+  // Setup ray tracing shader groups
+  VkPipelineShaderStageCreateInfo computeShaderStageCreateInfo;
+
+  computeShaderStageCreateInfo = shader.loadShader(
+      projDirectory.string() +
+          "/shaders/compiled/main_renderer_static_compute.comp.spv",
+      VK_SHADER_STAGE_COMPUTE_BIT, "gltf_static_compute_shader");
+  VkComputePipelineCreateInfo computePipelineCreateInfo = {};
+  computePipelineCreateInfo.sType =
+      VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+  computePipelineCreateInfo.stage = computeShaderStageCreateInfo;
+  computePipelineCreateInfo.layout = this->pipelineData.pipelineLayout;
+
+  validate_vk_result(vkCreateComputePipelines(
+      pEngineCore->devices.logical, VK_NULL_HANDLE, 1,
+      &computePipelineCreateInfo, nullptr, &this->pipelineData.pipeline));
+}
+
 void ComputeVertex::CreateCommandBuffers() {
 
   commandBuffers.resize(frame_draws);
@@ -246,7 +333,7 @@ void ComputeVertex::CreateCommandBuffers() {
       pEngineCore->devices.logical, &allocInfo, commandBuffers.data()));
 }
 
-void ComputeVertex::CreateDescriptorSets() {
+void ComputeVertex::CreateAnimationPipelineDescriptorSet() {
 
   std::vector<VkDescriptorPoolSize> poolSizes = {
       {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3}};
@@ -363,6 +450,106 @@ void ComputeVertex::CreateDescriptorSets() {
                          writeDescriptorSets.data(), 0, VK_NULL_HANDLE);
 }
 
+void ComputeVertex::CreateStaticPipelineDescriptorSet() {
+  std::vector<VkDescriptorPoolSize> poolSizes = {
+      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3}};
+
+  // descriptor pool create info
+  VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
+  descriptorPoolCreateInfo.sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  descriptorPoolCreateInfo.poolSizeCount =
+      static_cast<uint32_t>(poolSizes.size());
+  descriptorPoolCreateInfo.pPoolSizes = poolSizes.data();
+  descriptorPoolCreateInfo.maxSets = 1;
+
+  // create descriptor pool
+  pEngineCore->AddObject(
+      [this, &descriptorPoolCreateInfo]() {
+        return pEngineCore->objCreate.VKCreateDescriptorPool(
+            &descriptorPoolCreateInfo, nullptr,
+            &this->pipelineData.descriptorPool);
+      },
+      "gltf_compute_DescriptorPool");
+
+  VkDescriptorSetAllocateInfo descriptorSetAllocateInfo{};
+  descriptorSetAllocateInfo.sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  descriptorSetAllocateInfo.descriptorPool = this->pipelineData.descriptorPool;
+  descriptorSetAllocateInfo.pSetLayouts = &pipelineData.descriptorSetLayout;
+  descriptorSetAllocateInfo.descriptorSetCount = 1;
+
+  // create descriptor set
+  pEngineCore->AddObject(
+      [this, &descriptorSetAllocateInfo]() {
+        return pEngineCore->objCreate.VKAllocateDescriptorSet(
+            &descriptorSetAllocateInfo, nullptr,
+            &this->pipelineData.descriptorSet);
+      },
+      "gltf_compute_DescriptorSet");
+
+  // storage input buffer descriptor info
+  VkDescriptorBufferInfo storageInputBufferDescriptor{};
+  // storageInputBufferDescriptor.buffer = storageInputBuffer.bufferData.buffer;
+  storageInputBufferDescriptor.buffer = this->model->vertices.buffer;
+  storageInputBufferDescriptor.offset = 0;
+  storageInputBufferDescriptor.range =
+      static_cast<uint32_t>(this->model->vertexCount) *
+      sizeof(gtp::Model::Vertex);
+
+  // storage input buffer descriptor write info
+  VkWriteDescriptorSet storageInputBufferWrite{};
+  storageInputBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  storageInputBufferWrite.dstSet = pipelineData.descriptorSet;
+  storageInputBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  storageInputBufferWrite.dstBinding = 0;
+  storageInputBufferWrite.pBufferInfo = &storageInputBufferDescriptor;
+  storageInputBufferWrite.descriptorCount = 1;
+
+  std::cout << "this->model->vertexBufferSize: "
+            << this->model->vertexBufferSize << std::endl;
+  // storage output buffer descriptor info
+  VkDescriptorBufferInfo storageOutputBufferDescriptor{};
+  // storageOutputBufferDescriptor.buffer =
+  // this->model->vertices.buffer.bufferData.buffer;
+  storageOutputBufferDescriptor.buffer = storageOutputBuffer.bufferData.buffer;
+  storageOutputBufferDescriptor.offset = 0;
+  storageOutputBufferDescriptor.range =
+      static_cast<uint32_t>(this->model->vertexCount) *
+      sizeof(gtp::Model::Vertex);
+
+  // storage output buffer descriptor write info
+  VkWriteDescriptorSet storageOutputBufferWrite{};
+  storageOutputBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  storageOutputBufferWrite.dstSet = pipelineData.descriptorSet;
+  storageOutputBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  storageOutputBufferWrite.dstBinding = 1;
+  storageOutputBufferWrite.pBufferInfo = &storageOutputBufferDescriptor;
+  storageOutputBufferWrite.descriptorCount = 1;
+
+  // transforms buffer descriptor info
+  VkDescriptorBufferInfo transformsBufferDescriptor{};
+  transformsBufferDescriptor.buffer = transformsBuffer.bufferData.buffer;
+  transformsBufferDescriptor.offset = 0;
+  transformsBufferDescriptor.range = transformsBuffer.bufferData.size;
+
+  // transforms buffer descriptor write info
+  VkWriteDescriptorSet transformsBufferWrite{};
+  transformsBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  transformsBufferWrite.dstSet = pipelineData.descriptorSet;
+  transformsBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  transformsBufferWrite.dstBinding = 2;
+  transformsBufferWrite.pBufferInfo = &transformsBufferDescriptor;
+  transformsBufferWrite.descriptorCount = 1;
+
+  std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
+      storageInputBufferWrite, storageOutputBufferWrite, transformsBufferWrite};
+
+  vkUpdateDescriptorSets(this->pEngineCore->devices.logical,
+                         static_cast<uint32_t>(writeDescriptorSets.size()),
+                         writeDescriptorSets.data(), 0, VK_NULL_HANDLE);
+}
+
 VkCommandBuffer ComputeVertex::RecordComputeCommands(int frame) {
 
   // compute command buffer begin info
@@ -371,11 +558,11 @@ VkCommandBuffer ComputeVertex::RecordComputeCommands(int frame) {
 
   // reset command buffer
   validate_vk_result(vkResetCommandBuffer(this->commandBuffers[frame],
-    /*VkCommandBufferResetFlagBits*/ 0));
+                                          /*VkCommandBufferResetFlagBits*/ 0));
 
   // begin command buffer
   validate_vk_result(
-    vkBeginCommandBuffer(this->commandBuffers[frame], &computeBeginInfo));
+      vkBeginCommandBuffer(this->commandBuffers[frame], &computeBeginInfo));
 
   vkCmdBindPipeline(this->commandBuffers[frame], VK_PIPELINE_BIND_POINT_COMPUTE,
                     this->pipelineData.pipeline);
@@ -393,7 +580,6 @@ VkCommandBuffer ComputeVertex::RecordComputeCommands(int frame) {
   validate_vk_result(vkEndCommandBuffer(this->commandBuffers[frame]));
 
   return this->commandBuffers[frame];
-
 }
 
 // std::vector<gtp::Model::Vertex> ComputeVertex::RetrieveBufferData() {
@@ -442,9 +628,9 @@ void ComputeVertex::UpdateJointBuffer() {
   this->jointBuffer.copyTo(transforms.data(), jointBufferSize);
 }
 
-void ComputeVertex::UpdateTransformsBuffer(Utilities_UI::TransformMatrices* pTransformMatrices)
-{
-  //this->transformMatrices = *pTransformMatrices;
-  this->transformsBuffer.copyTo(pTransformMatrices, sizeof(Utilities_UI::TransformMatrices));
-
+void ComputeVertex::UpdateTransformsBuffer(
+    Utilities_UI::TransformMatrices *pTransformMatrices) {
+  // this->transformMatrices = *pTransformMatrices;
+  this->transformsBuffer.copyTo(pTransformMatrices,
+                                sizeof(Utilities_UI::TransformMatrices));
 }

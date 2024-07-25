@@ -64,11 +64,17 @@ public:
   // -- create buffers
   void CreateComputeBuffers();
 
-  // -- create pipeline
-  void CreateComputePipeline();
+  // -- create animation pipeline
+  void CreateAnimationComputePipeline();
 
-  // -- create descriptor sets
-  void CreateDescriptorSets();
+  // -- create animation pipeline
+  void CreateStaticComputePipeline();
+
+  // -- create animation pipeline descriptor set
+  void CreateAnimationPipelineDescriptorSet();
+
+  // -- create static pipeline descriptor set
+  void CreateStaticPipelineDescriptorSet();
 
   // -- create command buffers
   void CreateCommandBuffers();

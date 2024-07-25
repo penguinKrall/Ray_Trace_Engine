@@ -497,6 +497,62 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <CustomBuild Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\CMakeFiles\7e257bb3c1514eaf5d51ec02d10c4ad6\main_renderer_static_compute.comp.spv.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling main_renderer_static_compute.comp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+C:\VulkanSDK\1.3.283.0\Bin\glslc.exe --target-spv=spv1.5 -o C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/shaders/compiled/main_renderer_static_compute.comp.spv C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/shaders/main_renderer_static_compute.comp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_static_compute.comp;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_static_compute.comp.spv</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compiling main_renderer_static_compute.comp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+C:\VulkanSDK\1.3.283.0\Bin\glslc.exe --target-spv=spv1.5 -o C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/shaders/compiled/main_renderer_static_compute.comp.spv C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/shaders/main_renderer_static_compute.comp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_static_compute.comp;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_static_compute.comp.spv</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Compiling main_renderer_static_compute.comp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+C:\VulkanSDK\1.3.283.0\Bin\glslc.exe --target-spv=spv1.5 -o C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/shaders/compiled/main_renderer_static_compute.comp.spv C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/shaders/main_renderer_static_compute.comp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_static_compute.comp;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_static_compute.comp.spv</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Compiling main_renderer_static_compute.comp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+C:\VulkanSDK\1.3.283.0\Bin\glslc.exe --target-spv=spv1.5 -o C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/shaders/compiled/main_renderer_static_compute.comp.spv C:/Users/akral/projects/Ray_Trace_Engine/Ray_Trace_Engine/shaders/main_renderer_static_compute.comp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_static_compute.comp;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_static_compute.comp.spv</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
     <CustomBuild Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\CMakeFiles\7e257bb3c1514eaf5d51ec02d10c4ad6\particle_compute.comp.spv.rule">
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling particle_compute.comp</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
@@ -674,7 +730,7 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_anyhit.rahit.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_closesthit.rchit.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_intersection.rint.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_miss.rmiss.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_raygen.rgen.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_shadow.rmiss.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\particle_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\ui_fragment.frag.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\ui_vertex.vert.spv;%(AdditionalInputs)</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_anyhit.rahit.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_closesthit.rchit.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_intersection.rint.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_miss.rmiss.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_raygen.rgen.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_shadow.rmiss.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_static_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\particle_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\ui_fragment.frag.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\ui_vertex.vert.spv;%(AdditionalInputs)</AdditionalInputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\CMakeFiles\shaders</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
       <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</VerifyInputsAndOutputsExist>
@@ -686,7 +742,7 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_anyhit.rahit.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_closesthit.rchit.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_intersection.rint.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_miss.rmiss.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_raygen.rgen.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_shadow.rmiss.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\particle_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\ui_fragment.frag.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\ui_vertex.vert.spv;%(AdditionalInputs)</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_anyhit.rahit.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_closesthit.rchit.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_intersection.rint.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_miss.rmiss.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_raygen.rgen.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_shadow.rmiss.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_static_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\particle_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\ui_fragment.frag.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\ui_vertex.vert.spv;%(AdditionalInputs)</AdditionalInputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\CMakeFiles\shaders</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
       <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</VerifyInputsAndOutputsExist>
@@ -698,7 +754,7 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_anyhit.rahit.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_closesthit.rchit.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_intersection.rint.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_miss.rmiss.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_raygen.rgen.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_shadow.rmiss.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\particle_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\ui_fragment.frag.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\ui_vertex.vert.spv;%(AdditionalInputs)</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_anyhit.rahit.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_closesthit.rchit.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_intersection.rint.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_miss.rmiss.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_raygen.rgen.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_shadow.rmiss.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_static_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\particle_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\ui_fragment.frag.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\ui_vertex.vert.spv;%(AdditionalInputs)</AdditionalInputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\CMakeFiles\shaders</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
       <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</VerifyInputsAndOutputsExist>
@@ -710,7 +766,7 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_anyhit.rahit.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_closesthit.rchit.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_intersection.rint.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_miss.rmiss.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_raygen.rgen.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_shadow.rmiss.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\particle_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\ui_fragment.frag.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\ui_vertex.vert.spv;%(AdditionalInputs)</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_anyhit.rahit.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_closesthit.rchit.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_intersection.rint.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_miss.rmiss.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_raygen.rgen.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_shadow.rmiss.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\main_renderer_static_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\particle_compute.comp.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\ui_fragment.frag.spv;C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\compiled\ui_vertex.vert.spv;%(AdditionalInputs)</AdditionalInputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\CMakeFiles\shaders</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
       <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</VerifyInputsAndOutputsExist>

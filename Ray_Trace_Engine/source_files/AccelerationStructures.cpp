@@ -988,6 +988,31 @@ void gtp::AccelerationStructures::BuildGeometryNodesBuffer() {
   this->CreateGeometryNodesBuffer();
 }
 
+void gtp::AccelerationStructures::UpdateGeometryNodesBuffer(
+    gtp::Model *pModel, std::vector<gtp::Model *> &pModelList,
+    Utilities_UI::ModelData &modelData,
+    std::vector<gtp::Particle *> &pParticleList) {
+
+  /*for (int i = 0; i < pModelList.size(); i++) {
+    if (modelData.updateBLAS[i]) {
+  for (auto& node : pModelList[i]->linearNodes) {
+    if (node->mesh) {
+      int primIdx = 0;
+      for (auto& primitive : node->mesh->primitives) {
+        if (primitive->indexCount > 0) {
+          glm::mat4 tempTransformMat = modelData.transformMatrices[i].scale *
+  modelData.transformMatrices[i]./
+          this->geometryNodes[this->geometryNodesIndex[i].nodeOffset +
+  primIdx].transformMatrix = modelData.transformMatrices[i].
+        }
+      }
+    }
+  }
+
+    }
+  }*/
+}
+
 void gtp::AccelerationStructures::HandleModelDeleteBottomLevel(
     int defaultTexCount, std::vector<gtp::Model *> &modelList) {
   // update bottom level acceleration structures

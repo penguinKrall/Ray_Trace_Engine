@@ -325,7 +325,6 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source_files\core\Save.cpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\AccelerationStructures.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Buffer.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\ComputeVertex.hpp" />
@@ -355,10 +354,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\core\CoreUI.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\core\CoreWindow.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\core\EngineCore.hpp" />
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\core\Save.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\glTFModel.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\json_hpp\json.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\main.hpp" />
-    <ClInclude Include="header_files\core\Save.hpp" />
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_anyhit.rahit">
     </None>
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_bufferreferences.glsl">
@@ -378,6 +377,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_raygen.rgen">
     </None>
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_shadow.rmiss">
+    </None>
+    <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_static_compute.comp">
     </None>
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\particle_compute.comp">
     </None>
@@ -414,6 +415,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\core\CoreUI.cpp" />
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\core\CoreWindow.cpp" />
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\core\EngineCore.cpp" />
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\core\Save.cpp" />
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\core\main.cpp" />
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\glTFModel.cpp" />
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\imguiFileDialogue\ImGuiFileDialog.cpp" />

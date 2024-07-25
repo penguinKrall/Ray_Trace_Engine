@@ -964,11 +964,11 @@ void gtp::RenderBase::LoadGltfCompute(gtp::Model *pModel) {
 
   ComputeVertex *computeVtx = nullptr;
 
-  if (!pModel->animations.empty()) {
-    auto uniqueComputeVertex =
-        std::make_unique<ComputeVertex>(this->pEngineCore, pModel);
-    computeVtx = uniqueComputeVertex.release();
-  }
+  // if (!pModel->animations.empty()) {
+  auto uniqueComputeVertex =
+      std::make_unique<ComputeVertex>(this->pEngineCore, pModel);
+  computeVtx = uniqueComputeVertex.release();
+  //}
 
   this->assets.gltfCompute.push_back(computeVtx);
 }
