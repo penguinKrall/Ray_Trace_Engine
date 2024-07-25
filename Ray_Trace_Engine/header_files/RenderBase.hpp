@@ -171,7 +171,7 @@ public:
 
   // load model
   void LoadModel(std::string filename, uint32_t fileLoadingFlags = 0,
-                 Utilities_Renderer::ModelLoadingFlags modelLoadingFlags =
+                 uint32_t modelLoadingFlags =
                      Utilities_Renderer::ModelLoadingFlags::None,
                  Utilities_UI::TransformMatrices *pTransformMatrices = nullptr);
 

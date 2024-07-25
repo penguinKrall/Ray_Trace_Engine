@@ -3,7 +3,7 @@
 namespace gtp {
 
 // -- ctor
-Engine::Engine() { }
+Engine::Engine() {}
 
 // -- init
 VkResult Engine::InitEngine() {
@@ -12,6 +12,9 @@ VkResult Engine::InitEngine() {
 
   // init xy pos
   this->inputPosition.InitializeMousePosition(800.0f, 600.0f);
+
+  auto uniqueCharacterPtr = std::make_unique<gtp::Being>(this->pEngineCore);
+  this->beings.character = uniqueCharacterPtr.release();
 
   // init ui
   this->InitUI();
@@ -51,6 +54,15 @@ VkResult Engine::InitEngine() {
   // resize window
   this->camera->framebufferResized = true;
   this->HandleResize();
+
+  // Load the model file path from a custom location
+  beings.character->LoadModelFilePath(
+      Utilities_EngCore::BuildPath("character_save/model_path.json"));
+
+  // Save the model file path to a custom location
+  beings.character->modelFilePath = "updatedModel.obj";
+  beings.character->SaveModelFilePath(
+      Utilities_EngCore::BuildPath("character_save/model_path.json"));
 
   return VK_SUCCESS;
 }

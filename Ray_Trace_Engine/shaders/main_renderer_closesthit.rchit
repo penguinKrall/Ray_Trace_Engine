@@ -44,6 +44,7 @@ struct GeometryNode {
     int textureIndexEmissive;
     int semiTransparentFlag;
     float objectColorID;
+    mat4 transforms;
 };
 
 struct GeometryIndex {

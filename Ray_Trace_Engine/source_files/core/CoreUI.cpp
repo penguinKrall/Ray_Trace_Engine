@@ -1,5 +1,69 @@
 #include "CoreUI.hpp"
 
+void CoreUI::HeaderMenu() {
+  /* file menu header */
+  ImGui::Begin("topFrameBar", 0,
+               ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBackground |
+                   ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove);
+
+  // set position to top left
+  ImGui::SetWindowPos(ImVec2(0, 0));
+
+  // set size of header window
+  ImGui::SetWindowSize(ImVec2(
+      static_cast<float>(pEngineCore->swapchainData.swapchainExtent2D.width),
+      100));
+
+  // drop down menu bar
+  if (ImGui::BeginMenuBar()) {
+    if (ImGui::BeginMenu("File", true)) {
+      if (ImGui::MenuItem("Exit", "")) {
+        glfwSetWindowShouldClose(pEngineCore->CoreGLFWwindow(), true);
+      }
+      if (ImGui::MenuItem("Save", "")) {
+        this->saveOpen = true;
+      }
+      ImGui::EndMenu();
+    }
+
+    if (this->saveOpen) {
+      this->HeaderMenu_Save();
+    }
+
+    // render text - frame rate
+    ImGui::Text("framerate: %.3f ms/frame (%.1f FPS)",
+                1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+    // end drop down menu bar
+    ImGui::EndMenuBar();
+  }
+
+  // end header window
+  ImGui::End();
+}
+
+void CoreUI::HeaderMenu_Save() {
+
+  IGFD::FileDialogConfig config;
+  config.path = ".";
+  ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Save File",
+                                          ".json", config);
+
+  // choose file window
+  if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey")) {
+    if (ImGuiFileDialog::Instance()->IsOk()) {
+      std::cout << "saved file path: "
+                << ImGuiFileDialog::Instance()->GetFilePathName() << '\n';
+    }
+
+    // close
+    this->saveOpen = false;
+    ImGuiFileDialog::Instance()->Close();
+
+  }
+
+}
+
 CoreUI::CoreUI() {}
 
 CoreUI::CoreUI(EngineCore *pEngineCore) {
@@ -877,42 +941,12 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
 
   backends.io = &ImGui::GetIO();
 
-  // file/menu on top left corner of window
-  ImGui::Begin("topFrameBar", 0,
-               ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBackground |
-                   ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove);
-
-  ImGui::SetWindowPos(ImVec2(0, 0)); // set position to top left
-  ImGui::SetWindowSize(ImVec2(
-      static_cast<float>(pEngineCore->swapchainData.swapchainExtent2D.width),
-      100)); // set size of top left window
-
-  // top left window menu bar
-  // file/close
-  if (ImGui::BeginMenuBar()) {
-    if (ImGui::BeginMenu("File", true)) {
-      if (ImGui::MenuItem("Exit", "Esc")) {
-        glfwSetWindowShouldClose(pEngineCore->CoreGLFWwindow(), true);
-      }
-
-      ImGui::EndMenu(); // End "File" drop-down menu
-    }
-
-    // Place this line after rendering the menu bar
-    // ImGui::SameLine(ImGui::GetWindowWidth() - ImGui::CalcTextSize("
-    // framerate: 000.000 ms/frame ( 0.0 FPS )  ").x);
-
-    // Then render your text
-    ImGui::Text("framerate: %.3f ms/frame (%.1f FPS)",
-                1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-
-    ImGui::EndMenuBar(); // End main menu bar
-  }
-
-  ImGui::End();
+  // drop down window // window header //
+  this->HeaderMenu();
 
   // floating window
   ImGui::Begin("controls");
+  // combo drop down menu to select a model to manipulate
   if (pModelData->modelName.size() != 0) {
     if (ImGui::BeginCombo(
             "Model", pModelData->modelName[pModelData->modelIndex].c_str())) {

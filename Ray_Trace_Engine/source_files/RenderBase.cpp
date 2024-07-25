@@ -1251,8 +1251,7 @@ void gtp::RenderBase::RetrieveObjectID(int posX, int posY) {
 }
 
 void gtp::RenderBase::LoadModel(
-    std::string filename, uint32_t fileLoadingFlags,
-    Utilities_Renderer::ModelLoadingFlags modelLoadingFlags,
+    std::string filename, uint32_t fileLoadingFlags, uint32_t modelLoadingFlags,
     Utilities_UI::TransformMatrices *pTransformMatrices) {
 
   // model instance pointer to initialize and add to list
@@ -1385,10 +1384,15 @@ void gtp::RenderBase::HandleResize() {
 std::vector<VkCommandBuffer> gtp::RenderBase::RecordCompute(int frame) {
   std::vector<VkCommandBuffer> computeBuffers;
 
+  int modelIdx = 0;
+
   for (auto &vertexCompute : this->assets.gltfCompute) {
     if (vertexCompute != nullptr) {
+      vertexCompute->UpdateTransformsBuffer(
+          &this->assets.modelData.transformMatrices[modelIdx]);
       computeBuffers.push_back(vertexCompute->RecordComputeCommands(frame));
     }
+    ++modelIdx;
   }
 
   for (auto &particleCompute : this->assets.particle) {

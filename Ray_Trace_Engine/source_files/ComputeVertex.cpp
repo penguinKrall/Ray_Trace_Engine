@@ -441,3 +441,10 @@ void ComputeVertex::UpdateJointBuffer() {
 
   this->jointBuffer.copyTo(transforms.data(), jointBufferSize);
 }
+
+void ComputeVertex::UpdateTransformsBuffer(Utilities_UI::TransformMatrices* pTransformMatrices)
+{
+  //this->transformMatrices = *pTransformMatrices;
+  this->transformsBuffer.copyTo(pTransformMatrices, sizeof(Utilities_UI::TransformMatrices));
+
+}

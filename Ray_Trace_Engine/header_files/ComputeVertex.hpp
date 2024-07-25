@@ -76,6 +76,9 @@ public:
   // -- update joint buffers
   void UpdateJointBuffer();
 
+  // -- update transforms buffer
+  void UpdateTransformsBuffer(Utilities_UI::TransformMatrices* pTransformMatrices);
+
   // -- record compute commands
   VkCommandBuffer RecordComputeCommands(int frame);
 

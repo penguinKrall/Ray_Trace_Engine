@@ -5,7 +5,7 @@
 // -- class to contain ui data -- dear_imgui
 class CoreUI {
 private:
-  //render dimensions
+  // render dimensions
   struct RenderDimensions {
     VkExtent2D extent{};
     VkRect2D renderArea{};
@@ -15,6 +15,10 @@ private:
     VkClearValue depthClearValue{};
   };
   RenderDimensions renderDimensions{};
+
+  bool saveOpen = false;
+  void HeaderMenu();
+  void HeaderMenu_Save();
 
 public:
   // -- core pointer
@@ -99,9 +103,9 @@ public:
   quat qRot = quat(1.f, 0.f, 0.f, 0.f);
 
   //--utilities structs
-  //model data
+  // model data
   Utilities_UI::ModelData modelData{};
-  
+
   // -- renderer data
   Utilities_UI::RenderData rendererData{};
 
@@ -163,14 +167,14 @@ public:
 
   // -- input
   //@brief creates input window draw data
-  void Input(Utilities_UI::ModelData* pModelData);
+  void Input(Utilities_UI::ModelData *pModelData);
 
   // -- draw ui
   //@brief binds render data and draws vertex/index buffers
   void DrawUI(const VkCommandBuffer commandBuffer, int currentFrame);
 
   // -- set model data
-  void SetModelData(const Utilities_UI::ModelData* pModelData);
+  void SetModelData(const Utilities_UI::ModelData *pModelData);
 
   // -- destroy ui
   void DestroyUI();
