@@ -488,17 +488,6 @@ void Engine::Draw() {
 
     bool isBLASUpdated = false;
 
-    // this->renderers.mainRenderer.UpdateAnimations(deltaTime);
-    //
-    // this->renderers.mainRenderer.UpdateUniformBuffer(
-    //     timer, this->UI.rendererData.lightPosition);
-    //
-    // this->renderers.mainRenderer.HandleAccelerationStructureUpdate();
-
-    // this->renderers.mainRenderer.UpdateBLAS();
-    //
-    // this->renderers.mainRenderer.UpdateTLAS();
-
     this->renderers.defaultRenderer->UpdateShaderBuffers(
         deltaTime, timer, this->UI.rendererData.lightPosition);
 
@@ -510,11 +499,8 @@ void Engine::Draw() {
     //     record command buffer       //
     /*--------------------------------*/
 
+    // begin graphics command buffer
     this->BeginGraphicsCommandBuffer(currentFrame);
-
-    // multi blas
-    // this->renderers.mainRenderer.RebuildCommandBuffers(
-    //    currentFrame, this->UI.rendererData.showIDImage);
 
     this->renderers.defaultRenderer->GraphicsCommands(
         currentFrame, this->UI.rendererData.showIDImage);
