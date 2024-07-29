@@ -330,6 +330,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\ComputeVertex.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\DefaultRenderer.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Engine.hpp" />
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Input.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\LoadingScreen.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\ObjectMouseSelect.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Particle.hpp" />
@@ -391,6 +392,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\ComputeVertex.cpp" />
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\DefaultRenderer.cpp" />
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Engine.cpp" />
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Input.cpp" />
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\LoadingScreen.cpp" />
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\ObjectMouseSelect.cpp" />
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Particle.cpp" />

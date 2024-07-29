@@ -2,27 +2,16 @@
 
 #include <CoreUI.hpp>
 #include <EngineCore.hpp>
-// #include <MainRenderer.hpp>
 #include <Being.hpp>
 #include <DefaultRenderer.hpp>
 #include <LoadingScreen.hpp>
-
+#include <Input.hpp>
 namespace gtp {
 
 // -- engine
 //@brief contains core objects and renderers
 class Engine : private EngineCore {
 private:
-  struct InputPosition {
-    double lastX = 0.0f;
-    double lastY = 0.0f;
-
-    double mousePosX = 0.0f;
-    double mousePosY = 0.0f;
-
-    void InitializeMousePosition(float width, float height);
-  };
-  InputPosition inputPosition{};
 
   uint32_t currentFrame = 0;
 
@@ -30,11 +19,11 @@ private:
   float lastTime = 0.0f;
   float timer = 0.0f;
 
-  // -- user input
-  void userInput();
+  // -- input class
+  gtp::Input* pInput = nullptr;
 
   // mouse clicked on window
-  bool isLMBPressed = false;
+  //bool isLMBPressed = false;
 
   // -- renderers
   struct Renderers {
@@ -84,9 +73,6 @@ public:
   // -- init engine
   //@brief calls inherited 'initCore' func and initializes renderers
   VkResult InitEngine();
-
-  // -- init X and Y pos
-  // void InitXYPos();
 
   // -- draw
   //@brief handles update ubos, record command buffers, queue submit, and

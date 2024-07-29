@@ -16,6 +16,9 @@
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Engine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Input.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\LoadingScreen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -139,6 +142,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Engine.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Input.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\LoadingScreen.hpp">

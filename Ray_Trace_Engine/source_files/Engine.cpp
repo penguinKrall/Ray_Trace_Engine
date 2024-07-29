@@ -10,8 +10,12 @@ VkResult Engine::InitEngine() {
   // init core
   this->InitCore();
 
-  // init xy pos
-  this->inputPosition.InitializeMousePosition(800.0f, 600.0f);
+  // input class
+  auto uniqueInputPtr = std::make_unique<gtp::Input>(this->pEngineCore);
+  this->pInput = uniqueInputPtr.release();
+
+  //// init xy pos
+  // this->inputPosition.InitializeMousePosition(800.0f, 600.0f);
 
   auto uniqueCharacterPtr = std::make_unique<gtp::Being>(this->pEngineCore);
   this->beings.character = uniqueCharacterPtr.release();
@@ -22,7 +26,8 @@ VkResult Engine::InitEngine() {
   // poll events
   glfwPollEvents();
   this->UpdateDeltaTime();
-  this->userInput();
+  // this->userInput();
+  this->pInput->Process(deltaTime, this->camera);
 
   // initialize loading screen
   this->loadingScreen = gtp::LoadingScreen(this->pEngineCore);
@@ -87,7 +92,8 @@ void Engine::Run() {
       this->UpdateDeltaTime();
 
       // handle input
-      this->userInput();
+      // this->userInput();
+      this->pInput->Process(deltaTime, this->camera);
 
       // update ui
       this->UpdateUI();
@@ -168,13 +174,10 @@ void Engine::HandleUI() {
 
 void Engine::RetrieveColorID() {
   if (this->pEngineCore->camera->mouseOnWindow) {
-    if (this->isLMBPressed) {
-      // this->renderers.mainRenderer.GetTools()
-      //     .objectMouseSelect.RetrieveObjectID();
+    if (this->pInput->LeftMouseDown()) {
       this->renderers.defaultRenderer->ObjectID(
-          static_cast<int>(inputPosition.mousePosX),
-          static_cast<int>(inputPosition.mousePosY));
-      this->isLMBPressed = false;
+          static_cast<int>(this->pInput->MousePosition().x),
+          static_cast<int>(this->pInput->MousePosition().y));
     }
   }
 }
@@ -183,7 +186,6 @@ void Engine::LoadModel() {
   // continue if ui load model is true
   if (this->UI.modelData.loadModel) {
     // set main renderer model data to ui model data
-    // this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
     this->renderers.defaultRenderer->ModelDataSet(&this->UI.modelData);
     // set file loading flags
     gtp::FileLoadingFlags loadingFlags =
@@ -259,82 +261,10 @@ void Engine::HandleResize() {
   //}
 }
 
-void Engine::userInput() {
-  // float deltaTime = deltaTime;
-
-  glfwGetCursorPos(CoreGLFWwindow(), &inputPosition.mousePosX,
-                   &inputPosition.mousePosY);
-
-  // Print mouse coordinates (you can use them as needed)
-  // printf("Mouse Coordinates: %.2f, %.2f\n", mousePosX, mousePosY);
-
-  auto xoffset =
-      static_cast<float>(inputPosition.mousePosX - inputPosition.lastX);
-  auto yoffset =
-      static_cast<float>(inputPosition.lastY - inputPosition.mousePosY);
-
-  inputPosition.lastX = inputPosition.mousePosX;
-  inputPosition.lastY = inputPosition.mousePosY;
-
-  if (glfwGetMouseButton(CoreGLFWwindow(), GLFW_MOUSE_BUTTON_RIGHT) ==
-      GLFW_TRUE) {
-    camera->viewUpdated = true;
-    camera->ProcessMouseMovement(xoffset, yoffset);
-  }
-
-  if (glfwGetMouseButton(CoreGLFWwindow(), GLFW_MOUSE_BUTTON_LEFT) ==
-      GLFW_TRUE) {
-    this->isLMBPressed = true;
-  }
-
-  // if (glfwGetKey(CoreGLFWwindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-  //   camera->viewUpdated = true;
-  //   glfwSetWindowShouldClose(CoreGLFWwindow(), true);
-  // }
-
-  if (glfwGetKey(CoreGLFWwindow(), GLFW_KEY_W) == GLFW_PRESS) {
-    camera->viewUpdated = true;
-    camera->ProcessKeyboard(Movement::FORWARD, deltaTime);
-  }
-
-  if (glfwGetKey(CoreGLFWwindow(), GLFW_KEY_S) == GLFW_PRESS) {
-    camera->viewUpdated = true;
-    camera->ProcessKeyboard(Movement::BACKWARD, deltaTime);
-  }
-
-  if (glfwGetKey(CoreGLFWwindow(), GLFW_KEY_A) == GLFW_PRESS) {
-    camera->viewUpdated = true;
-    camera->ProcessKeyboard(Movement::LEFT, deltaTime);
-  }
-
-  if (glfwGetKey(CoreGLFWwindow(), GLFW_KEY_D) == GLFW_PRESS) {
-    camera->viewUpdated = true;
-    camera->ProcessKeyboard(Movement::RIGHT, deltaTime);
-  }
-
-  if (glfwGetKey(CoreGLFWwindow(), GLFW_KEY_UP) == GLFW_TRUE) {
-    camera->viewUpdated = true;
-    camera->ProcessKeyboard(Movement::UP, deltaTime);
-  }
-
-  if (glfwGetKey(CoreGLFWwindow(), GLFW_KEY_DOWN) == GLFW_TRUE) {
-    camera->viewUpdated = true;
-    camera->ProcessKeyboard(Movement::DOWN, deltaTime);
-  }
-}
-
 void Engine::InitRenderers() {
   std::cout << "\ninitializing MainRenderer "
                "class\n'''''''''''''''''''''''''''''''''''''''''''''''\n"
             << std::endl;
-
-  // output to loading screen
-  // this->loadingScreen.Draw(&this->UI, "Loading Main 'Renderer'");
-
-  // this->renderers.mainRenderer = MainRenderer(this->pEngineCore);
-  // std::cout << "\nfinished initializing MainRenderer "
-  //              "class\n'''''''''''''''''''''''''''''''''''''''''''''''\n"
-  //           << std::endl;
 
   std::cout << "\ninitializing RenderBase "
                "class\n'''''''''''''''''''''''''''''''''''''''''''''''\n"
@@ -381,22 +311,6 @@ void Engine::Draw() {
   /*------------------*/
 
   if (camera->activeWindow) {
-    //  if (camera->framebufferResized) {
-    //    // wait idle
-    //    vkDeviceWaitIdle(this->LogicalDevice());
-    //    // recreate semaphores, fences
-    //    RecreateSyncObjects();
-    //    // recreate swapchain, swapchain images/views
-    //    RecreateCoreSwapchain();
-    //    // recreate god knows what
-    //    renderers.mainRenderer.HandleResize();
-    //    // recreate ui framebuffers
-    //    UI.RecreateFramebuffers();
-    //    // Flaggy McFlaggerson
-    //    camera->framebufferResized = false;
-    //    // ret
-    //    return;
-    //  }
 
     // resize if resized
     this->HandleResize();
@@ -407,17 +321,6 @@ void Engine::Draw() {
 
     //// wait for fences
     this->ComputeFence(currentFrame);
-    // if (vkWaitForFences(this->LogicalDevice(), 1,
-    // &sync.computeFences[currentFrame],
-    //                     VK_TRUE,
-    //                     std::numeric_limits<uint64_t>::max()) != VK_SUCCESS)
-    //                     {
-    //   throw std::invalid_argument("failed to wait for compute fences");
-    // }
-
-    //// reset fences
-    // vkResetFences(this->LogicalDevice(), 1,
-    // &sync.computeFences[currentFrame]);
 
     ///* record compute commands section */
     //// compute command buffer vector
@@ -451,14 +354,10 @@ void Engine::Draw() {
                                      &computeSubmitInfo,
                                      sync.computeFences[currentFrame]));
 
-    // vkDeviceWaitIdle(this->pEngineCore->this->LogicalDevice());
-
     //------------------------//
     //-----GRAPHICS QUEUE----//
     //----------------------//
-
-    // vkDeviceWaitIdle(this->pEngineCore->this->LogicalDevice());
-
+    //
     // wait for draw fences
     validate_vk_result(vkWaitForFences(this->LogicalDevice(), 1,
                                        &sync.drawFences[currentFrame], VK_TRUE,
@@ -572,13 +471,4 @@ void Engine::Draw() {
     this->currentFrame = (this->currentFrame + 1) % frame_draws;
   }
 }
-
-void Engine::InputPosition::InitializeMousePosition(float width, float height) {
-  lastX = width / 2.0f;
-  lastY = height / 2.0f;
-
-  mousePosX = width / 2.0f;
-  mousePosY = height / 2.0f;
-}
-
 } // namespace gtp
