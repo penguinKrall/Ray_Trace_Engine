@@ -1,0 +1,12 @@
+# V 0.13
+
+newmtl decl_000_u_0
+map_Kd decl_diff_000_a_uni
+map_bump *NULL*
+map_Ks *NULL*
+
+newmtl decl_000_u_1
+map_Kd decl_diff_000_a_uni
+map_bump *NULL*
+map_Ks *NULL*
+

@@ -1,0 +1,12 @@
+# V 0.13
+
+newmtl feet_000_r_0
+map_Kd feet_diff_000_a_whi
+map_bump feet_normal_000
+map_Ks feet_spec_000
+
+newmtl feet_000_r_1
+map_Kd feet_diff_000_a_whi
+map_bump *NULL*
+map_Ks *NULL*
+

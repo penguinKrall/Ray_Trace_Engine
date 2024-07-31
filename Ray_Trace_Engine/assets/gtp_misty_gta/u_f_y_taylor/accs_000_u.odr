@@ -1,0 +1,55 @@
+Version 165 32
+{
+	Shaders
+	{
+		ped_alpha.sps
+		{
+			DiffuseSampler accs_diff_000_a_uni
+			BumpSampler accs_normal_000
+			SpecSampler accs_spec_000
+			envEffFatThickness 25.00000000 25.00000000
+			SpecularIntensityMult 0.12500000
+			SpecularFalloffMult 100.00000000
+			SpecularFresnel 0.97000000
+			Bumpiness 1.00000000
+			DetailSettings 0.00000000 0.00000000 24.00000000
+		}
+		ped_default_cutout.sps
+		{
+			DiffuseSampler accs_diff_000_a_uni
+			BumpSampler *NULL*
+			SpecSampler *NULL*
+			envEffFatThickness 25.00000000 25.00000000
+			SpecMapIntMask 1.00000000 0.00000000 0.00000000
+			SpecularIntensityMult 0.12500000
+			SpecularFalloffMult 100.00000000
+			SpecularFresnel 0.97000000
+			Bumpiness 1.00000000
+			DetailSettings 0.00000000 0.00000000 24.00000000
+		}
+	}
+	Skeleton null
+	LodGroup
+	{
+		Center 0.00502400 -0.03396700 1.42597000
+		Radius 0.18792200
+		AABBMin -0.08197200 -0.15935400 1.31631400
+		AABBMax 0.09201900 0.09142000 1.53562600
+		High 9998.00000000
+		{
+			accs_000_u\accs_000_u_high.mesh 0
+		}
+		Med 9998.00000000
+		{
+			accs_000_u\accs_000_u_med.mesh 0
+		}
+		Low 9998.00000000
+		{
+			accs_000_u\accs_000_u_low.mesh 0
+		}
+		Vlow 9998.00000000
+	}
+	Joints null
+	Light null
+	Bound null
+}

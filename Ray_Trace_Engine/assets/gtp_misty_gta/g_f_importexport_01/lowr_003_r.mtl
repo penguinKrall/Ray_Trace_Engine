@@ -1,0 +1,12 @@
+# V 0.13
+
+newmtl lowr_003_r_0
+map_Kd lowr_diff_003_a_whi
+map_bump lowr_normal_003
+map_Ks lowr_spec_003
+
+newmtl lowr_003_r_1
+map_Kd lowr_diff_003_a_whi
+map_bump *NULL*
+map_Ks *NULL*
+

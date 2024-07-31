@@ -1,0 +1,70 @@
+Version 165 32
+{
+	Shaders
+	{
+		ped_hair_spiked.sps
+		{
+			DiffuseSampler hair_diff_000_a_uni
+			anisoNoiseSpecSampler givemechecker
+			BumpSampler hair_normal_000
+			SpecSampler hair_spec_000
+			umGlobalParams 0.00250000 0.00250000 7.00000000 7.00000000
+			AnisotropicAlphaBias 1.00000000
+			envEffFatThickness 25.00000000 25.00000000
+			OrderNumber 0.00000000
+			SpecularIntensityMult 0.12500000
+			SpecularFalloffMult 100.00000000
+			SpecularFresnel 0.97000000
+			Bumpiness 1.00000000
+			SpecularNoiseMapUVScaleFactor 2.00000000 1.00000000 3.00000000 1.00000000
+			AnisotropicSpecularColour 0.10000000 0.10000000 0.10000000 1.00000000
+			AnisotropicSpecularExponent 16.00000000 32.00000000
+			AnisotropicSpecularIntensity 0.10000000 0.15000000
+			DetailSettings 0.00000000 0.00000000 24.00000000
+		}
+		ped_hair_spiked.sps
+		{
+			DiffuseSampler hair_diff_000_a_uni
+			anisoNoiseSpecSampler givemechecker
+			BumpSampler hair_normal_000
+			SpecSampler hair_spec_000
+			umGlobalParams 0.00250000 0.00250000 7.00000000 7.00000000
+			AnisotropicAlphaBias 1.00000000
+			envEffFatThickness 25.00000000 25.00000000
+			OrderNumber 1.00000000
+			SpecularIntensityMult 0.12500000
+			SpecularFalloffMult 100.00000000
+			SpecularFresnel 0.97000000
+			Bumpiness 1.00000000
+			SpecularNoiseMapUVScaleFactor 2.00000000 1.00000000 3.00000000 1.00000000
+			AnisotropicSpecularColour 0.10000000 0.10000000 0.10000000 1.00000000
+			AnisotropicSpecularExponent 16.00000000 32.00000000
+			AnisotropicSpecularIntensity 0.10000000 0.15000000
+			DetailSettings 0.00000000 0.00000000 24.00000000
+		}
+	}
+	Skeleton null
+	LodGroup
+	{
+		Center 0.00542700 -0.01058600 1.61115900
+		Radius 0.23035700
+		AABBMin -0.10292600 -0.14881000 1.46210200
+		AABBMax 0.11378000 0.12763900 1.76021600
+		High 9998.00000000
+		{
+			hair_000_u\hair_000_u_high.mesh 0
+		}
+		Med 9998.00000000
+		{
+			hair_000_u\hair_000_u_med.mesh 0
+		}
+		Low 9998.00000000
+		{
+			hair_000_u\hair_000_u_low.mesh 0
+		}
+		Vlow 9998.00000000
+	}
+	Joints null
+	Light null
+	Bound null
+}

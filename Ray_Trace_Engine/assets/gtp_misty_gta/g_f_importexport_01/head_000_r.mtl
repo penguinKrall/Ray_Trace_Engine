@@ -1,0 +1,12 @@
+# V 0.13
+
+newmtl head_000_r_0
+map_Kd head_diff_000_a_lat
+map_bump head_normal_000
+map_Ks head_spec_000
+
+newmtl head_000_r_1
+map_Kd head_diff_000_a_lat
+map_bump *NULL*
+map_Ks *NULL*
+

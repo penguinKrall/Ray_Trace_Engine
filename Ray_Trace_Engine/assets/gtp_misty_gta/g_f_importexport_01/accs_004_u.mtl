@@ -1,0 +1,12 @@
+# V 0.13
+
+newmtl accs_004_u_0
+map_Kd accs_diff_004_a_uni
+map_bump accs_normal_004
+map_Ks accs_spec_004
+
+newmtl accs_004_u_1
+map_Kd accs_diff_004_a_uni
+map_bump *NULL*
+map_Ks *NULL*
+

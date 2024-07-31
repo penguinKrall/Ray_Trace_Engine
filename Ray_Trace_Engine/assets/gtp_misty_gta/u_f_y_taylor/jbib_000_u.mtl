@@ -1,0 +1,12 @@
+# V 0.13
+
+newmtl jbib_000_u_0
+map_Kd jbib_diff_000_a_uni
+map_bump jbib_normal_000
+map_Ks jbib_spec_000
+
+newmtl jbib_000_u_1
+map_Kd jbib_diff_000_a_uni
+map_bump *NULL*
+map_Ks *NULL*
+

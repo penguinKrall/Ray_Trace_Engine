@@ -1,0 +1,17 @@
+# V 0.13
+
+newmtl hair_000_u_0
+map_Kd hair_diff_000_a_uni
+map_bump hair_normal_000
+map_Ks long_hair_noise
+
+newmtl hair_000_u_1
+map_Kd hair_diff_000_a_uni
+map_bump hair_normal_000
+map_Ks long_hair_noise
+
+newmtl hair_000_u_2
+map_Kd hair_diff_000_a_uni
+map_bump *NULL*
+map_Ks *NULL*
+

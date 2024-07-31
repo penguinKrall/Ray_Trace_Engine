@@ -1,0 +1,12 @@
+# V 0.13
+
+newmtl uppr_002_r_0
+map_Kd uppr_diff_002_a_lat
+map_bump uppr_normal_002
+map_Ks uppr_spec_002
+
+newmtl uppr_002_r_1
+map_Kd uppr_diff_002_a_lat
+map_bump *NULL*
+map_Ks *NULL*
+

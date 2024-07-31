@@ -1,0 +1,12 @@
+# V 0.13
+
+newmtl uppr_000_r_0
+map_Kd uppr_diff_000_a_whi
+map_bump uppr_normal_000
+map_Ks uppr_spec_000
+
+newmtl uppr_000_r_1
+map_Kd uppr_diff_000_a_whi
+map_bump *NULL*
+map_Ks *NULL*
+

@@ -1,0 +1,952 @@
+Version 165 30
+{
+	DataCRC 1248409109
+	NumBones 100
+	Bone SKEL_ROOT 0
+	{
+		MirrorBoneId 0
+		Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+		RotationQuaternion 0.00000000 0.00000000 -1.00000000 -0.00000016
+		LocalOffset 0.00000000 -0.00577900 -0.02921900
+		Scale 1.00000000 1.00000000 1.00000000
+		Children 3
+		{
+			Bone SKEL_Pelvis 11816
+			{
+				MirrorBoneId 11816
+				Flags ROT_X ROT_Y ROT_Z
+				RotationQuaternion 0.00000000 0.70710660 0.00000000 0.70710690
+				LocalOffset 0.00000000 0.00000000 0.00000000
+				Scale 1.00000000 1.00000000 1.00000000
+				Children 4
+				{
+					Bone SKEL_L_Thigh 58271
+					{
+						MirrorBoneId 58271
+						Flags ROT_X ROT_Y ROT_Z
+						RotationQuaternion -0.00867493 0.03141972 -0.01399282 0.99937070
+						LocalOffset 0.06566600 -0.00734000 -0.09482000
+						Scale 1.00000000 1.00000000 1.00000000
+						Children 2
+						{
+							Bone SKEL_L_Calf 63931
+							{
+								MirrorBoneId 63931
+								Flags ROT_X ROT_Y ROT_Z
+								RotationQuaternion -0.00000100 0.00000003 -0.02628297 0.99965450
+								LocalOffset 0.43902800 0.00000000 0.00000000
+								Scale 1.00000000 1.00000000 1.00000000
+								Children 1
+								{
+									Bone SKEL_L_Foot 14201
+									{
+										MirrorBoneId 14201
+										Flags ROT_X ROT_Y ROT_Z
+										RotationQuaternion -0.01723609 -0.02640999 0.61147390 0.79063590
+										LocalOffset 0.40009200 0.00000000 0.00000000
+										Scale 1.00000000 1.00000000 1.00000000
+										Children 3
+										{
+											Bone SKEL_L_Toe0 2108
+											{
+												MirrorBoneId 2108
+												Flags ROT_X ROT_Y ROT_Z
+												RotationQuaternion 0.98578240 0.16802710 -0.00000003 -0.00000016
+												LocalOffset 0.13971300 0.00000000 0.00000000
+												Scale 1.00000000 1.00000000 1.00000000
+											}
+											Bone IK_L_Foot 65245
+											{
+												MirrorBoneId 65245
+												Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+												RotationQuaternion -0.57956620 0.40509710 0.57280560 0.41460000
+												LocalOffset 0.08501000 -0.04363600 0.00000000
+												Scale 1.00000000 1.00000000 1.00000000
+											}
+											Bone PH_L_Foot 57717
+											{
+												MirrorBoneId 57717
+												Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+												RotationQuaternion -0.57956620 0.40509710 0.57280560 0.41460000
+												LocalOffset 0.08501000 -0.04363600 0.00000000
+												Scale 1.00000000 1.00000000 1.00000000
+											}
+										}
+									}
+								}
+							}
+							Bone MH_L_Knee 46078
+							{
+								MirrorBoneId 46078
+								Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+								RotationQuaternion -0.00000100 0.00000003 -0.02628347 0.99965450
+								LocalOffset 0.43902700 0.00000000 0.00000000
+								Scale 1.00000000 1.00000000 1.00000000
+							}
+						}
+					}
+					Bone SKEL_R_Thigh 51826
+					{
+						MirrorBoneId 51826
+						Flags ROT_X ROT_Y ROT_Z
+						RotationQuaternion 0.00867493 -0.03141922 -0.01399282 0.99937070
+						LocalOffset 0.06566600 -0.00734000 0.09482000
+						Scale 1.00000000 1.00000000 1.00000000
+						Children 2
+						{
+							Bone SKEL_R_Calf 36864
+							{
+								MirrorBoneId 36864
+								Flags ROT_X ROT_Y ROT_Z
+								RotationQuaternion 0.00000000 0.00000000 -0.02628297 0.99965450
+								LocalOffset 0.43902800 0.00000000 0.00000000
+								Scale 1.00000000 1.00000000 1.00000000
+								Children 1
+								{
+									Bone SKEL_R_Foot 52301
+									{
+										MirrorBoneId 52301
+										Flags ROT_X ROT_Y ROT_Z
+										RotationQuaternion 0.01723679 0.02640990 0.61147390 0.79063590
+										LocalOffset 0.40009300 0.00000000 0.00000000
+										Scale 1.00000000 1.00000000 1.00000000
+										Children 3
+										{
+											Bone SKEL_R_Toe0 20781
+											{
+												MirrorBoneId 20781
+												Flags ROT_X ROT_Y ROT_Z
+												RotationQuaternion 0.98578260 0.16802560 -0.00000003 -0.00000016
+												LocalOffset 0.13971300 0.00000000 0.00000000
+												Scale 1.00000000 1.00000000 1.00000000
+											}
+											Bone IK_R_Foot 35502
+											{
+												MirrorBoneId 35502
+												Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+												RotationQuaternion 0.57280670 -0.41460030 -0.57956430 -0.40509780
+												LocalOffset 0.08501000 -0.04363600 0.00000000
+												Scale 1.00000000 1.00000000 1.00000000
+											}
+											Bone PH_R_Foot 24806
+											{
+												MirrorBoneId 24806
+												Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+												RotationQuaternion 0.57280670 -0.41460030 -0.57956430 -0.40509780
+												LocalOffset 0.08501000 -0.04363600 0.00000000
+												Scale 1.00000000 1.00000000 1.00000000
+											}
+										}
+									}
+								}
+							}
+							Bone MH_R_Knee 16335
+							{
+								MirrorBoneId 16335
+								Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+								RotationQuaternion 0.00000000 0.00000000 -0.02628347 0.99965450
+								LocalOffset 0.43902700 0.00000000 0.00000000
+								Scale 1.00000000 1.00000000 1.00000000
+							}
+						}
+					}
+					Bone RB_L_ThighRoll 23639
+					{
+						MirrorBoneId 23639
+						Flags ROT_X ROT_Y ROT_Z
+						RotationQuaternion -0.00867492 0.03142022 -0.01399282 0.99937070
+						LocalOffset 0.06566600 -0.00734000 -0.09482000
+						Scale 1.00000000 1.00000000 1.00000000
+					}
+					Bone RB_R_ThighRoll 6442
+					{
+						MirrorBoneId 6442
+						Flags ROT_X ROT_Y ROT_Z
+						RotationQuaternion 0.00867544 -0.03141873 -0.01399281 0.99937070
+						LocalOffset 0.06566600 -0.00734000 0.09482000
+						Scale 1.00000000 1.00000000 1.00000000
+					}
+				}
+			}
+			Bone SKEL_Spine_Root 57597
+			{
+				MirrorBoneId 57597
+				Flags ROT_X ROT_Y ROT_Z
+				RotationQuaternion 0.00000000 -0.70710660 0.00000000 0.70710690
+				LocalOffset 0.00000000 0.00000000 0.00000000
+				Scale 1.00000000 1.00000000 1.00000000
+				Children 1
+				{
+					Bone SKEL_Spine0 23553
+					{
+						MirrorBoneId 23553
+						Flags ROT_X ROT_Y ROT_Z
+						RotationQuaternion 0.00000050 -0.00000002 -0.04267653 0.99908900
+						LocalOffset 0.02125300 -0.01637700 0.00000000
+						Scale 1.00000000 1.00000000 1.00000000
+						Children 1
+						{
+							Bone SKEL_Spine1 24816
+							{
+								MirrorBoneId 24816
+								Flags ROT_X ROT_Y ROT_Z
+								RotationQuaternion 0.00000000 0.00000000 0.06804787 0.99768200
+								LocalOffset 0.04262100 0.00000000 0.00000000
+								Scale 1.00000000 1.00000000 1.00000000
+								Children 1
+								{
+									Bone SKEL_Spine2 24817
+									{
+										MirrorBoneId 24817
+										Flags ROT_X ROT_Y ROT_Z
+										RotationQuaternion 0.00000000 0.00000000 -0.03324288 0.99944730
+										LocalOffset 0.04960400 0.00000000 0.00000000
+										Scale 1.00000000 1.00000000 1.00000000
+										Children 1
+										{
+											Bone SKEL_Spine3 24818
+											{
+												MirrorBoneId 24818
+												Flags ROT_X ROT_Y ROT_Z
+												RotationQuaternion -0.00000900 -0.00000009 0.00952986 0.99995460
+												LocalOffset 0.12647600 0.00000000 0.00000000
+												Scale 1.00000000 1.00000000 1.00000000
+												Children 5
+												{
+													Bone SKEL_L_Clavicle 64729
+													{
+														MirrorBoneId 64729
+														Flags ROT_X ROT_Y ROT_Z
+														RotationQuaternion 0.13294290 -0.80179370 -0.09725092 0.57445220
+														LocalOffset 0.21176400 0.04233800 0.03588700
+														Scale 1.00000000 1.00000000 1.00000000
+														Children 1
+														{
+															Bone SKEL_L_UpperArm 45509
+															{
+																MirrorBoneId 45509
+																Flags ROT_X ROT_Y ROT_Z
+																RotationQuaternion 0.04957201 -0.28667030 0.15315180 0.94440850
+																LocalOffset 0.13598000 0.00000000 0.00000200
+																Scale 1.00000000 1.00000000 1.00000000
+																Children 3
+																{
+																	Bone SKEL_L_Forearm 61163
+																	{
+																		MirrorBoneId 61163
+																		Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+																		RotationQuaternion -0.00041503 -0.03667756 0.02177299 0.99908990
+																		LocalOffset 0.26174700 0.00000000 -0.00000200
+																		Scale 1.00000000 1.00000000 1.00000000
+																		Children 2
+																		{
+																			Bone SKEL_L_Hand 18905
+																			{
+																				MirrorBoneId 18905
+																				Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+																				RotationQuaternion 0.00000000 0.00000000 0.00000000 1.00000000
+																				LocalOffset 0.24939200 0.00000000 0.00000100
+																				Scale 1.00000000 1.00000000 1.00000000
+																				Children 7
+																				{
+																					Bone SKEL_L_Finger00 26610
+																					{
+																						MirrorBoneId 26610
+																						Flags ROT_X ROT_Y ROT_Z
+																						RotationQuaternion -0.03581937 -0.13545670 0.22128660 0.96509100
+																						LocalOffset 0.00683700 0.01699200 0.00082200
+																						Scale 1.00000000 1.00000000 1.00000000
+																						Children 1
+																						{
+																							Bone SKEL_L_Finger01 4089
+																							{
+																								MirrorBoneId 4089
+																								Flags ROT_X ROT_Y ROT_Z
+																								RotationQuaternion -0.00483609 -0.01322236 -0.13283670 0.99103800
+																								LocalOffset 0.04951200 0.00000000 0.00000000
+																								Scale 1.00000000 1.00000000 1.00000000
+																								Children 1
+																								{
+																									Bone SKEL_L_Finger02 4090
+																									{
+																										MirrorBoneId 4090
+																										Flags ROT_X ROT_Y ROT_Z
+																										RotationQuaternion -0.00032854 -0.00536427 -0.15575230 0.98778150
+																										LocalOffset 0.04312000 0.00000000 0.00000000
+																										Scale 1.00000000 1.00000000 1.00000000
+																									}
+																								}
+																							}
+																						}
+																					}
+																					Bone SKEL_L_Finger10 26611
+																					{
+																						MirrorBoneId 26611
+																						Flags ROT_X ROT_Y ROT_Z
+																						RotationQuaternion -0.64287800 -0.03657223 -0.04074901 0.76400910
+																						LocalOffset 0.08271300 0.01769800 -0.01816600
+																						Scale 1.00000000 1.00000000 1.00000000
+																						Children 1
+																						{
+																							Bone SKEL_L_Finger11 4169
+																							{
+																								MirrorBoneId 4169
+																								Flags ROT_X ROT_Y ROT_Z
+																								RotationQuaternion -0.00166847 -0.03073504 -0.23385530 0.97178400
+																								LocalOffset 0.04844100 0.00000000 0.00000000
+																								Scale 1.00000000 1.00000000 1.00000000
+																								Children 1
+																								{
+																									Bone SKEL_L_Finger12 4170
+																									{
+																										MirrorBoneId 4170
+																										Flags ROT_X ROT_Y ROT_Z
+																										RotationQuaternion 0.00294775 -0.02292906 -0.19458090 0.98061410
+																										LocalOffset 0.02325400 0.00000000 0.00000000
+																										Scale 1.00000000 1.00000000 1.00000000
+																									}
+																								}
+																							}
+																						}
+																					}
+																					Bone SKEL_L_Finger20 26612
+																					{
+																						MirrorBoneId 26612
+																						Flags ROT_X ROT_Y ROT_Z
+																						RotationQuaternion -0.70033790 -0.06418993 -0.11721690 0.70118950
+																						LocalOffset 0.08274000 -0.00516400 -0.01924300
+																						Scale 1.00000000 1.00000000 1.00000000
+																						Children 1
+																						{
+																							Bone SKEL_L_Finger21 4185
+																							{
+																								MirrorBoneId 4185
+																								Flags ROT_X ROT_Y ROT_Z
+																								RotationQuaternion 0.00484620 -0.02300905 -0.25925510 0.96552270
+																								LocalOffset 0.05274500 0.00000000 0.00000000
+																								Scale 1.00000000 1.00000000 1.00000000
+																								Children 1
+																								{
+																									Bone SKEL_L_Finger22 4186
+																									{
+																										MirrorBoneId 4186
+																										Flags ROT_X ROT_Y ROT_Z
+																										RotationQuaternion -0.00658285 -0.02797695 -0.19543800 0.98029490
+																										LocalOffset 0.02997500 0.00000000 0.00000000
+																										Scale 1.00000000 1.00000000 1.00000000
+																									}
+																								}
+																							}
+																						}
+																					}
+																					Bone SKEL_L_Finger30 26613
+																					{
+																						MirrorBoneId 26613
+																						Flags ROT_X ROT_Y ROT_Z
+																						RotationQuaternion -0.77540010 0.00252003 -0.17170270 0.60767310
+																						LocalOffset 0.07776500 -0.02393100 -0.01106500
+																						Scale 1.00000000 1.00000000 1.00000000
+																						Children 1
+																						{
+																							Bone SKEL_L_Finger31 4137
+																							{
+																								MirrorBoneId 4137
+																								Flags ROT_X ROT_Y ROT_Z
+																								RotationQuaternion 0.02108150 -0.02539479 -0.24061200 0.97006010
+																								LocalOffset 0.04182900 0.00000000 0.00000000
+																								Scale 1.00000000 1.00000000 1.00000000
+																								Children 1
+																								{
+																									Bone SKEL_L_Finger32 4138
+																									{
+																										MirrorBoneId 4138
+																										Flags ROT_X ROT_Y ROT_Z
+																										RotationQuaternion -0.01893330 -0.03714988 -0.22266920 0.97400200
+																										LocalOffset 0.03181300 0.00000000 0.00000000
+																										Scale 1.00000000 1.00000000 1.00000000
+																									}
+																								}
+																							}
+																						}
+																					}
+																					Bone SKEL_L_Finger40 26614
+																					{
+																						MirrorBoneId 26614
+																						Flags ROT_X ROT_Y ROT_Z
+																						RotationQuaternion -0.82489940 0.07330491 -0.15677460 0.53813480
+																						LocalOffset 0.06796100 -0.03911500 -0.00150400
+																						Scale 1.00000000 1.00000000 1.00000000
+																						Children 1
+																						{
+																							Bone SKEL_L_Finger41 4153
+																							{
+																								MirrorBoneId 4153
+																								Flags ROT_X ROT_Y ROT_Z
+																								RotationQuaternion 0.03033352 -0.01653683 -0.29674520 0.95433140
+																								LocalOffset 0.03988500 0.00000100 0.00000000
+																								Scale 1.00000000 1.00000000 1.00000000
+																								Children 1
+																								{
+																									Bone SKEL_L_Finger42 4154
+																									{
+																										MirrorBoneId 4154
+																										Flags ROT_X ROT_Y ROT_Z
+																										RotationQuaternion -0.01056154 -0.00299597 -0.13133590 0.99127710
+																										LocalOffset 0.02138800 0.00000000 0.00000000
+																										Scale 1.00000000 1.00000000 1.00000000
+																									}
+																								}
+																							}
+																						}
+																					}
+																					Bone PH_L_Hand 60309
+																					{
+																						MirrorBoneId 60309
+																						Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+																						RotationQuaternion 0.00000000 0.00000000 0.00000000 1.00000000
+																						LocalOffset 0.04255200 0.00000000 0.00000000
+																						Scale 1.00000000 1.00000000 1.00000000
+																					}
+																					Bone IK_L_Hand 36029
+																					{
+																						MirrorBoneId 36029
+																						Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+																						RotationQuaternion 0.00000000 0.00000000 0.00000000 1.00000000
+																						LocalOffset 0.04255200 0.00000000 0.00000000
+																						Scale 1.00000000 1.00000000 1.00000000
+																					}
+																				}
+																			}
+																			Bone RB_L_ForeArmRoll 61007
+																			{
+																				MirrorBoneId 61007
+																				Flags ROT_X ROT_Y ROT_Z
+																				RotationQuaternion 0.00000000 0.00000000 0.00000000 1.00000000
+																				LocalOffset 0.12469500 0.00000000 0.00000000
+																				Scale 1.00000000 1.00000000 1.00000000
+																			}
+																		}
+																	}
+																	Bone RB_L_ArmRoll 5232
+																	{
+																		MirrorBoneId 5232
+																		Flags ROT_X ROT_Y ROT_Z
+																		RotationQuaternion 0.00000000 0.00000000 0.00000000 1.00000000
+																		LocalOffset 0.00000000 0.00000000 0.00000000
+																		Scale 1.00000000 1.00000000 1.00000000
+																	}
+																	Bone MH_L_Elbow 22711
+																	{
+																		MirrorBoneId 22711
+																		Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+																		RotationQuaternion -0.00041553 -0.03667756 0.02177297 0.99908990
+																		LocalOffset 0.26175000 0.00000000 0.00000000
+																		Scale 1.00000000 1.00000000 1.00000000
+																	}
+																}
+															}
+														}
+													}
+													Bone SKEL_R_Clavicle 10706
+													{
+														MirrorBoneId 10706
+														Flags ROT_X ROT_Y ROT_Z
+														RotationQuaternion -0.13293330 0.80179490 -0.09723692 0.57445500
+														LocalOffset 0.21176400 0.04234000 -0.03588500
+														Scale 1.00000000 1.00000000 1.00000000
+														Children 1
+														{
+															Bone SKEL_R_UpperArm 40269
+															{
+																MirrorBoneId 40269
+																Flags ROT_X ROT_Y ROT_Z
+																RotationQuaternion -0.04957213 0.28667130 0.15315310 0.94440800
+																LocalOffset 0.13598000 0.00000000 -0.00000200
+																Scale 1.00000000 1.00000000 1.00000000
+																Children 3
+																{
+																	Bone SKEL_R_Forearm 28252
+																	{
+																		MirrorBoneId 28252
+																		Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+																		RotationQuaternion 0.00041554 0.03667707 0.02177297 0.99908990
+																		LocalOffset 0.26174700 0.00000000 0.00000300
+																		Scale 1.00000000 1.00000000 1.00000000
+																		Children 2
+																		{
+																			Bone SKEL_R_Hand 57005
+																			{
+																				MirrorBoneId 57005
+																				Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+																				RotationQuaternion 0.00000000 0.00000000 0.00000000 1.00000000
+																				LocalOffset 0.24939100 0.00000000 -0.00000200
+																				Scale 1.00000000 1.00000000 1.00000000
+																				Children 7
+																				{
+																					Bone SKEL_R_Finger00 58866
+																					{
+																						MirrorBoneId 58866
+																						Flags ROT_X ROT_Y ROT_Z
+																						RotationQuaternion 0.03581715 0.13545720 0.22128730 0.96509090
+																						LocalOffset 0.00683700 0.01699200 -0.00082200
+																						Scale 1.00000000 1.00000000 1.00000000
+																						Children 1
+																						{
+																							Bone SKEL_R_Finger01 64016
+																							{
+																								MirrorBoneId 64016
+																								Flags ROT_X ROT_Y ROT_Z
+																								RotationQuaternion 0.00483496 0.01322150 -0.13283620 0.99103810
+																								LocalOffset 0.04951100 0.00000000 0.00000000
+																								Scale 1.00000000 1.00000000 1.00000000
+																								Children 1
+																								{
+																									Bone SKEL_R_Finger02 64017
+																									{
+																										MirrorBoneId 64017
+																										Flags ROT_X ROT_Y ROT_Z
+																										RotationQuaternion 0.00032477 0.00536284 -0.15575180 0.98778170
+																										LocalOffset 0.04312100 0.00000000 0.00000000
+																										Scale 1.00000000 1.00000000 1.00000000
+																									}
+																								}
+																							}
+																						}
+																					}
+																					Bone SKEL_R_Finger10 58867
+																					{
+																						MirrorBoneId 58867
+																						Flags ROT_X ROT_Y ROT_Z
+																						RotationQuaternion -0.76401020 0.04074939 0.03657128 0.64287670
+																						LocalOffset 0.08271300 0.01769800 0.01816600
+																						Scale 1.00000000 1.00000000 1.00000000
+																						Children 1
+																						{
+																							Bone SKEL_R_Finger11 64096
+																							{
+																								MirrorBoneId 64096
+																								Flags ROT_X ROT_Y ROT_Z
+																								RotationQuaternion 0.00165423 -0.03073795 0.23385390 0.97178440
+																								LocalOffset 0.04844100 0.00000000 0.00000000
+																								Scale 1.00000000 1.00000000 1.00000000
+																								Children 1
+																								{
+																									Bone SKEL_R_Finger12 64097
+																									{
+																										MirrorBoneId 64097
+																										Flags ROT_X ROT_Y ROT_Z
+																										RotationQuaternion -0.00293495 -0.02293211 0.19457960 0.98061420
+																										LocalOffset 0.02325400 0.00000000 0.00000000
+																										Scale 1.00000000 1.00000000 1.00000000
+																									}
+																								}
+																							}
+																						}
+																					}
+																					Bone SKEL_R_Finger20 58868
+																					{
+																						MirrorBoneId 58868
+																						Flags ROT_X ROT_Y ROT_Z
+																						RotationQuaternion -0.70119050 0.11721710 0.06419118 0.70033650
+																						LocalOffset 0.08274000 -0.00516400 0.01924300
+																						Scale 1.00000000 1.00000000 1.00000000
+																						Children 1
+																						{
+																							Bone SKEL_R_Finger21 64112
+																							{
+																								MirrorBoneId 64112
+																								Flags ROT_X ROT_Y ROT_Z
+																								RotationQuaternion -0.00484596 -0.02301001 0.25925410 0.96552290
+																								LocalOffset 0.05274500 0.00000000 0.00000000
+																								Scale 1.00000000 1.00000000 1.00000000
+																								Children 1
+																								{
+																									Bone SKEL_R_Finger22 64113
+																									{
+																										MirrorBoneId 64113
+																										Flags ROT_X ROT_Y ROT_Z
+																										RotationQuaternion 0.00658236 -0.02797705 0.19543800 0.98029490
+																										LocalOffset 0.02997500 0.00000000 0.00000000
+																										Scale 1.00000000 1.00000000 1.00000000
+																									}
+																								}
+																							}
+																						}
+																					}
+																					Bone SKEL_R_Finger30 58869
+																					{
+																						MirrorBoneId 58869
+																						Flags ROT_X ROT_Y ROT_Z
+																						RotationQuaternion -0.60767390 0.17170340 -0.00251918 0.77539930
+																						LocalOffset 0.07776500 -0.02393100 0.01106500
+																						Scale 1.00000000 1.00000000 1.00000000
+																						Children 1
+																						{
+																							Bone SKEL_R_Finger31 64064
+																							{
+																								MirrorBoneId 64064
+																								Flags ROT_X ROT_Y ROT_Z
+																								RotationQuaternion -0.02108043 -0.02539501 0.24061100 0.97006040
+																								LocalOffset 0.04182900 0.00000000 0.00000000
+																								Scale 1.00000000 1.00000000 1.00000000
+																								Children 1
+																								{
+																									Bone SKEL_R_Finger32 64065
+																									{
+																										MirrorBoneId 64065
+																										Flags ROT_X ROT_Y ROT_Z
+																										RotationQuaternion 0.01893292 -0.03715047 0.22266920 0.97400200
+																										LocalOffset 0.03181300 0.00000000 0.00000000
+																										Scale 1.00000000 1.00000000 1.00000000
+																									}
+																								}
+																							}
+																						}
+																					}
+																					Bone SKEL_R_Finger40 58870
+																					{
+																						MirrorBoneId 58870
+																						Flags ROT_X ROT_Y ROT_Z
+																						RotationQuaternion -0.53813580 0.15677510 -0.07330444 0.82489870
+																						LocalOffset 0.06796100 -0.03911500 0.00150500
+																						Scale 1.00000000 1.00000000 1.00000000
+																						Children 1
+																						{
+																							Bone SKEL_R_Finger41 64080
+																							{
+																								MirrorBoneId 64080
+																								Flags ROT_X ROT_Y ROT_Z
+																								RotationQuaternion -0.03033353 -0.01653681 0.29674470 0.95433160
+																								LocalOffset 0.03988500 0.00000000 0.00000000
+																								Scale 1.00000000 1.00000000 1.00000000
+																								Children 1
+																								{
+																									Bone SKEL_R_Finger42 64081
+																									{
+																										MirrorBoneId 64081
+																										Flags ROT_X ROT_Y ROT_Z
+																										RotationQuaternion 0.01056309 -0.00299627 0.13133590 0.99127710
+																										LocalOffset 0.02138900 0.00000000 0.00000000
+																										Scale 1.00000000 1.00000000 1.00000000
+																									}
+																								}
+																							}
+																						}
+																					}
+																					Bone PH_R_Hand 28422
+																					{
+																						MirrorBoneId 28422
+																						Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+																						RotationQuaternion 0.00000000 0.00000000 0.00000000 1.00000000
+																						LocalOffset 0.04255200 0.00000000 0.00000000
+																						Scale 1.00000000 1.00000000 1.00000000
+																					}
+																					Bone IK_R_Hand 6286
+																					{
+																						MirrorBoneId 6286
+																						Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+																						RotationQuaternion 0.00000000 0.00000000 0.00000000 1.00000000
+																						LocalOffset 0.04255200 0.00000000 0.00000000
+																						Scale 1.00000000 1.00000000 1.00000000
+																					}
+																				}
+																			}
+																			Bone RB_R_ForeArmRoll 43810
+																			{
+																				MirrorBoneId 43810
+																				Flags ROT_X ROT_Y ROT_Z
+																				RotationQuaternion 0.00000000 0.00000000 0.00000000 1.00000000
+																				LocalOffset 0.12469500 0.00000000 0.00000000
+																				Scale 1.00000000 1.00000000 1.00000000
+																			}
+																		}
+																	}
+																	Bone RB_R_ArmRoll 37119
+																	{
+																		MirrorBoneId 37119
+																		Flags ROT_X ROT_Y ROT_Z
+																		RotationQuaternion 0.00000000 0.00000000 0.00000000 1.00000000
+																		LocalOffset 0.00000000 0.00000000 0.00000000
+																		Scale 1.00000000 1.00000000 1.00000000
+																	}
+																	Bone MH_R_Elbow 2992
+																	{
+																		MirrorBoneId 2992
+																		Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+																		RotationQuaternion 0.00041553 0.03667756 0.02177297 0.99908990
+																		LocalOffset 0.26174900 0.00000000 0.00000000
+																		Scale 1.00000000 1.00000000 1.00000000
+																	}
+																}
+															}
+														}
+													}
+													Bone SKEL_Neck_1 39317
+													{
+														MirrorBoneId 39317
+														Flags ROT_X ROT_Y ROT_Z
+														RotationQuaternion 0.00000906 0.00000003 0.11343880 0.99354500
+														LocalOffset 0.24311100 0.00000000 0.00000000
+														Scale 1.00000000 1.00000000 1.00000000
+														Children 2
+														{
+															Bone SKEL_Head 31086
+															{
+																MirrorBoneId 31086
+																Flags ROT_X ROT_Y ROT_Z
+																RotationQuaternion 0.00000591 -0.00000116 -0.11134510 0.99378180
+																LocalOffset 0.12217900 0.00000000 0.00000000
+																Scale 1.00000000 1.00000000 1.00000000
+																Children 2
+																{
+																	Bone IK_Head 12844
+																	{
+																		MirrorBoneId 12844
+																		Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+																		RotationQuaternion 0.00000150 0.00000000 0.00000000 1.00000000
+																		LocalOffset 0.00000000 0.00000000 0.00000000
+																		Scale 1.00000000 1.00000000 1.00000000
+																	}
+																	Bone FACIAL_facialRoot 65068
+																	{
+																		MirrorBoneId 65068
+																		Flags ROT_X ROT_Y ROT_Z
+																		RotationQuaternion 0.00000150 0.00000000 0.00000000 1.00000000
+																		LocalOffset 0.00000000 0.00000000 0.00000000
+																		Scale 1.00000000 1.00000000 1.00000000
+																		Children 13
+																		{
+																			Bone FB_L_Brow_Out_004 58331
+																			{
+																				MirrorBoneId 58331
+																				Flags ROT_X ROT_Y ROT_Z SCALE_X SCALE_Y SCALE_Z
+																				RotationQuaternion 0.54565710 0.27436350 0.65189870 0.44945630
+																				LocalOffset 0.07231900 0.00613800 0.00352500
+																				Scale 1.00000000 1.00000000 1.00000000
+																			}
+																			Bone FB_L_Lid_Upper_004 45750
+																			{
+																				MirrorBoneId 45750
+																				Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z SCALE_X SCALE_Y SCALE_Z
+																				RotationQuaternion 0.52214460 0.46916250 0.56984890 0.42722820
+																				LocalOffset 0.04724400 0.07311400 0.02694700
+																				Scale 1.00000000 1.00000000 1.00000000
+																			}
+																			Bone FB_L_Eye_004 25260
+																			{
+																				MirrorBoneId 25260
+																				Flags ROT_X ROT_Y ROT_Z SCALE_X SCALE_Y SCALE_Z
+																				RotationQuaternion 0.52214500 0.46916200 0.56984930 0.42722770
+																				LocalOffset 0.04724400 0.07311400 0.02694700
+																				Scale 1.00000000 1.00000000 1.00000000
+																			}
+																			Bone FB_L_CheekBone_004 21550
+																			{
+																				MirrorBoneId 21550
+																				Flags ROT_X ROT_Y ROT_Z SCALE_X SCALE_Y SCALE_Z
+																				RotationQuaternion -0.58712130 -0.04267975 -0.80460920 0.07791539
+																				LocalOffset 0.03522300 0.09059400 0.00589900
+																				Scale 1.00000000 1.00000000 1.00000000
+																			}
+																			Bone FB_L_Lip_Corner_004 29868
+																			{
+																				MirrorBoneId 29868
+																				Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z SCALE_X SCALE_Y SCALE_Z
+																				RotationQuaternion 0.60718000 0.42613450 0.54598650 0.38941070
+																				LocalOffset -0.02287500 0.06423200 0.00945800
+																				Scale 1.00000000 1.00000000 1.00000000
+																			}
+																			Bone FB_R_Lid_Upper_004 43536
+																			{
+																				MirrorBoneId 43536
+																				Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z SCALE_X SCALE_Y SCALE_Z
+																				RotationQuaternion 0.44122890 0.55785850 0.47839190 0.51502640
+																				LocalOffset 0.04697500 0.07377100 -0.03306500
+																				Scale 1.00000000 1.00000000 1.00000000
+																			}
+																			Bone FB_R_Eye_004 27474
+																			{
+																				MirrorBoneId 27474
+																				Flags ROT_X ROT_Y ROT_Z SCALE_X SCALE_Y SCALE_Z
+																				RotationQuaternion 0.44234320 0.55665630 0.47736220 0.51632510
+																				LocalOffset 0.04698400 0.07377300 -0.03306500
+																				Scale 1.00000000 1.00000000 1.00000000
+																			}
+																			Bone FB_R_CheekBone_004 19336
+																			{
+																				MirrorBoneId 19336
+																				Flags ROT_X ROT_Y ROT_Z SCALE_X SCALE_Y SCALE_Z
+																				RotationQuaternion -0.07782282 0.80335760 0.04284814 0.58883300
+																				LocalOffset 0.03522800 0.09119200 -0.00854400
+																				Scale 1.00000000 1.00000000 1.00000000
+																			}
+																			Bone FB_R_Brow_Out_004 1356
+																			{
+																				MirrorBoneId 1356
+																				Flags ROT_X ROT_Y ROT_Z SCALE_X SCALE_Y SCALE_Z
+																				RotationQuaternion 0.44978680 0.65123130 0.27380830 0.54646020
+																				LocalOffset 0.07231900 0.00613800 -0.00453600
+																				Scale 1.00000000 1.00000000 1.00000000
+																			}
+																			Bone FB_R_Lip_Corner_004 11174
+																			{
+																				MirrorBoneId 11174
+																				Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z SCALE_X SCALE_Y SCALE_Z
+																				RotationQuaternion 0.38863410 0.54709020 0.42684620 0.60618340
+																				LocalOffset -0.02337600 0.06232100 -0.01520400
+																				Scale 1.00000000 1.00000000 1.00000000
+																			}
+																			Bone FB_Brow_Centre_004 37193
+																			{
+																				MirrorBoneId 37193
+																				Flags ROT_X ROT_Y ROT_Z SCALE_X SCALE_Y SCALE_Z
+																				RotationQuaternion 0.50973270 0.49007230 0.49006580 0.50974220
+																				LocalOffset 0.05375200 0.00174800 -0.00223000
+																				Scale 1.00000000 1.00000000 1.00000000
+																			}
+																			Bone FB_UpperLipRoot_004 20178
+																			{
+																				MirrorBoneId 20178
+																				Flags ROT_X ROT_Y ROT_Z SCALE_X SCALE_Y SCALE_Z
+																				RotationQuaternion 0.50399810 0.49597100 0.49596210 0.50400410
+																				LocalOffset -0.00908800 0.05622400 -0.00263300
+																				Scale 1.00000000 1.00000000 1.00000000
+																				Children 1
+																				{
+																					Bone FB_UpperLip_004 61839
+																					{
+																						MirrorBoneId 61839
+																						Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z SCALE_X SCALE_Y SCALE_Z
+																						RotationQuaternion -0.00000119 0.61720270 -0.00000119 0.78680420
+																						LocalOffset 0.04017100 0.00000000 0.00092100
+																						Scale 1.00000000 1.00000000 1.00000000
+																						Children 2
+																						{
+																							Bone FB_L_Lip_Top_004 20279
+																							{
+																								MirrorBoneId 20279
+																								Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z SCALE_X SCALE_Y SCALE_Z
+																								RotationQuaternion -0.62504120 -0.27177050 0.56895380 0.46016940
+																								LocalOffset 0.00703000 0.00302700 -0.00283000
+																								Scale 1.00000000 1.00000000 1.00000000
+																							}
+																							Bone FB_R_Lip_Top_004 17719
+																							{
+																								MirrorBoneId 17719
+																								Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z SCALE_X SCALE_Y SCALE_Z
+																								RotationQuaternion 0.62641450 -0.27065970 -0.56742640 0.46084240
+																								LocalOffset 0.00703000 -0.00299200 -0.00283000
+																								Scale 1.00000000 1.00000000 1.00000000
+																							}
+																						}
+																					}
+																				}
+																			}
+																			Bone FB_Jaw_004 46240
+																			{
+																				MirrorBoneId 46240
+																				Flags ROT_X ROT_Y ROT_Z SCALE_X SCALE_Y SCALE_Z
+																				RotationQuaternion 0.30622000 0.63736450 0.63735510 0.30622570
+																				LocalOffset -0.00053800 0.01475400 -0.00263300
+																				Scale 1.00000000 1.00000000 1.00000000
+																				Children 1
+																				{
+																					Bone FB_LowerLipRoot_004 17188
+																					{
+																						MirrorBoneId 17188
+																						Flags ROT_X ROT_Y ROT_Z SCALE_X SCALE_Y SCALE_Z
+																						RotationQuaternion 0.00000000 -0.33471990 0.00000000 0.94231770
+																						LocalOffset 0.05385000 0.00000000 -0.00162900
+																						Scale 1.00000000 1.00000000 1.00000000
+																						Children 2
+																						{
+																							Bone FB_LowerLip_004 20623
+																							{
+																								MirrorBoneId 20623
+																								Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z SCALE_X SCALE_Y SCALE_Z
+																								RotationQuaternion 0.00000027 -0.54049680 0.00000042 0.84134600
+																								LocalOffset 0.03503400 0.00000000 0.00056300
+																								Scale 1.00000000 1.00000000 1.00000000
+																								Children 2
+																								{
+																									Bone FB_L_Lip_Bot_004 47419
+																									{
+																										MirrorBoneId 47419
+																										Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z SCALE_X SCALE_Y SCALE_Z
+																										RotationQuaternion 0.50507140 0.27784600 0.64452920 0.50228130
+																										LocalOffset 0.00978200 -0.00003800 0.00042500
+																										Scale 1.00000000 1.00000000 1.00000000
+																									}
+																									Bone FB_R_Lip_Bot_004 49979
+																									{
+																										MirrorBoneId 49979
+																										Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z SCALE_X SCALE_Y SCALE_Z
+																										RotationQuaternion -0.50290950 0.27952930 -0.64620430 0.50136360
+																										LocalOffset 0.00978200 -0.00201300 0.00042500
+																										Scale 1.00000000 1.00000000 1.00000000
+																									}
+																								}
+																							}
+																							Bone FB_Tongue_004 47495
+																							{
+																								MirrorBoneId 47495
+																								Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z SCALE_X SCALE_Y SCALE_Z
+																								RotationQuaternion 0.00000000 0.00000000 0.00000000 1.00000000
+																								LocalOffset -0.00460200 0.00000000 0.00895800
+																								Scale 1.00000000 1.00000000 1.00000000
+																							}
+																						}
+																					}
+																				}
+																			}
+																		}
+																	}
+																}
+															}
+															Bone RB_Neck_1 35731
+															{
+																MirrorBoneId 35731
+																Flags ROT_X ROT_Y ROT_Z
+																RotationQuaternion 0.00000000 0.00000000 0.00000050 1.00000000
+																LocalOffset 0.06108900 0.00000000 0.00000000
+																Scale 1.00000000 1.00000000 1.00000000
+															}
+														}
+													}
+													Bone SPR_L_Breast 64654
+													{
+														MirrorBoneId 64654
+														Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+														RotationQuaternion 0.70710580 -0.00122880 0.70710550 0.00122880
+														LocalOffset 0.07063400 0.16821700 0.09450600
+														Scale 1.00000000 1.00000000 1.00000000
+													}
+													Bone SPR_R_Breast 34911
+													{
+														MirrorBoneId 34911
+														Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+														RotationQuaternion 0.70710580 -0.00122880 0.70710550 0.00122880
+														LocalOffset 0.07063400 0.16822100 -0.09449900
+														Scale 1.00000000 1.00000000 1.00000000
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			Bone IK_Root 56604
+			{
+				MirrorBoneId 56604
+				Flags ROT_X ROT_Y ROT_Z TRANS_X TRANS_Y TRANS_Z
+				RotationQuaternion 0.00000000 0.00000000 0.00000000 1.00000000
+				LocalOffset 0.00000000 0.00000000 0.00000000
+				Scale 1.00000000 1.00000000 1.00000000
+			}
+		}
+	}
+}

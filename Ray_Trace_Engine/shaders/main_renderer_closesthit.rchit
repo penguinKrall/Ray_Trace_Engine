@@ -119,7 +119,7 @@ void main() {
         rayPayload.normal = normalize(normalSample * 2.0f - 1.0f);
     } else {
         // Assign ray payload normal from tri
-        rayPayload.normal = tri.normal.xyz;
+        rayPayload.normal = normalize(tri.normal.xyz);
     }
 
     // Assign ray payload color
