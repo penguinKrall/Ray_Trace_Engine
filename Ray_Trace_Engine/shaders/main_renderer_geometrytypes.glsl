@@ -30,12 +30,6 @@ Triangle unpackTriangle2(uint index, int vertexSize) {
     Vertices vertices = Vertices(geometryNode.vertexBufferDeviceAddress);
 
     // Unpack vertices
-    // Data is packed as vec4 so we can map to the glTF vertex structure from the host side
-    // We match vkglTF::Vertex: pos.xyz+normal.x, normalyz+uv.xy
-    // glm::vec3 pos;
-    // glm::vec3 normal;
-    // glm::vec2 uv;
-    // ...
     for (uint i = 0; i < 3; i++) {
     const uint offset = indices.i[triIndex + i] * 7; // Each vertex takes 7 vec4s
     vec4 d0 = vertices.v[offset]; // First vec4 (pos.xyz)

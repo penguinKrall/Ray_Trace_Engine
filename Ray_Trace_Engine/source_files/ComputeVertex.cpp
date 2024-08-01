@@ -634,3 +634,8 @@ void ComputeVertex::UpdateTransformsBuffer(
   this->transformsBuffer.copyTo(pTransformMatrices,
                                 sizeof(Utilities_UI::TransformMatrices));
 }
+
+gtp::Buffer* ComputeVertex::GetJointBuffer()
+{
+  return &this->jointBuffer;
+}

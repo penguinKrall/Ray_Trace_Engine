@@ -116,7 +116,7 @@ void main() {
     if (geometryNode.textureIndexNormal > -1) {
         vec3 normalSample = texture(textures[nonuniformEXT(geometryNode.textureIndexNormal)], tri.uv).rgb;
         // Convert from [0, 1] to [-1, 1]
-        rayPayload.normal = normalize(normalSample * 2.0f - 1.0f);
+        rayPayload.normal = normalize((normalSample * 2.0f - 1.0f) + tri.normal.xyz);
     } else {
         // Assign ray payload normal from tri
         rayPayload.normal = normalize(tri.normal.xyz);

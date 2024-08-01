@@ -1413,7 +1413,7 @@ void gtp::RenderBase::UpdateAnimations(float deltaTime) {
       if (this->assets.modelData.isAnimated[i]) {
         this->assets.models[i]->updateAnimation(
             activeAnimation, deltaTime,
-            &this->assets.gltfCompute[i]->jointBuffer);
+            this->assets.gltfCompute[i]->GetJointBuffer());
       }
     }
   }

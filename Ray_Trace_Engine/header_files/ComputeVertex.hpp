@@ -8,7 +8,7 @@
 
 class ComputeVertex {
 
-public:
+private:
 
   // -- core pointer
   EngineCore *pEngineCore = nullptr;
@@ -49,6 +49,8 @@ public:
   // -- pipeline data
   PipelineData pipelineData{};
 
+public:
+
   // -- default constructor
   ComputeVertex();
 
@@ -85,11 +87,11 @@ public:
   // -- update transforms buffer
   void UpdateTransformsBuffer(Utilities_UI::TransformMatrices* pTransformMatrices);
 
+  // -- get joint buffer
+  gtp::Buffer* GetJointBuffer();
+
   // -- record compute commands
   VkCommandBuffer RecordComputeCommands(int frame);
-
-  // -- retrieve buffer data
-  // std::vector<gtp::Model::Vertex> RetrieveBufferData();
 
   // -- destroy
   void Destroy_ComputeVertex();

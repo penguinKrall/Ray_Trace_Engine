@@ -17,8 +17,9 @@
 namespace gtp {
 class RenderBase : private AccelerationStructures {
 private:
-  /*	base class private variables	and data structures*/
 
+
+  /*	base class private variables	and data structures*/
   // -- uniform data
   Utilities_Renderer::UniformData uniformData{};
 
@@ -141,6 +142,7 @@ private:
   void UpdateDefaultRayTracingPipeline();
 
   void UpdateDefaultDescriptorSet();
+
 
 public:
   /*	base class public variables	*/
