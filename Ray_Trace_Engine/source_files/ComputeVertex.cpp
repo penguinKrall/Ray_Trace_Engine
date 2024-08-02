@@ -4,64 +4,68 @@
 void ComputeVertex::CreateUniformBuffer() {
   std::cout << "\nCompute Vertex Create Uniform Buffer\n";
   std::cout << "\tmodel:" << this->model->modelName << std::endl;
+
   // iterate through models linear nodes to check for mesh
   for (auto &node : this->model->linearNodes) {
     if (node->mesh) {
       // iterate through meshes to find primitives
+      int i = 0;
       for (auto &primitive : node->mesh->primitives) {
         if (primitive->indexCount > 0) {
+          geometryData.resize(node->mesh->primitives.size());
           // initialiaze a new geometry data struct
-          GeometryData tempGeometryData{};
+          // GeometryData tempGeometryData = GeometryData{};
 
-          tempGeometryData.textureIndexBaseColor =
+          geometryData[i].textureIndexBaseColor =
               primitive->material.baseColorTexture
                   ? static_cast<int>(
                         primitive->material.baseColorTexture->index)
                   : -1;
 
           std::cout << "\ttextureIndexBaseColor:"
-                    << tempGeometryData.textureIndexBaseColor << std::endl;
+                    << geometryData[i].textureIndexBaseColor << std::endl;
 
-          tempGeometryData.textureIndexOcclusion =
+          geometryData[i].textureIndexOcclusion =
               primitive->material.occlusionTexture
                   ? static_cast<int>(
                         primitive->material.occlusionTexture->index)
                   : -1;
 
           std::cout << "\textureIndexOcclusion:"
-                    << tempGeometryData.textureIndexOcclusion << std::endl;
+                    << geometryData[i].textureIndexOcclusion << std::endl;
 
-          tempGeometryData.textureIndexMetallicRoughness =
+          geometryData[i].textureIndexMetallicRoughness =
               primitive->material.metallicRoughnessTexture
                   ? static_cast<int>(
                         primitive->material.metallicRoughnessTexture->index)
                   : -1;
 
           std::cout << "\textureIndexMetallicRoughness:"
-                    << tempGeometryData.textureIndexMetallicRoughness
+                    << geometryData[i].textureIndexMetallicRoughness
                     << std::endl;
 
-          tempGeometryData.textureIndexNormal =
+          geometryData[i].textureIndexNormal =
               primitive->material.normalTexture
                   ? static_cast<int>(primitive->material.normalTexture->index)
                   : -1;
 
           std::cout << "\textureIndexNormal:"
-                    << tempGeometryData.textureIndexNormal << std::endl;
+                    << geometryData[i].textureIndexNormal << std::endl;
 
-          tempGeometryData.firstVertex = primitive->firstVertex;
+          geometryData[i].firstVertex = primitive->firstVertex;
 
-          std::cout << "\tfirstVertex:" << tempGeometryData.firstVertex
+          std::cout << "\tfirstVertex:" << geometryData[i].firstVertex
                     << std::endl;
 
-          tempGeometryData.vertexCount = primitive->vertexCount;
+          geometryData[i].vertexCount = primitive->vertexCount;
 
-          std::cout << "\tvertexCount:" << tempGeometryData.vertexCount << '\n'
+          std::cout << "\tvertexCount:" << geometryData[i].vertexCount << '\n'
                     << std::endl;
 
           // add geometry data to array in uniform data
-          this->uniformData.geometryData.push_back(tempGeometryData);
-          ++uniformData.geometryCount;
+          // this->geometryData.push_back(tempGeometryData);
+          ++i;
+          ++geometryIndexData.geometryCount;
         }
       }
     }
@@ -71,20 +75,16 @@ void ComputeVertex::CreateUniformBuffer() {
   uniformBuffer.bufferData.bufferMemoryName =
       "compute_vertex_uniform_buffer_memory";
 
-  size_t totalSize =
-      sizeof(GeometryData) * uniformData.geometryData.size() + sizeof(int);
-  void *buffer = malloc(totalSize);
-  memcpy(buffer, uniformData.geometryData.data(),
-         sizeof(GeometryData) * uniformData.geometryData.size());
-  memcpy(static_cast<char *>(buffer) +
-             sizeof(GeometryData) * uniformData.geometryData.size(),
-         &uniformData.geometryCount, sizeof(int));
+  // Calculate the total size required for the buffer
+  VkDeviceSize totalSize =
+      sizeof(GeometryData) * static_cast<uint32_t>(geometryData.size());
 
-  if (pEngineCore->CreateBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+  if (pEngineCore->CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |
+                                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                                 &uniformBuffer, totalSize,
-                                buffer) != VK_SUCCESS) {
+                                geometryData.data()) != VK_SUCCESS) {
     throw std::invalid_argument(
         "failed to create compute vertex uniform buffer!");
   }
@@ -286,7 +286,7 @@ void ComputeVertex::CreateAnimationComputePipeline() {
   // uniform buffer layout binding
   VkDescriptorSetLayoutBinding uniformBufferLayoutBinding =
       gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
-          4, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT,
+          4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT,
           nullptr);
 
   // textures
@@ -386,7 +386,7 @@ void ComputeVertex::CreateStaticComputePipeline() {
   // uniform buffer layout binding
   VkDescriptorSetLayoutBinding uniformBufferLayoutBinding =
       gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
-          3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT,
+          3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT,
           nullptr);
 
   // textures
@@ -483,7 +483,7 @@ void ComputeVertex::CreateCommandBuffers() {
 void ComputeVertex::CreateAnimationPipelineDescriptorSet() {
 
   std::vector<VkDescriptorPoolSize> poolSizes = {
-      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5},
+      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10},
       {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
       {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 100}};
 
@@ -605,13 +605,14 @@ void ComputeVertex::CreateAnimationPipelineDescriptorSet() {
   VkDescriptorBufferInfo uboDescriptor{};
   uboDescriptor.buffer = uniformBuffer.bufferData.buffer;
   uboDescriptor.offset = 0;
-  uboDescriptor.range = uniformBuffer.bufferData.size;
+  uboDescriptor.range =
+      static_cast<uint32_t>(geometryData.size()) * sizeof(GeometryData);
 
   // ubo descriptor write info
   VkWriteDescriptorSet uniformBufferWrite{};
   uniformBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   uniformBufferWrite.dstSet = pipelineData.descriptorSet;
-  uniformBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  uniformBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   uniformBufferWrite.dstBinding = 4;
   uniformBufferWrite.pBufferInfo = &uboDescriptor;
   uniformBufferWrite.descriptorCount = 1;
@@ -764,7 +765,7 @@ void ComputeVertex::CreateStaticPipelineDescriptorSet() {
   VkWriteDescriptorSet uniformBufferWrite{};
   uniformBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   uniformBufferWrite.dstSet = pipelineData.descriptorSet;
-  uniformBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  uniformBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   uniformBufferWrite.dstBinding = 3;
   uniformBufferWrite.pBufferInfo = &uboDescriptor;
   uniformBufferWrite.descriptorCount = 1;

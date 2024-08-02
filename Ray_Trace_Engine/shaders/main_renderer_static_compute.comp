@@ -47,18 +47,13 @@ struct GeometryData{
     int textureIndexOcclusion;
     int textureIndexMetallicRoughness;
     int textureIndexNormal;
-    uint firstVertex;
-    uint vertexCount;
+    int firstVertex;
+    int vertexCount;
 };
 
-struct UniformData{
-    GeometryData geometryData[MAX_GEOMETRY];
-    int geometryCount;
-};
-
-layout(std140, binding = 3) uniform UBO {
-    UniformData uniformData;
-};
+layout(std140, binding = 3) buffer UBO {
+   GeometryData geometryData[MAX_GEOMETRY];
+}ubo;
 
 layout(binding = 4, set = 0) uniform sampler2D textures[];
 

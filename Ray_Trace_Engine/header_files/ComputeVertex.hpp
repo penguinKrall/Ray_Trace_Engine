@@ -17,12 +17,17 @@ private:
     int vertexCount = 0;
   };
 
-  struct UniformData {
-    std::vector<GeometryData> geometryData;
+  std::vector<GeometryData> geometryData;
+
+  //struct GeometryBufferData {
+  //  std::vector<GeometryData> geometryData;
+  //};
+  //GeometryBufferData geometryBufferData{};
+
+  struct GeometryIndexData {
     int geometryCount = 0;
   };
-
-  UniformData uniformData{};
+  GeometryIndexData geometryIndexData{};
 
   // -- core pointer
   EngineCore *pEngineCore = nullptr;
