@@ -1,5 +1,95 @@
 #include "ComputeVertex.hpp"
 
+// create uniform buffer for compute
+void ComputeVertex::CreateUniformBuffer() {
+  std::cout << "\nCompute Vertex Create Uniform Buffer\n";
+  std::cout << "\tmodel:" << this->model->modelName << std::endl;
+  // iterate through models linear nodes to check for mesh
+  for (auto &node : this->model->linearNodes) {
+    if (node->mesh) {
+      // iterate through meshes to find primitives
+      for (auto &primitive : node->mesh->primitives) {
+        if (primitive->indexCount > 0) {
+          // initialiaze a new geometry data struct
+          GeometryData tempGeometryData{};
+
+          tempGeometryData.textureIndexBaseColor =
+              primitive->material.baseColorTexture
+                  ? static_cast<int>(
+                        primitive->material.baseColorTexture->index)
+                  : -1;
+
+          std::cout << "\ttextureIndexBaseColor:"
+                    << tempGeometryData.textureIndexBaseColor << std::endl;
+
+          tempGeometryData.textureIndexOcclusion =
+              primitive->material.occlusionTexture
+                  ? static_cast<int>(
+                        primitive->material.occlusionTexture->index)
+                  : -1;
+
+          std::cout << "\textureIndexOcclusion:"
+                    << tempGeometryData.textureIndexOcclusion << std::endl;
+
+          tempGeometryData.textureIndexMetallicRoughness =
+              primitive->material.metallicRoughnessTexture
+                  ? static_cast<int>(
+                        primitive->material.metallicRoughnessTexture->index)
+                  : -1;
+
+          std::cout << "\textureIndexMetallicRoughness:"
+                    << tempGeometryData.textureIndexMetallicRoughness
+                    << std::endl;
+
+          tempGeometryData.textureIndexNormal =
+              primitive->material.normalTexture
+                  ? static_cast<int>(primitive->material.normalTexture->index)
+                  : -1;
+
+          std::cout << "\textureIndexNormal:"
+                    << tempGeometryData.textureIndexNormal << std::endl;
+
+          tempGeometryData.firstVertex = primitive->firstVertex;
+
+          std::cout << "\tfirstVertex:" << tempGeometryData.firstVertex
+                    << std::endl;
+
+          tempGeometryData.vertexCount = primitive->vertexCount;
+
+          std::cout << "\tvertexCount:" << tempGeometryData.vertexCount << '\n'
+                    << std::endl;
+
+          // add geometry data to array in uniform data
+          this->uniformData.geometryData.push_back(tempGeometryData);
+          ++uniformData.geometryCount;
+        }
+      }
+    }
+  }
+
+  uniformBuffer.bufferData.bufferName = "compute_vertex_uniform_buffer";
+  uniformBuffer.bufferData.bufferMemoryName =
+      "compute_vertex_uniform_buffer_memory";
+
+  size_t totalSize =
+      sizeof(GeometryData) * uniformData.geometryData.size() + sizeof(int);
+  void *buffer = malloc(totalSize);
+  memcpy(buffer, uniformData.geometryData.data(),
+         sizeof(GeometryData) * uniformData.geometryData.size());
+  memcpy(static_cast<char *>(buffer) +
+             sizeof(GeometryData) * uniformData.geometryData.size(),
+         &uniformData.geometryCount, sizeof(int));
+
+  if (pEngineCore->CreateBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                &uniformBuffer, totalSize,
+                                buffer) != VK_SUCCESS) {
+    throw std::invalid_argument(
+        "failed to create compute vertex uniform buffer!");
+  }
+}
+
 ComputeVertex::ComputeVertex() {}
 
 ComputeVertex::ComputeVertex(EngineCore *pEngineCore, gtp::Model *modelPtr) {
@@ -13,13 +103,13 @@ ComputeVertex::ComputeVertex(EngineCore *pEngineCore, gtp::Model *modelPtr) {
   if (modelPtr->animations.size() > 0) {
     this->CreateAnimationComputePipeline();
     this->CreateAnimationPipelineDescriptorSet();
+    std::cout << "created animation compute pipeine!" << std::endl;
   }
 
   else {
     this->CreateStaticComputePipeline();
     this->CreateStaticPipelineDescriptorSet();
-    std::cout << "_ * _ * _ * _ * _ * _* created static compute pipeine!"
-              << std::endl;
+    std::cout << "created static compute pipeine!" << std::endl;
   }
 
   CreateCommandBuffers();
@@ -33,6 +123,7 @@ void ComputeVertex::Init_ComputeVertex(EngineCore *pEngineCore,
   this->pEngineCore = pEngineCore;
   this->model = modelPtr;
   this->shader = gtp::Shader(pEngineCore);
+  this->CreateUniformBuffer();
 }
 
 void ComputeVertex::CreateTransformsBuffer() {
@@ -161,35 +252,65 @@ void ComputeVertex::Destroy_ComputeVertex() {
   this->jointBuffer.destroy(this->pEngineCore->devices.logical);
   this->storageInputBuffer.destroy(this->pEngineCore->devices.logical);
   this->storageOutputBuffer.destroy(this->pEngineCore->devices.logical);
+  this->uniformBuffer.destroy(this->pEngineCore->GetLogicalDevice());
 }
 
 void ComputeVertex::CreateAnimationComputePipeline() {
 
   // descriptor binding
+  //'input' storage buffer - unchanging vertex data from when the model is
+  // loaded
   VkDescriptorSetLayoutBinding inputStorageBufferLayoutBinding =
       gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
           0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT,
           nullptr);
 
+  //'output' storage buffer - the modified version of the input buffer
   VkDescriptorSetLayoutBinding outputStorageBufferLayoutBinding =
       gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
           1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT,
           nullptr);
 
+  // joint/bones buffer
   VkDescriptorSetLayoutBinding jointStorageBufferLayoutBinding =
       gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
           2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT,
           nullptr);
 
+  // transform matrices
   VkDescriptorSetLayoutBinding transformsStorageBufferLayoutBinding =
       gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
           3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT,
           nullptr);
 
+  // uniform buffer layout binding
+  VkDescriptorSetLayoutBinding uniformBufferLayoutBinding =
+      gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
+          4, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT,
+          nullptr);
+
+  // textures
+  VkDescriptorSetLayoutBinding textureLayoutBinding =
+      gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
+          5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+          static_cast<uint32_t>(this->model->textures.size()),
+          VK_SHADER_STAGE_COMPUTE_BIT, nullptr);
+
   // array of bindings
   std::vector<VkDescriptorSetLayoutBinding> bindings(
       {inputStorageBufferLayoutBinding, outputStorageBufferLayoutBinding,
-       jointStorageBufferLayoutBinding, transformsStorageBufferLayoutBinding});
+       jointStorageBufferLayoutBinding, transformsStorageBufferLayoutBinding,
+       uniformBufferLayoutBinding, textureLayoutBinding});
+
+  // Unbound set
+  VkDescriptorSetLayoutBindingFlagsCreateInfoEXT setLayoutBindingFlags{};
+  setLayoutBindingFlags.sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
+  setLayoutBindingFlags.bindingCount = static_cast<uint32_t>(bindings.size());
+  std::vector<VkDescriptorBindingFlagsEXT> descriptorBindingFlags = {
+      0, 0, 0, 0, 0, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
+
+  setLayoutBindingFlags.pBindingFlags = descriptorBindingFlags.data();
 
   // descriptor set layout create info
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
@@ -198,6 +319,7 @@ void ComputeVertex::CreateAnimationComputePipeline() {
   descriptorSetLayoutCreateInfo.bindingCount =
       static_cast<uint32_t>(bindings.size());
   descriptorSetLayoutCreateInfo.pBindings = bindings.data();
+  descriptorSetLayoutCreateInfo.pNext = &setLayoutBindingFlags;
 
   // create descriptor set layout
   pEngineCore->AddObject(
@@ -261,10 +383,34 @@ void ComputeVertex::CreateStaticComputePipeline() {
           2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT,
           nullptr);
 
+  // uniform buffer layout binding
+  VkDescriptorSetLayoutBinding uniformBufferLayoutBinding =
+      gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
+          3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT,
+          nullptr);
+
+  // textures
+  VkDescriptorSetLayoutBinding textureLayoutBinding =
+      gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
+          4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+          static_cast<uint32_t>(this->model->textures.size()),
+          VK_SHADER_STAGE_COMPUTE_BIT, nullptr);
+
   // array of bindings
   std::vector<VkDescriptorSetLayoutBinding> bindings(
       {inputStorageBufferLayoutBinding, outputStorageBufferLayoutBinding,
-       transformsStorageBufferLayoutBinding});
+       transformsStorageBufferLayoutBinding, uniformBufferLayoutBinding,
+       textureLayoutBinding});
+
+  // Unbound set
+  VkDescriptorSetLayoutBindingFlagsCreateInfoEXT setLayoutBindingFlags{};
+  setLayoutBindingFlags.sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
+  setLayoutBindingFlags.bindingCount = static_cast<uint32_t>(bindings.size());
+  std::vector<VkDescriptorBindingFlagsEXT> descriptorBindingFlags = {
+      0, 0, 0, 0, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
+
+  setLayoutBindingFlags.pBindingFlags = descriptorBindingFlags.data();
 
   // descriptor set layout create info
   VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
@@ -273,6 +419,7 @@ void ComputeVertex::CreateStaticComputePipeline() {
   descriptorSetLayoutCreateInfo.bindingCount =
       static_cast<uint32_t>(bindings.size());
   descriptorSetLayoutCreateInfo.pBindings = bindings.data();
+  descriptorSetLayoutCreateInfo.pNext = &setLayoutBindingFlags;
 
   // create descriptor set layout
   pEngineCore->AddObject(
@@ -336,7 +483,9 @@ void ComputeVertex::CreateCommandBuffers() {
 void ComputeVertex::CreateAnimationPipelineDescriptorSet() {
 
   std::vector<VkDescriptorPoolSize> poolSizes = {
-      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3}};
+      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5},
+      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+      {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 100}};
 
   // descriptor pool create info
   VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
@@ -356,12 +505,23 @@ void ComputeVertex::CreateAnimationPipelineDescriptorSet() {
       },
       "gltf_compute_DescriptorPool");
 
+  // variable descriptor count allocate info extension
+  VkDescriptorSetVariableDescriptorCountAllocateInfoEXT
+      variableDescriptorCountAllocInfo{};
+  uint32_t variableDescCounts[] = {
+      static_cast<uint32_t>(this->model->textures.size())};
+  variableDescriptorCountAllocInfo.sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
+  variableDescriptorCountAllocInfo.descriptorSetCount = 1;
+  variableDescriptorCountAllocInfo.pDescriptorCounts = variableDescCounts;
+
   VkDescriptorSetAllocateInfo descriptorSetAllocateInfo{};
   descriptorSetAllocateInfo.sType =
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
   descriptorSetAllocateInfo.descriptorPool = this->pipelineData.descriptorPool;
   descriptorSetAllocateInfo.pSetLayouts = &pipelineData.descriptorSetLayout;
   descriptorSetAllocateInfo.descriptorSetCount = 1;
+  descriptorSetAllocateInfo.pNext = &variableDescriptorCountAllocInfo;
 
   // create descriptor set
   pEngineCore->AddObject(
@@ -441,9 +601,48 @@ void ComputeVertex::CreateAnimationPipelineDescriptorSet() {
   transformsBufferWrite.pBufferInfo = &transformsBufferDescriptor;
   transformsBufferWrite.descriptorCount = 1;
 
+  // ubo descriptor info
+  VkDescriptorBufferInfo uboDescriptor{};
+  uboDescriptor.buffer = uniformBuffer.bufferData.buffer;
+  uboDescriptor.offset = 0;
+  uboDescriptor.range = uniformBuffer.bufferData.size;
+
+  // ubo descriptor write info
+  VkWriteDescriptorSet uniformBufferWrite{};
+  uniformBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  uniformBufferWrite.dstSet = pipelineData.descriptorSet;
+  uniformBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  uniformBufferWrite.dstBinding = 4;
+  uniformBufferWrite.pBufferInfo = &uboDescriptor;
+  uniformBufferWrite.descriptorCount = 1;
+
+  // Image descriptors for the image array
+  std::vector<VkDescriptorImageInfo> textureDescriptors{};
+
+  for (int i = 0; i < this->model->textures.size(); i++) {
+    VkDescriptorImageInfo descriptor{};
+    descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    descriptor.sampler = this->model->textures[i].sampler;
+    descriptor.imageView = this->model->textures[i].view;
+    textureDescriptors.push_back(descriptor);
+  }
+
   std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
       storageInputBufferWrite, storageOutputBufferWrite, jointBufferWrite,
-      transformsBufferWrite};
+      transformsBufferWrite, uniformBufferWrite};
+
+  if (!this->model->textures.empty()) {
+    VkWriteDescriptorSet writeDescriptorImgArray{};
+    writeDescriptorImgArray.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeDescriptorImgArray.dstBinding = 5;
+    writeDescriptorImgArray.descriptorType =
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    writeDescriptorImgArray.descriptorCount =
+        static_cast<uint32_t>(textureDescriptors.size());
+    writeDescriptorImgArray.dstSet = this->pipelineData.descriptorSet;
+    writeDescriptorImgArray.pImageInfo = textureDescriptors.data();
+    writeDescriptorSets.push_back(writeDescriptorImgArray);
+  }
 
   vkUpdateDescriptorSets(this->pEngineCore->devices.logical,
                          static_cast<uint32_t>(writeDescriptorSets.size()),
@@ -452,7 +651,9 @@ void ComputeVertex::CreateAnimationPipelineDescriptorSet() {
 
 void ComputeVertex::CreateStaticPipelineDescriptorSet() {
   std::vector<VkDescriptorPoolSize> poolSizes = {
-      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3}};
+      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5},
+      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+      {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 100}};
 
   // descriptor pool create info
   VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
@@ -472,12 +673,23 @@ void ComputeVertex::CreateStaticPipelineDescriptorSet() {
       },
       "gltf_compute_DescriptorPool");
 
+  // variable descriptor count allocate info extension
+  VkDescriptorSetVariableDescriptorCountAllocateInfoEXT
+      variableDescriptorCountAllocInfo{};
+  uint32_t variableDescCounts[] = {
+      static_cast<uint32_t>(this->model->textures.size())};
+  variableDescriptorCountAllocInfo.sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
+  variableDescriptorCountAllocInfo.descriptorSetCount = 1;
+  variableDescriptorCountAllocInfo.pDescriptorCounts = variableDescCounts;
+
   VkDescriptorSetAllocateInfo descriptorSetAllocateInfo{};
   descriptorSetAllocateInfo.sType =
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
   descriptorSetAllocateInfo.descriptorPool = this->pipelineData.descriptorPool;
   descriptorSetAllocateInfo.pSetLayouts = &pipelineData.descriptorSetLayout;
   descriptorSetAllocateInfo.descriptorSetCount = 1;
+  descriptorSetAllocateInfo.pNext = &variableDescriptorCountAllocInfo;
 
   // create descriptor set
   pEngineCore->AddObject(
@@ -542,8 +754,48 @@ void ComputeVertex::CreateStaticPipelineDescriptorSet() {
   transformsBufferWrite.pBufferInfo = &transformsBufferDescriptor;
   transformsBufferWrite.descriptorCount = 1;
 
+  // ubo descriptor info
+  VkDescriptorBufferInfo uboDescriptor{};
+  uboDescriptor.buffer = uniformBuffer.bufferData.buffer;
+  uboDescriptor.offset = 0;
+  uboDescriptor.range = uniformBuffer.bufferData.size;
+
+  // ubo descriptor write info
+  VkWriteDescriptorSet uniformBufferWrite{};
+  uniformBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  uniformBufferWrite.dstSet = pipelineData.descriptorSet;
+  uniformBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  uniformBufferWrite.dstBinding = 3;
+  uniformBufferWrite.pBufferInfo = &uboDescriptor;
+  uniformBufferWrite.descriptorCount = 1;
+
   std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
-      storageInputBufferWrite, storageOutputBufferWrite, transformsBufferWrite};
+      storageInputBufferWrite, storageOutputBufferWrite, transformsBufferWrite,
+      uniformBufferWrite};
+
+  // Image descriptors for the image array
+  std::vector<VkDescriptorImageInfo> textureDescriptors{};
+
+  for (int i = 0; i < this->model->textures.size(); i++) {
+    VkDescriptorImageInfo descriptor{};
+    descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    descriptor.sampler = this->model->textures[i].sampler;
+    descriptor.imageView = this->model->textures[i].view;
+    textureDescriptors.push_back(descriptor);
+  }
+
+  if (!this->model->textures.empty()) {
+    VkWriteDescriptorSet writeDescriptorImgArray{};
+    writeDescriptorImgArray.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeDescriptorImgArray.dstBinding = 4;
+    writeDescriptorImgArray.descriptorType =
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    writeDescriptorImgArray.descriptorCount =
+        static_cast<uint32_t>(textureDescriptors.size());
+    writeDescriptorImgArray.dstSet = this->pipelineData.descriptorSet;
+    writeDescriptorImgArray.pImageInfo = textureDescriptors.data();
+    writeDescriptorSets.push_back(writeDescriptorImgArray);
+  }
 
   vkUpdateDescriptorSets(this->pEngineCore->devices.logical,
                          static_cast<uint32_t>(writeDescriptorSets.size()),
@@ -635,7 +887,4 @@ void ComputeVertex::UpdateTransformsBuffer(
                                 sizeof(Utilities_UI::TransformMatrices));
 }
 
-gtp::Buffer* ComputeVertex::GetJointBuffer()
-{
-  return &this->jointBuffer;
-}
+gtp::Buffer *ComputeVertex::GetJointBuffer() { return &this->jointBuffer; }

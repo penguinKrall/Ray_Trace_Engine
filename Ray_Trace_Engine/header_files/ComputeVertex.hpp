@@ -7,8 +7,22 @@
 #include <glTFModel.hpp>
 
 class ComputeVertex {
-
 private:
+  struct GeometryData {
+    int textureIndexBaseColor = -1;
+    int textureIndexOcclusion = -1;
+    int textureIndexMetallicRoughness = -1;
+    int textureIndexNormal = -1;
+    int firstVertex = 0;
+    int vertexCount = 0;
+  };
+
+  struct UniformData {
+    std::vector<GeometryData> geometryData;
+    int geometryCount = 0;
+  };
+
+  UniformData uniformData{};
 
   // -- core pointer
   EngineCore *pEngineCore = nullptr;
@@ -28,9 +42,12 @@ private:
   // -- joint storage buffer
   gtp::Buffer jointBuffer;
 
+  // -- uniform buffer
+  gtp::Buffer uniformBuffer;
+
   // -- rotate/translate/scale matrices buffer
   Utilities_UI::TransformMatrices transformMatrices{};
-  //Utilities_UI::ModelData uiModelData{};
+  // Utilities_UI::ModelData uiModelData{};
 
   gtp::Buffer transformsBuffer;
 
@@ -49,8 +66,10 @@ private:
   // -- pipeline data
   PipelineData pipelineData{};
 
-public:
+  // -- create uniform buffer
+  void CreateUniformBuffer();
 
+public:
   // -- default constructor
   ComputeVertex();
 
@@ -85,10 +104,11 @@ public:
   void UpdateJointBuffer();
 
   // -- update transforms buffer
-  void UpdateTransformsBuffer(Utilities_UI::TransformMatrices* pTransformMatrices);
+  void
+  UpdateTransformsBuffer(Utilities_UI::TransformMatrices *pTransformMatrices);
 
   // -- get joint buffer
-  gtp::Buffer* GetJointBuffer();
+  gtp::Buffer *GetJointBuffer();
 
   // -- record compute commands
   VkCommandBuffer RecordComputeCommands(int frame);

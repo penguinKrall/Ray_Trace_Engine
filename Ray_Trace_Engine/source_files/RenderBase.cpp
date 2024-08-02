@@ -449,6 +449,7 @@ void gtp::RenderBase::CreateDefaultDescriptorSet() {
       {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 150},
       {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10},
   };
+
   // descriptor pool create info
   VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
   descriptorPoolCreateInfo.sType =

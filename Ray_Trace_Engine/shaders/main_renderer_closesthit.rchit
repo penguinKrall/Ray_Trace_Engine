@@ -92,16 +92,16 @@ void main() {
     vec4 color = vec4(1.0f);
 
     // Assign texture color if geometry node has texture
-    if (geometryNode.textureIndexBaseColor > -1) {
-        color = texture(textures[nonuniformEXT(geometryNode.textureIndexBaseColor)], tri.uv);
-        // Set semi-transparency flag according to base color alpha
-        if (color.a < 1.0f) {
-            rayPayload.semiTransparentFlag = 1;
-        }
-    } else {
+    //if (geometryNode.textureIndexBaseColor > -1) {
+    //    color = texture(textures[nonuniformEXT(geometryNode.textureIndexBaseColor)], tri.uv);
+    //    // Set semi-transparency flag according to base color alpha
+    //    if (color.a < 1.0f) {
+    //        rayPayload.semiTransparentFlag = 1;
+    //    }
+    //} else {
         // Assign vertex color to color if no texture
         color = vec4(tri.color.rgb, 1.0f);
-    }
+    //}
 
     // Assign occlusion color map if model has one -- currently unused?
     if (geometryNode.textureIndexOcclusion > -1) {

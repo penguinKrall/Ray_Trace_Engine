@@ -1,6 +1,9 @@
-#version 450
+#version 460
 
 #extension GL_EXT_debug_printf : enable
+#extension GL_EXT_nonuniform_qualifier : require
+
+#define MAX_GEOMETRY 100
 
 //workgroup size
 layout(local_size_x = 256) in;
@@ -50,16 +53,44 @@ layout(std140, binding = 3) buffer TransformSSBOData {
     TransformMatrices transformMatrices;
 }transformSSBO;
 
+struct GeometryData{
+    int textureIndexBaseColor;
+    int textureIndexOcclusion;
+    int textureIndexMetallicRoughness;
+    int textureIndexNormal;
+    int firstVertex;
+    int vertexCount;
+};
+
+struct UniformData{
+    GeometryData geometryData[MAX_GEOMETRY];
+    int geometryCount;
+};
+
+layout(set = 0, binding = 4) uniform UBO {
+    UniformData uniformData;
+}ubo;
+
+layout(binding = 5, set = 0) uniform sampler2D textures[];
+
 void main() {
-    
-    //debugPrintfEXT("compute shader test");
 
     //index for vertex buffer
     uint vID = gl_GlobalInvocationID.x;
 
+
     //break if index > vertex buffer length
     if (vID > inputSSBO.vtx.length()) {
         return;
+    }
+    
+    //index for textureIndexBaseColor
+    int geometryID = -1;
+
+    for(int i = 0; i < ubo.uniformData.geometryCount; i++){
+        if(ubo.uniformData.geometryData[i].firstVertex <= vID){
+            geometryID = i;
+        }
     }
 
     //declare vertex struct variable and assign value from vertex buffer
@@ -89,6 +120,13 @@ void main() {
     //normal
     v.normal = normalize(transformSSBO.transformMatrices.rotate * boneTransform * v.normal);
     
+    //color
+    int diffuseColorID = ubo.uniformData.geometryData[geometryID].textureIndexBaseColor;
+
+    vec4 texColor = texture(textures[diffuseColorID], v.uv);
+    //vec4 texColor = texture(textures[0], v.uv);
+    v.inColor = texColor;
+
     //tangent
     float w = v.tangent.w;
     v.tangent = normalize((boneTransform * vec4(v.tangent.xyz, 1.0f)));

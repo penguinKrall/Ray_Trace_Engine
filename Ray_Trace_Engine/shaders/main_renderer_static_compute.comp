@@ -2,6 +2,8 @@
 
 #extension GL_EXT_debug_printf : enable
 
+#define MAX_GEOMETRY 100
+
 //workgroup size
 layout(local_size_x = 256) in;
 
@@ -39,6 +41,26 @@ layout(std140, binding = 1) buffer OutputSSBOData {
 layout(std140, binding = 2) buffer TransformSSBOData {
     TransformMatrices transformMatrices;
 }transformSSBO;
+
+struct GeometryData{
+    int textureIndexBaseColor;
+    int textureIndexOcclusion;
+    int textureIndexMetallicRoughness;
+    int textureIndexNormal;
+    uint firstVertex;
+    uint vertexCount;
+};
+
+struct UniformData{
+    GeometryData geometryData[MAX_GEOMETRY];
+    int geometryCount;
+};
+
+layout(std140, binding = 3) uniform UBO {
+    UniformData uniformData;
+};
+
+layout(binding = 4, set = 0) uniform sampler2D textures[];
 
 void main() {
     
