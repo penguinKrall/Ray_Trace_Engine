@@ -55,15 +55,21 @@ layout(std140, binding = 3) buffer TransformSSBOData {
 
 struct GeometryData{
     int textureIndexBaseColor;
+    int pad0;
     int textureIndexOcclusion;
+    int pad1;
     int textureIndexMetallicRoughness;
+    int pad2;
     int textureIndexNormal;
+    int pad3;
     int firstVertex;
+    int pad4;
     int vertexCount;
+    int pad5;
 };
 
 layout(std140, binding = 4) buffer UBO {
-   GeometryData geometryData[MAX_GEOMETRY];
+   GeometryData geometryData[];
 }ubo;
 
 layout(binding = 5, set = 0) uniform sampler2D textures[];
@@ -117,8 +123,9 @@ void main() {
     
     //color
 
-    //int texID = inputSSBO.vtx.length() / ubo.geometryData[1].vertexCount;
-    vec4 texColor = texture(textures[2], v.uv);
+    int texID = ubo.geometryData[2].textureIndexBaseColor;
+    //vec4 texColor = texture(textures[1], v.uv);
+    vec4 texColor = texture(textures[texID], v.uv);
 
     //const int diffuseColorID = ubo.geometryData[2].textureIndexBaseColor;
     //vec4 texColor = texture(textures[diffuseColorID], v.uv);

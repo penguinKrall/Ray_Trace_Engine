@@ -6,10 +6,10 @@ void ComputeVertex::CreateUniformBuffer() {
   std::cout << "\tmodel:" << this->model->modelName << std::endl;
 
   // iterate through models linear nodes to check for mesh
+  int i = 0;
   for (auto &node : this->model->linearNodes) {
     if (node->mesh) {
       // iterate through meshes to find primitives
-      int i = 0;
       for (auto &primitive : node->mesh->primitives) {
         if (primitive->indexCount > 0) {
           geometryData.resize(node->mesh->primitives.size());
@@ -31,7 +31,7 @@ void ComputeVertex::CreateUniformBuffer() {
                         primitive->material.occlusionTexture->index)
                   : -1;
 
-          std::cout << "\textureIndexOcclusion:"
+          std::cout << "\ttextureIndexOcclusion:"
                     << geometryData[i].textureIndexOcclusion << std::endl;
 
           geometryData[i].textureIndexMetallicRoughness =
@@ -40,7 +40,7 @@ void ComputeVertex::CreateUniformBuffer() {
                         primitive->material.metallicRoughnessTexture->index)
                   : -1;
 
-          std::cout << "\textureIndexMetallicRoughness:"
+          std::cout << "\ttextureIndexMetallicRoughness:"
                     << geometryData[i].textureIndexMetallicRoughness
                     << std::endl;
 
@@ -49,7 +49,7 @@ void ComputeVertex::CreateUniformBuffer() {
                   ? static_cast<int>(primitive->material.normalTexture->index)
                   : -1;
 
-          std::cout << "\textureIndexNormal:"
+          std::cout << "\ttextureIndexNormal:"
                     << geometryData[i].textureIndexNormal << std::endl;
 
           geometryData[i].firstVertex = primitive->firstVertex;
@@ -65,7 +65,7 @@ void ComputeVertex::CreateUniformBuffer() {
           // add geometry data to array in uniform data
           // this->geometryData.push_back(tempGeometryData);
           ++i;
-          ++geometryIndexData.geometryCount;
+          //++geometryIndexData.geometryCount;
         }
       }
     }
@@ -826,8 +826,8 @@ VkCommandBuffer ComputeVertex::RecordComputeCommands(int frame) {
                           &this->pipelineData.descriptorSet, 0, nullptr);
 
   vkCmdDispatch(this->commandBuffers[frame],
-                (static_cast<uint32_t>(this->model->vertexCount) + 255) / 256,
-                1, 1);
+                (static_cast<uint32_t>(this->model->vertexCount) / 256) + 1, 1,
+                1);
 
   // end compute command buffer
   validate_vk_result(vkEndCommandBuffer(this->commandBuffers[frame]));

@@ -10,11 +10,17 @@ class ComputeVertex {
 private:
   struct GeometryData {
     int textureIndexBaseColor = -1;
+    int pad0 = 0;
     int textureIndexOcclusion = -1;
+    int pad1 = 0;
     int textureIndexMetallicRoughness = -1;
+    int pad2 = 0;
     int textureIndexNormal = -1;
+    int pad3 = 0;
     int firstVertex = 0;
+    int pad4 = 0;
     int vertexCount = 0;
+    int pad5 = 0;
   };
 
   std::vector<GeometryData> geometryData;
@@ -24,10 +30,10 @@ private:
   //};
   //GeometryBufferData geometryBufferData{};
 
-  struct GeometryIndexData {
-    int geometryCount = 0;
-  };
-  GeometryIndexData geometryIndexData{};
+  //struct GeometryIndexData {
+  //  int geometryCount = 0;
+  //};
+  //GeometryIndexData geometryIndexData{};
 
   // -- core pointer
   EngineCore *pEngineCore = nullptr;
