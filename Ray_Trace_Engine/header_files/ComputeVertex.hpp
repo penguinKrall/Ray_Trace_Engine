@@ -8,7 +8,7 @@
 
 class ComputeVertex {
 private:
-  struct GeometryData {
+  struct Geometry {
     double textureIndexBaseColor = -1;
     double textureIndexOcclusion = -1;
     double textureIndexMetallicRoughness = -1;
@@ -17,17 +17,21 @@ private:
     double vertexCount = 0;
   };
 
-  std::vector<GeometryData> geometryData;
+  struct GeometryBufferData {
+  std::vector<Geometry> geometries;
+  };
 
-  //struct GeometryBufferData {
-  //  std::vector<GeometryData> geometryData;
-  //};
-  //GeometryBufferData geometryBufferData{};
+  GeometryBufferData geometryBufferData{};
 
-  //struct GeometryIndexData {
-  //  int geometryCount = 0;
-  //};
-  //GeometryIndexData geometryIndexData{};
+  // struct GeometryBufferData {
+  //   std::vector<GeometryData> geometryData;
+  // };
+  // GeometryBufferData geometryBufferData{};
+
+  // struct GeometryIndexData {
+  //   int geometryCount = 0;
+  // };
+  // GeometryIndexData geometryIndexData{};
 
   // -- core pointer
   EngineCore *pEngineCore = nullptr;
@@ -41,20 +45,19 @@ private:
   gtp::Model *model = nullptr;
 
   // -- shader storage buffer
-  gtp::Buffer storageInputBuffer;
-  gtp::Buffer storageOutputBuffer;
+  // gtp::Buffer storageInputBuffer;
+  gtp::Buffer vertexReadBuffer;
 
-  // -- joint storage buffer
-  gtp::Buffer jointBuffer;
+  // -- bone storage buffer
+  gtp::Buffer boneBuffer;
 
-  // -- uniform buffer
+  // -- geometry buffer
   gtp::Buffer geometryBuffer;
+
+  gtp::Buffer transformMatrixBuffer;
 
   // -- rotate/translate/scale matrices buffer
   Utilities_UI::TransformMatrices transformMatrices{};
-  // Utilities_UI::ModelData uiModelData{};
-
-  gtp::Buffer transformsBuffer;
 
   // -- pipeline data struct
   struct PipelineData {
@@ -85,10 +88,10 @@ public:
   void Init_ComputeVertex(EngineCore *pEngineCore, gtp::Model *modelPtr);
 
   // -- create transforms buffer
-  void CreateTransformsBuffer();
+  void CreateTransformMatrixBuffer();
 
   // -- create buffers
-  void CreateComputeBuffers();
+  void CreateBuffers();
 
   // -- create animation pipeline
   void CreateAnimationComputePipeline();
@@ -105,15 +108,15 @@ public:
   // -- create command buffers
   void CreateCommandBuffers();
 
-  // -- update joint buffers
-  void UpdateJointBuffer();
+  // -- update bone buffers
+  void UpdateBoneBuffer();
 
   // -- update transforms buffer
   void
-  UpdateTransformsBuffer(Utilities_UI::TransformMatrices *pTransformMatrices);
+  UpdateTransformMatrixBuffer(Utilities_UI::TransformMatrices *pTransformMatrices);
 
-  // -- get joint buffer
-  gtp::Buffer *GetJointBuffer();
+  // -- get bone buffer
+  gtp::Buffer *GetBoneBuffer();
 
   // -- record compute commands
   VkCommandBuffer RecordComputeCommands(int frame);

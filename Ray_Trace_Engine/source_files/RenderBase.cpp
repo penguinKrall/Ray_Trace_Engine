@@ -415,8 +415,8 @@ void gtp::RenderBase::CreateShaderBindingTable() {
 
 void gtp::RenderBase::CreateDefaultUniformBuffer() {
 
-  buffers.ubo.bufferData.bufferName = "UBOBuffer";
-  buffers.ubo.bufferData.bufferMemoryName = "UBOBufferMemory";
+  buffers.ubo.bufferData.bufferName = "render_base_defualt_buffer";
+  buffers.ubo.bufferData.bufferMemoryName = "render_base_defualt_bufferMemory";
 
   if (pEngineCore->CreateBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
@@ -424,7 +424,8 @@ void gtp::RenderBase::CreateDefaultUniformBuffer() {
                                 &buffers.ubo,
                                 sizeof(Utilities_Renderer::UniformData),
                                 &uniformData) != VK_SUCCESS) {
-    throw std::invalid_argument("failed to create  uniform buffer!");
+    throw std::invalid_argument(
+        "failed to create render base default uniform buffer!");
   }
 
   this->UpdateDefaultUniformBuffer(0.0f, glm::vec4(0.0f));
@@ -1389,7 +1390,7 @@ std::vector<VkCommandBuffer> gtp::RenderBase::RecordCompute(int frame) {
 
   for (auto &vertexCompute : this->assets.gltfCompute) {
     if (vertexCompute != nullptr) {
-      vertexCompute->UpdateTransformsBuffer(
+      vertexCompute->UpdateTransformMatrixBuffer(
           &this->assets.modelData.transformMatrices[modelIdx]);
       computeBuffers.push_back(vertexCompute->RecordComputeCommands(frame));
     }
@@ -1414,7 +1415,7 @@ void gtp::RenderBase::UpdateAnimations(float deltaTime) {
       if (this->assets.modelData.isAnimated[i]) {
         this->assets.models[i]->updateAnimation(
             activeAnimation, deltaTime,
-            this->assets.gltfCompute[i]->GetJointBuffer());
+            this->assets.gltfCompute[i]->GetBoneBuffer());
       }
     }
   }

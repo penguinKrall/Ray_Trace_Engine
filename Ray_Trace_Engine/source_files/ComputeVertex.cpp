@@ -12,60 +12,62 @@ void ComputeVertex::CreateGeometryBuffer() {
       // iterate through meshes to find primitives
       for (auto &primitive : node->mesh->primitives) {
         if (primitive->indexCount > 0) {
-          geometryData.resize(node->mesh->primitives.size());
-          // initialiaze a new geometry data struct
-          // GeometryData tempGeometryData = GeometryData{};
+          geometryBufferData.geometries.resize(i + 1);
 
-          geometryData[i].textureIndexBaseColor =
+          geometryBufferData.geometries[i].textureIndexBaseColor =
               primitive->material.baseColorTexture
                   ? static_cast<int>(
                         primitive->material.baseColorTexture->index)
                   : -1;
 
           std::cout << "\ttextureIndexBaseColor:"
-                    << geometryData[i].textureIndexBaseColor << std::endl;
+                    << geometryBufferData.geometries[i].textureIndexBaseColor
+                    << std::endl;
 
-          geometryData[i].textureIndexOcclusion =
+          geometryBufferData.geometries[i].textureIndexOcclusion =
               primitive->material.occlusionTexture
                   ? static_cast<int>(
                         primitive->material.occlusionTexture->index)
                   : -1;
 
           std::cout << "\ttextureIndexOcclusion:"
-                    << geometryData[i].textureIndexOcclusion << std::endl;
+                    << geometryBufferData.geometries[i].textureIndexOcclusion
+                    << std::endl;
 
-          geometryData[i].textureIndexMetallicRoughness =
+          geometryBufferData.geometries[i].textureIndexMetallicRoughness =
               primitive->material.metallicRoughnessTexture
                   ? static_cast<int>(
                         primitive->material.metallicRoughnessTexture->index)
                   : -1;
 
-          std::cout << "\ttextureIndexMetallicRoughness:"
-                    << geometryData[i].textureIndexMetallicRoughness
-                    << std::endl;
+          std::cout
+              << "\ttextureIndexMetallicRoughness:"
+              << geometryBufferData.geometries[i].textureIndexMetallicRoughness
+              << std::endl;
 
-          geometryData[i].textureIndexNormal =
+          geometryBufferData.geometries[i].textureIndexNormal =
               primitive->material.normalTexture
                   ? static_cast<int>(primitive->material.normalTexture->index)
                   : -1;
 
           std::cout << "\ttextureIndexNormal:"
-                    << geometryData[i].textureIndexNormal << std::endl;
-
-          geometryData[i].firstVertex = primitive->firstVertex;
-
-          std::cout << "\tfirstVertex:" << geometryData[i].firstVertex
+                    << geometryBufferData.geometries[i].textureIndexNormal
                     << std::endl;
 
-          geometryData[i].vertexCount = primitive->vertexCount;
+          geometryBufferData.geometries[i].firstVertex = primitive->firstVertex;
 
-          std::cout << "\tvertexCount:" << geometryData[i].vertexCount << '\n'
+          std::cout << "\tfirstVertex:"
+                    << geometryBufferData.geometries[i].firstVertex
                     << std::endl;
 
-          // add geometry data to array in uniform data
-          // this->geometryData.push_back(tempGeometryData);
+          geometryBufferData.geometries[i].vertexCount = primitive->vertexCount;
+
+          std::cout << "\tvertexCount:"
+                    << geometryBufferData.geometries[i].vertexCount << '\n'
+                    << std::endl;
+
           ++i;
-          //++geometryIndexData.geometryCount;
+          //this->geometryBufferData.geometryCount = static_cast<double>(i);
         }
       }
     }
@@ -77,14 +79,24 @@ void ComputeVertex::CreateGeometryBuffer() {
 
   // Calculate the total size required for the buffer
   VkDeviceSize totalSize =
-      sizeof(GeometryData) * static_cast<uint32_t>(geometryData.size());
+      sizeof(Geometry) *
+          static_cast<uint32_t>(geometryBufferData.geometries.size());
+
+  //void *bufferData = malloc(totalSize);
+  // Copy the geometry count to the buffer first
+  //memcpy(bufferData, &geometryBufferData.geometryCount, sizeof(double));
+
+  // Copy the geometry data to the buffer next
+  //memcpy(static_cast<char *>(bufferData) + sizeof(double),
+  //       geometryBufferData.geometries.data(),
+  //       sizeof(Geometry) * geometryBufferData.geometries.size());
 
   if (pEngineCore->CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |
                                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                                 &geometryBuffer, totalSize,
-                                geometryData.data()) != VK_SUCCESS) {
+                                geometryBufferData.geometries.data()) != VK_SUCCESS) {
     throw std::invalid_argument(
         "failed to create compute vertex geometry buffer!");
   }
@@ -94,11 +106,11 @@ ComputeVertex::ComputeVertex() {}
 
 ComputeVertex::ComputeVertex(EngineCore *pEngineCore, gtp::Model *modelPtr) {
 
-  Init_ComputeVertex(pEngineCore, modelPtr);
+  this->Init_ComputeVertex(pEngineCore, modelPtr);
 
-  CreateComputeBuffers();
+  this->CreateBuffers();
 
-  CreateTransformsBuffer();
+  this->CreateTransformMatrixBuffer();
 
   if (modelPtr->animations.size() > 0) {
     this->CreateAnimationComputePipeline();
@@ -126,13 +138,14 @@ void ComputeVertex::Init_ComputeVertex(EngineCore *pEngineCore,
   this->CreateGeometryBuffer();
 }
 
-void ComputeVertex::CreateTransformsBuffer() {
+void ComputeVertex::CreateTransformMatrixBuffer() {
 
-  VkDeviceSize transformsBufferSize = sizeof(Utilities_UI::TransformMatrices);
-  this->transformsBuffer.bufferData.bufferName =
-      "gltf_compute_transformsStorageBuffer_";
-  this->transformsBuffer.bufferData.bufferMemoryName =
-      "gltf_compute_transformsStorageBufferMemory_";
+  VkDeviceSize transformMatrixBufferSize =
+      sizeof(Utilities_UI::TransformMatrices);
+  this->transformMatrixBuffer.bufferData.bufferName =
+      "compute_vertex_transformsStorageBuffer_";
+  this->transformMatrixBuffer.bufferData.bufferMemoryName =
+      "compute_vertex_transformsStorageBufferMemory_";
 
   this->pEngineCore->CreateBuffer(
       VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
@@ -140,41 +153,28 @@ void ComputeVertex::CreateTransformsBuffer() {
           VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-      &this->transformsBuffer, transformsBufferSize, &transformMatrices);
+      &this->transformMatrixBuffer, transformMatrixBufferSize,
+      &transformMatrices);
 }
 
-void ComputeVertex::CreateComputeBuffers() {
+void ComputeVertex::CreateBuffers() {
 
-  // input buffer
-  this->storageInputBuffer.bufferData.bufferName =
-      "gltf_compute_inputStorageBuffer_";
-  this->storageInputBuffer.bufferData.bufferMemoryName =
-      "gltf_compute_inputStorageBufferMemory_";
-
-  this->pEngineCore->CreateBuffer(
-      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-          VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &this->storageInputBuffer,
-      static_cast<uint32_t>(this->model->vertexCount) *
-          sizeof(gtp::Model::Vertex),
-      nullptr);
-
-  // output buffer
-  this->storageOutputBuffer.bufferData.bufferName =
-      "gltf_compute_outputStorageBuffer_";
-  this->storageOutputBuffer.bufferData.bufferMemoryName =
-      "gltf_compute_outputStorageBufferMemory_";
+  /* vertex read buffer*/
+  this->vertexReadBuffer.bufferData.bufferName =
+      "compute_vertex_outputStorageBuffer_";
+  this->vertexReadBuffer.bufferData.bufferMemoryName =
+      "compute_vertex_outputStorageBufferMemory_";
 
   this->pEngineCore->CreateBuffer(
       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
           VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &this->storageOutputBuffer,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &this->vertexReadBuffer,
       static_cast<uint32_t>(this->model->vertexCount) *
           sizeof(gtp::Model::Vertex),
       nullptr);
 
-  // copy from existing model vertex buffer
-  // create temporary command buffer
+  // create one time submit command buffer and copy model vertex buffer to read
+  // storage buffer
   VkCommandBuffer cmdBuffer = pEngineCore->objCreate.VKCreateCommandBuffer(
       VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -185,15 +185,13 @@ void ComputeVertex::CreateComputeBuffers() {
                     sizeof(gtp::Model::Vertex);
 
   vkCmdCopyBuffer(cmdBuffer, model->vertices.buffer,
-                  this->storageInputBuffer.bufferData.buffer, 1, &copyRegion);
-  vkCmdCopyBuffer(cmdBuffer, model->vertices.buffer,
-                  this->storageOutputBuffer.bufferData.buffer, 1, &copyRegion);
+                  this->vertexReadBuffer.bufferData.buffer, 1, &copyRegion);
 
-  // submit temporary command buffer and destroy command buffer/memory
+  // submit and destroy one time submit command buffer
   pEngineCore->FlushCommandBuffer(cmdBuffer, pEngineCore->queue.graphics,
                                   pEngineCore->commandPools.graphics, true);
 
-  // joint buffer
+  /* joint buffer */
   if (!this->model->animations.empty()) {
 
     std::vector<glm::mat4> transforms;
@@ -201,9 +199,9 @@ void ComputeVertex::CreateComputeBuffers() {
     for (auto &nodes : this->model->linearNodes) {
       if (nodes->mesh) {
         if (nodes->skin) {
-          std::cout << "\n\n**GLTF_COMPUTE joint buffer" << std::endl;
+          std::cout << "\ncompute vertex joint buffer" << std::endl;
           for (int i = 0; i < nodes->skin->joints.size(); i++) {
-            std::cout << "node[" << i
+            std::cout << "\tnode[" << i
                       << "]name: " << nodes->skin->joints[i]->name << std::endl;
             transforms.push_back(nodes->mesh->uniformBlock.jointMatrix[i]);
           }
@@ -211,12 +209,12 @@ void ComputeVertex::CreateComputeBuffers() {
       }
     }
 
-    size_t jointBufferSize = transforms.size() * sizeof(glm::mat4);
+    size_t boneBufferSize = transforms.size() * sizeof(glm::mat4);
 
-    this->jointBuffer.bufferData.bufferName =
-        "gltf_compute_jointStorageBuffer_";
-    this->jointBuffer.bufferData.bufferMemoryName =
-        "gltf_compute_jointStorageBufferMemory_";
+    this->boneBuffer.bufferData.bufferName =
+        "compute_vertex_jointStorageBuffer";
+    this->boneBuffer.bufferData.bufferMemoryName =
+        "compute_vertex_jointStorageBufferMemory_";
 
     this->pEngineCore->CreateBuffer(
         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
@@ -224,7 +222,7 @@ void ComputeVertex::CreateComputeBuffers() {
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        &this->jointBuffer, jointBufferSize, transforms.data());
+        &this->boneBuffer, boneBufferSize, transforms.data());
   }
 }
 
@@ -248,10 +246,10 @@ void ComputeVertex::Destroy_ComputeVertex() {
                                this->pipelineData.descriptorSetLayout, nullptr);
 
   // storage buffers
-  this->transformsBuffer.destroy(this->pEngineCore->devices.logical);
-  this->jointBuffer.destroy(this->pEngineCore->devices.logical);
-  this->storageInputBuffer.destroy(this->pEngineCore->devices.logical);
-  this->storageOutputBuffer.destroy(this->pEngineCore->devices.logical);
+  this->transformMatrixBuffer.destroy(this->pEngineCore->devices.logical);
+  this->boneBuffer.destroy(this->pEngineCore->devices.logical);
+  // this->modelVertexBuffer.destroy(this->pEngineCore->devices.logical);
+  this->vertexReadBuffer.destroy(this->pEngineCore->devices.logical);
   this->geometryBuffer.destroy(this->pEngineCore->GetLogicalDevice());
 }
 
@@ -354,7 +352,7 @@ void ComputeVertex::CreateAnimationComputePipeline() {
   computeShaderStageCreateInfo =
       shader.loadShader(projDirectory.string() +
                             "/shaders/compiled/main_renderer_compute.comp.spv",
-                        VK_SHADER_STAGE_COMPUTE_BIT, "gltf_compute_shader");
+                        VK_SHADER_STAGE_COMPUTE_BIT, "compute_vertex_shader");
   VkComputePipelineCreateInfo computePipelineCreateInfo = {};
   computePipelineCreateInfo.sType =
       VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
@@ -503,7 +501,7 @@ void ComputeVertex::CreateAnimationPipelineDescriptorSet() {
             &descriptorPoolCreateInfo, nullptr,
             &this->pipelineData.descriptorPool);
       },
-      "gltf_compute_DescriptorPool");
+      "compute_vertex_DescriptorPool");
 
   // variable descriptor count allocate info extension
   VkDescriptorSetVariableDescriptorCountAllocateInfoEXT
@@ -530,91 +528,90 @@ void ComputeVertex::CreateAnimationPipelineDescriptorSet() {
             &descriptorSetAllocateInfo, nullptr,
             &this->pipelineData.descriptorSet);
       },
-      "gltf_compute_DescriptorSet");
+      "compute_vertex_DescriptorSet");
 
   // storage input buffer descriptor info
-  VkDescriptorBufferInfo storageInputBufferDescriptor{};
-  // storageInputBufferDescriptor.buffer = storageInputBuffer.bufferData.buffer;
-  storageInputBufferDescriptor.buffer = this->model->vertices.buffer;
-  storageInputBufferDescriptor.offset = 0;
-  storageInputBufferDescriptor.range =
+  VkDescriptorBufferInfo modelVertexBufferDescriptor{};
+  modelVertexBufferDescriptor.buffer = this->model->vertices.buffer;
+  modelVertexBufferDescriptor.offset = 0;
+  modelVertexBufferDescriptor.range =
       static_cast<uint32_t>(this->model->vertexCount) *
       sizeof(gtp::Model::Vertex);
 
   // storage input buffer descriptor write info
-  VkWriteDescriptorSet storageInputBufferWrite{};
-  storageInputBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  storageInputBufferWrite.dstSet = pipelineData.descriptorSet;
-  storageInputBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  storageInputBufferWrite.dstBinding = 0;
-  storageInputBufferWrite.pBufferInfo = &storageInputBufferDescriptor;
-  storageInputBufferWrite.descriptorCount = 1;
+  VkWriteDescriptorSet modelVertexBufferWrite{};
+  modelVertexBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  modelVertexBufferWrite.dstSet = pipelineData.descriptorSet;
+  modelVertexBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  modelVertexBufferWrite.dstBinding = 0;
+  modelVertexBufferWrite.pBufferInfo = &modelVertexBufferDescriptor;
+  modelVertexBufferWrite.descriptorCount = 1;
 
   std::cout << "this->model->vertexBufferSize: "
             << this->model->vertexBufferSize << std::endl;
   // storage output buffer descriptor info
-  VkDescriptorBufferInfo storageOutputBufferDescriptor{};
-  // storageOutputBufferDescriptor.buffer =
-  // this->model->vertices.buffer.bufferData.buffer;
-  storageOutputBufferDescriptor.buffer = storageOutputBuffer.bufferData.buffer;
-  storageOutputBufferDescriptor.offset = 0;
-  storageOutputBufferDescriptor.range =
+  VkDescriptorBufferInfo vertexReadBufferDescriptor{};
+  vertexReadBufferDescriptor.buffer = vertexReadBuffer.bufferData.buffer;
+  vertexReadBufferDescriptor.offset = 0;
+  vertexReadBufferDescriptor.range =
       static_cast<uint32_t>(this->model->vertexCount) *
       sizeof(gtp::Model::Vertex);
 
   // storage output buffer descriptor write info
-  VkWriteDescriptorSet storageOutputBufferWrite{};
-  storageOutputBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  storageOutputBufferWrite.dstSet = pipelineData.descriptorSet;
-  storageOutputBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  storageOutputBufferWrite.dstBinding = 1;
-  storageOutputBufferWrite.pBufferInfo = &storageOutputBufferDescriptor;
-  storageOutputBufferWrite.descriptorCount = 1;
+  VkWriteDescriptorSet vertexReadBufferWrite{};
+  vertexReadBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  vertexReadBufferWrite.dstSet = pipelineData.descriptorSet;
+  vertexReadBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  vertexReadBufferWrite.dstBinding = 1;
+  vertexReadBufferWrite.pBufferInfo = &vertexReadBufferDescriptor;
+  vertexReadBufferWrite.descriptorCount = 1;
 
   // joint buffer descriptor info
-  VkDescriptorBufferInfo jointBufferDescriptor{};
-  jointBufferDescriptor.buffer = jointBuffer.bufferData.buffer;
-  jointBufferDescriptor.offset = 0;
-  jointBufferDescriptor.range = jointBuffer.bufferData.size;
+  VkDescriptorBufferInfo boneBufferDescriptor{};
+  boneBufferDescriptor.buffer = boneBuffer.bufferData.buffer;
+  boneBufferDescriptor.offset = 0;
+  boneBufferDescriptor.range = boneBuffer.bufferData.size;
 
   // joint buffer descriptor write info
-  VkWriteDescriptorSet jointBufferWrite{};
-  jointBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  jointBufferWrite.dstSet = pipelineData.descriptorSet;
-  jointBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  jointBufferWrite.dstBinding = 2;
-  jointBufferWrite.pBufferInfo = &jointBufferDescriptor;
-  jointBufferWrite.descriptorCount = 1;
+  VkWriteDescriptorSet boneBufferWrite{};
+  boneBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  boneBufferWrite.dstSet = pipelineData.descriptorSet;
+  boneBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  boneBufferWrite.dstBinding = 2;
+  boneBufferWrite.pBufferInfo = &boneBufferDescriptor;
+  boneBufferWrite.descriptorCount = 1;
 
   // transforms buffer descriptor info
-  VkDescriptorBufferInfo transformsBufferDescriptor{};
-  transformsBufferDescriptor.buffer = transformsBuffer.bufferData.buffer;
-  transformsBufferDescriptor.offset = 0;
-  transformsBufferDescriptor.range = transformsBuffer.bufferData.size;
+  VkDescriptorBufferInfo transformMatrixBufferDescriptor{};
+  transformMatrixBufferDescriptor.buffer =
+      transformMatrixBuffer.bufferData.buffer;
+  transformMatrixBufferDescriptor.offset = 0;
+  transformMatrixBufferDescriptor.range = transformMatrixBuffer.bufferData.size;
 
   // transforms buffer descriptor write info
-  VkWriteDescriptorSet transformsBufferWrite{};
-  transformsBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  transformsBufferWrite.dstSet = pipelineData.descriptorSet;
-  transformsBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  transformsBufferWrite.dstBinding = 3;
-  transformsBufferWrite.pBufferInfo = &transformsBufferDescriptor;
-  transformsBufferWrite.descriptorCount = 1;
+  VkWriteDescriptorSet transformMatrixBufferWrite{};
+  transformMatrixBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  transformMatrixBufferWrite.dstSet = pipelineData.descriptorSet;
+  transformMatrixBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  transformMatrixBufferWrite.dstBinding = 3;
+  transformMatrixBufferWrite.pBufferInfo = &transformMatrixBufferDescriptor;
+  transformMatrixBufferWrite.descriptorCount = 1;
 
-  // ubo descriptor info
-  VkDescriptorBufferInfo uboDescriptor{};
-  uboDescriptor.buffer = geometryBuffer.bufferData.buffer;
-  uboDescriptor.offset = 0;
-  uboDescriptor.range =
-      static_cast<uint32_t>(geometryData.size()) * sizeof(GeometryData);
+  // geometry descriptor info
+  VkDescriptorBufferInfo geometryDescriptor{};
+  geometryDescriptor.buffer = geometryBuffer.bufferData.buffer;
+  geometryDescriptor.offset = 0;
+  geometryDescriptor.range =
+      static_cast<uint32_t>(geometryBufferData.geometries.size()) *
+      sizeof(Geometry);
 
-  // ubo descriptor write info
+  // geometry descriptor write info
   VkWriteDescriptorSet geometryBufferWrite{};
   geometryBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   geometryBufferWrite.dstSet = pipelineData.descriptorSet;
   geometryBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   geometryBufferWrite.dstBinding = 4;
-  geometryBufferWrite.pBufferInfo = &uboDescriptor;
+  geometryBufferWrite.pBufferInfo = &geometryDescriptor;
   geometryBufferWrite.descriptorCount = 1;
 
   // Image descriptors for the image array
@@ -629,8 +626,8 @@ void ComputeVertex::CreateAnimationPipelineDescriptorSet() {
   }
 
   std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
-      storageInputBufferWrite, storageOutputBufferWrite, jointBufferWrite,
-      transformsBufferWrite, geometryBufferWrite};
+      modelVertexBufferWrite, vertexReadBufferWrite, boneBufferWrite,
+      transformMatrixBufferWrite, geometryBufferWrite};
 
   if (!this->model->textures.empty()) {
     VkWriteDescriptorSet writeDescriptorImgArray{};
@@ -672,7 +669,7 @@ void ComputeVertex::CreateStaticPipelineDescriptorSet() {
             &descriptorPoolCreateInfo, nullptr,
             &this->pipelineData.descriptorPool);
       },
-      "gltf_compute_DescriptorPool");
+      "compute_vertex_DescriptorPool");
 
   // variable descriptor count allocate info extension
   VkDescriptorSetVariableDescriptorCountAllocateInfoEXT
@@ -699,79 +696,80 @@ void ComputeVertex::CreateStaticPipelineDescriptorSet() {
             &descriptorSetAllocateInfo, nullptr,
             &this->pipelineData.descriptorSet);
       },
-      "gltf_compute_DescriptorSet");
+      "compute_vertex_DescriptorSet");
 
   // storage input buffer descriptor info
-  VkDescriptorBufferInfo storageInputBufferDescriptor{};
-  // storageInputBufferDescriptor.buffer = storageInputBuffer.bufferData.buffer;
-  storageInputBufferDescriptor.buffer = this->model->vertices.buffer;
-  storageInputBufferDescriptor.offset = 0;
-  storageInputBufferDescriptor.range =
+  VkDescriptorBufferInfo modelVertexBufferDescriptor{};
+  // modelVertexBufferDescriptor.buffer = modelVertexBuffer.bufferData.buffer;
+  modelVertexBufferDescriptor.buffer = this->model->vertices.buffer;
+  modelVertexBufferDescriptor.offset = 0;
+  modelVertexBufferDescriptor.range =
       static_cast<uint32_t>(this->model->vertexCount) *
       sizeof(gtp::Model::Vertex);
 
   // storage input buffer descriptor write info
-  VkWriteDescriptorSet storageInputBufferWrite{};
-  storageInputBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  storageInputBufferWrite.dstSet = pipelineData.descriptorSet;
-  storageInputBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  storageInputBufferWrite.dstBinding = 0;
-  storageInputBufferWrite.pBufferInfo = &storageInputBufferDescriptor;
-  storageInputBufferWrite.descriptorCount = 1;
+  VkWriteDescriptorSet modelVertexBufferWrite{};
+  modelVertexBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  modelVertexBufferWrite.dstSet = pipelineData.descriptorSet;
+  modelVertexBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  modelVertexBufferWrite.dstBinding = 0;
+  modelVertexBufferWrite.pBufferInfo = &modelVertexBufferDescriptor;
+  modelVertexBufferWrite.descriptorCount = 1;
 
   std::cout << "this->model->vertexBufferSize: "
             << this->model->vertexBufferSize << std::endl;
   // storage output buffer descriptor info
-  VkDescriptorBufferInfo storageOutputBufferDescriptor{};
-  // storageOutputBufferDescriptor.buffer =
+  VkDescriptorBufferInfo vertexReadBufferDescriptor{};
+  // vertexReadBufferDescriptor.buffer =
   // this->model->vertices.buffer.bufferData.buffer;
-  storageOutputBufferDescriptor.buffer = storageOutputBuffer.bufferData.buffer;
-  storageOutputBufferDescriptor.offset = 0;
-  storageOutputBufferDescriptor.range =
+  vertexReadBufferDescriptor.buffer = vertexReadBuffer.bufferData.buffer;
+  vertexReadBufferDescriptor.offset = 0;
+  vertexReadBufferDescriptor.range =
       static_cast<uint32_t>(this->model->vertexCount) *
       sizeof(gtp::Model::Vertex);
 
   // storage output buffer descriptor write info
-  VkWriteDescriptorSet storageOutputBufferWrite{};
-  storageOutputBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  storageOutputBufferWrite.dstSet = pipelineData.descriptorSet;
-  storageOutputBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  storageOutputBufferWrite.dstBinding = 1;
-  storageOutputBufferWrite.pBufferInfo = &storageOutputBufferDescriptor;
-  storageOutputBufferWrite.descriptorCount = 1;
+  VkWriteDescriptorSet vertexReadBufferWrite{};
+  vertexReadBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  vertexReadBufferWrite.dstSet = pipelineData.descriptorSet;
+  vertexReadBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  vertexReadBufferWrite.dstBinding = 1;
+  vertexReadBufferWrite.pBufferInfo = &vertexReadBufferDescriptor;
+  vertexReadBufferWrite.descriptorCount = 1;
 
   // transforms buffer descriptor info
-  VkDescriptorBufferInfo transformsBufferDescriptor{};
-  transformsBufferDescriptor.buffer = transformsBuffer.bufferData.buffer;
-  transformsBufferDescriptor.offset = 0;
-  transformsBufferDescriptor.range = transformsBuffer.bufferData.size;
+  VkDescriptorBufferInfo transformMatrixBufferDescriptor{};
+  transformMatrixBufferDescriptor.buffer =
+      transformMatrixBuffer.bufferData.buffer;
+  transformMatrixBufferDescriptor.offset = 0;
+  transformMatrixBufferDescriptor.range = transformMatrixBuffer.bufferData.size;
 
   // transforms buffer descriptor write info
-  VkWriteDescriptorSet transformsBufferWrite{};
-  transformsBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  transformsBufferWrite.dstSet = pipelineData.descriptorSet;
-  transformsBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  transformsBufferWrite.dstBinding = 2;
-  transformsBufferWrite.pBufferInfo = &transformsBufferDescriptor;
-  transformsBufferWrite.descriptorCount = 1;
+  VkWriteDescriptorSet transformMatrixBufferWrite{};
+  transformMatrixBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  transformMatrixBufferWrite.dstSet = pipelineData.descriptorSet;
+  transformMatrixBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  transformMatrixBufferWrite.dstBinding = 2;
+  transformMatrixBufferWrite.pBufferInfo = &transformMatrixBufferDescriptor;
+  transformMatrixBufferWrite.descriptorCount = 1;
 
-  // ubo descriptor info
-  VkDescriptorBufferInfo uboDescriptor{};
-  uboDescriptor.buffer = geometryBuffer.bufferData.buffer;
-  uboDescriptor.offset = 0;
-  uboDescriptor.range = geometryBuffer.bufferData.size;
+  // geometry descriptor info
+  VkDescriptorBufferInfo geometryDescriptor{};
+  geometryDescriptor.buffer = geometryBuffer.bufferData.buffer;
+  geometryDescriptor.offset = 0;
+  geometryDescriptor.range = geometryBuffer.bufferData.size;
 
-  // ubo descriptor write info
+  // geometry descriptor write info
   VkWriteDescriptorSet geometryBufferWrite{};
   geometryBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   geometryBufferWrite.dstSet = pipelineData.descriptorSet;
   geometryBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   geometryBufferWrite.dstBinding = 3;
-  geometryBufferWrite.pBufferInfo = &uboDescriptor;
+  geometryBufferWrite.pBufferInfo = &geometryDescriptor;
   geometryBufferWrite.descriptorCount = 1;
 
   std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
-      storageInputBufferWrite, storageOutputBufferWrite, transformsBufferWrite,
+      modelVertexBufferWrite, vertexReadBufferWrite, transformMatrixBufferWrite,
       geometryBufferWrite};
 
   // Image descriptors for the image array
@@ -841,7 +839,7 @@ VkCommandBuffer ComputeVertex::RecordComputeCommands(int frame) {
 //	//
 //	//vkMapMemory(
 //	//	this->pEngineCore->devices.logical,
-// this->storageInputBuffer.bufferData.memory,
+// this->modelVertexBuffer.bufferData.memory,
 //	//	0, static_cast<uint32_t>(this->model->modelVertexBuffer.size())
 //* sizeof(gtp::Vertex), 0, &data);
 //	//
@@ -854,15 +852,15 @@ VkCommandBuffer ComputeVertex::RecordComputeCommands(int frame) {
 // sizeof(gtp::Vertex));
 //	//
 //	//vkUnmapMemory(this->pEngineCore->devices.logical,
-// this->storageInputBuffer.bufferData.memory);
+// this->modelVertexBuffer.bufferData.memory);
 //	//
 //	//return tempVertex;
 //
 // }
 
-void ComputeVertex::UpdateJointBuffer() {
+void ComputeVertex::UpdateBoneBuffer() {
 
-  std::vector<glm::mat4> transforms;
+  std::vector<glm::mat4> boneMatrices;
 
   for (auto &nodes : this->model->linearNodes) {
     if (nodes->mesh) {
@@ -870,22 +868,22 @@ void ComputeVertex::UpdateJointBuffer() {
         for (int i = 0; i < nodes->skin->joints.size(); i++) {
           // std::cout << "node names: " << nodes->skin->joints[i]->name <<
           // std::endl;
-          transforms.push_back(nodes->mesh->uniformBlock.jointMatrix[i]);
+          boneMatrices.push_back(nodes->mesh->uniformBlock.jointMatrix[i]);
         }
       }
     }
   }
 
-  size_t jointBufferSize = transforms.size() * sizeof(glm::mat4);
+  size_t boneBufferSize = boneMatrices.size() * sizeof(glm::mat4);
 
-  this->jointBuffer.copyTo(transforms.data(), jointBufferSize);
+  this->boneBuffer.copyTo(boneMatrices.data(), boneBufferSize);
 }
 
-void ComputeVertex::UpdateTransformsBuffer(
+void ComputeVertex::UpdateTransformMatrixBuffer(
     Utilities_UI::TransformMatrices *pTransformMatrices) {
   // this->transformMatrices = *pTransformMatrices;
-  this->transformsBuffer.copyTo(pTransformMatrices,
-                                sizeof(Utilities_UI::TransformMatrices));
+  this->transformMatrixBuffer.copyTo(pTransformMatrices,
+                                     sizeof(Utilities_UI::TransformMatrices));
 }
 
-gtp::Buffer *ComputeVertex::GetJointBuffer() { return &this->jointBuffer; }
+gtp::Buffer *ComputeVertex::GetBoneBuffer() { return &this->boneBuffer; }
