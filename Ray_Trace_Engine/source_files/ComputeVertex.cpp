@@ -1,8 +1,8 @@
 #include "ComputeVertex.hpp"
 
 // create uniform buffer for compute
-void ComputeVertex::CreateUniformBuffer() {
-  std::cout << "\nCompute Vertex Create Uniform Buffer\n";
+void ComputeVertex::CreateGeometryBuffer() {
+  std::cout << "\nCompute Vertex Create Geometry Buffer\n";
   std::cout << "\tmodel:" << this->model->modelName << std::endl;
 
   // iterate through models linear nodes to check for mesh
@@ -71,9 +71,9 @@ void ComputeVertex::CreateUniformBuffer() {
     }
   }
 
-  uniformBuffer.bufferData.bufferName = "compute_vertex_uniform_buffer";
-  uniformBuffer.bufferData.bufferMemoryName =
-      "compute_vertex_uniform_buffer_memory";
+  geometryBuffer.bufferData.bufferName = "compute_vertex_geometry_buffer";
+  geometryBuffer.bufferData.bufferMemoryName =
+      "compute_vertex_geometry_buffer_memory";
 
   // Calculate the total size required for the buffer
   VkDeviceSize totalSize =
@@ -83,10 +83,10 @@ void ComputeVertex::CreateUniformBuffer() {
                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |
                                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                                &uniformBuffer, totalSize,
+                                &geometryBuffer, totalSize,
                                 geometryData.data()) != VK_SUCCESS) {
     throw std::invalid_argument(
-        "failed to create compute vertex uniform buffer!");
+        "failed to create compute vertex geometry buffer!");
   }
 }
 
@@ -123,7 +123,7 @@ void ComputeVertex::Init_ComputeVertex(EngineCore *pEngineCore,
   this->pEngineCore = pEngineCore;
   this->model = modelPtr;
   this->shader = gtp::Shader(pEngineCore);
-  this->CreateUniformBuffer();
+  this->CreateGeometryBuffer();
 }
 
 void ComputeVertex::CreateTransformsBuffer() {
@@ -252,7 +252,7 @@ void ComputeVertex::Destroy_ComputeVertex() {
   this->jointBuffer.destroy(this->pEngineCore->devices.logical);
   this->storageInputBuffer.destroy(this->pEngineCore->devices.logical);
   this->storageOutputBuffer.destroy(this->pEngineCore->devices.logical);
-  this->uniformBuffer.destroy(this->pEngineCore->GetLogicalDevice());
+  this->geometryBuffer.destroy(this->pEngineCore->GetLogicalDevice());
 }
 
 void ComputeVertex::CreateAnimationComputePipeline() {
@@ -284,7 +284,7 @@ void ComputeVertex::CreateAnimationComputePipeline() {
           nullptr);
 
   // uniform buffer layout binding
-  VkDescriptorSetLayoutBinding uniformBufferLayoutBinding =
+  VkDescriptorSetLayoutBinding geometryBufferLayoutBinding =
       gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
           4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT,
           nullptr);
@@ -300,7 +300,7 @@ void ComputeVertex::CreateAnimationComputePipeline() {
   std::vector<VkDescriptorSetLayoutBinding> bindings(
       {inputStorageBufferLayoutBinding, outputStorageBufferLayoutBinding,
        jointStorageBufferLayoutBinding, transformsStorageBufferLayoutBinding,
-       uniformBufferLayoutBinding, textureLayoutBinding});
+       geometryBufferLayoutBinding, textureLayoutBinding});
 
   // Unbound set
   VkDescriptorSetLayoutBindingFlagsCreateInfoEXT setLayoutBindingFlags{};
@@ -384,7 +384,7 @@ void ComputeVertex::CreateStaticComputePipeline() {
           nullptr);
 
   // uniform buffer layout binding
-  VkDescriptorSetLayoutBinding uniformBufferLayoutBinding =
+  VkDescriptorSetLayoutBinding geometryBufferLayoutBinding =
       gtp::Utilities_EngCore::VkInitializers::descriptorSetLayoutBinding(
           3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT,
           nullptr);
@@ -399,7 +399,7 @@ void ComputeVertex::CreateStaticComputePipeline() {
   // array of bindings
   std::vector<VkDescriptorSetLayoutBinding> bindings(
       {inputStorageBufferLayoutBinding, outputStorageBufferLayoutBinding,
-       transformsStorageBufferLayoutBinding, uniformBufferLayoutBinding,
+       transformsStorageBufferLayoutBinding, geometryBufferLayoutBinding,
        textureLayoutBinding});
 
   // Unbound set
@@ -603,19 +603,19 @@ void ComputeVertex::CreateAnimationPipelineDescriptorSet() {
 
   // ubo descriptor info
   VkDescriptorBufferInfo uboDescriptor{};
-  uboDescriptor.buffer = uniformBuffer.bufferData.buffer;
+  uboDescriptor.buffer = geometryBuffer.bufferData.buffer;
   uboDescriptor.offset = 0;
   uboDescriptor.range =
       static_cast<uint32_t>(geometryData.size()) * sizeof(GeometryData);
 
   // ubo descriptor write info
-  VkWriteDescriptorSet uniformBufferWrite{};
-  uniformBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  uniformBufferWrite.dstSet = pipelineData.descriptorSet;
-  uniformBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  uniformBufferWrite.dstBinding = 4;
-  uniformBufferWrite.pBufferInfo = &uboDescriptor;
-  uniformBufferWrite.descriptorCount = 1;
+  VkWriteDescriptorSet geometryBufferWrite{};
+  geometryBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  geometryBufferWrite.dstSet = pipelineData.descriptorSet;
+  geometryBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  geometryBufferWrite.dstBinding = 4;
+  geometryBufferWrite.pBufferInfo = &uboDescriptor;
+  geometryBufferWrite.descriptorCount = 1;
 
   // Image descriptors for the image array
   std::vector<VkDescriptorImageInfo> textureDescriptors{};
@@ -630,7 +630,7 @@ void ComputeVertex::CreateAnimationPipelineDescriptorSet() {
 
   std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
       storageInputBufferWrite, storageOutputBufferWrite, jointBufferWrite,
-      transformsBufferWrite, uniformBufferWrite};
+      transformsBufferWrite, geometryBufferWrite};
 
   if (!this->model->textures.empty()) {
     VkWriteDescriptorSet writeDescriptorImgArray{};
@@ -757,22 +757,22 @@ void ComputeVertex::CreateStaticPipelineDescriptorSet() {
 
   // ubo descriptor info
   VkDescriptorBufferInfo uboDescriptor{};
-  uboDescriptor.buffer = uniformBuffer.bufferData.buffer;
+  uboDescriptor.buffer = geometryBuffer.bufferData.buffer;
   uboDescriptor.offset = 0;
-  uboDescriptor.range = uniformBuffer.bufferData.size;
+  uboDescriptor.range = geometryBuffer.bufferData.size;
 
   // ubo descriptor write info
-  VkWriteDescriptorSet uniformBufferWrite{};
-  uniformBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  uniformBufferWrite.dstSet = pipelineData.descriptorSet;
-  uniformBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  uniformBufferWrite.dstBinding = 3;
-  uniformBufferWrite.pBufferInfo = &uboDescriptor;
-  uniformBufferWrite.descriptorCount = 1;
+  VkWriteDescriptorSet geometryBufferWrite{};
+  geometryBufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  geometryBufferWrite.dstSet = pipelineData.descriptorSet;
+  geometryBufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  geometryBufferWrite.dstBinding = 3;
+  geometryBufferWrite.pBufferInfo = &uboDescriptor;
+  geometryBufferWrite.descriptorCount = 1;
 
   std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
       storageInputBufferWrite, storageOutputBufferWrite, transformsBufferWrite,
-      uniformBufferWrite};
+      geometryBufferWrite};
 
   // Image descriptors for the image array
   std::vector<VkDescriptorImageInfo> textureDescriptors{};

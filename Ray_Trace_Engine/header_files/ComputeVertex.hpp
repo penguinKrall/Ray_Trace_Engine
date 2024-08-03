@@ -48,7 +48,7 @@ private:
   gtp::Buffer jointBuffer;
 
   // -- uniform buffer
-  gtp::Buffer uniformBuffer;
+  gtp::Buffer geometryBuffer;
 
   // -- rotate/translate/scale matrices buffer
   Utilities_UI::TransformMatrices transformMatrices{};
@@ -72,7 +72,7 @@ private:
   PipelineData pipelineData{};
 
   // -- create uniform buffer
-  void CreateUniformBuffer();
+  void CreateGeometryBuffer();
 
 public:
   // -- default constructor
