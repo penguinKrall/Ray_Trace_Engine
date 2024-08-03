@@ -9,18 +9,12 @@
 class ComputeVertex {
 private:
   struct GeometryData {
-    int textureIndexBaseColor = -1;
-    int pad0 = 0;
-    int textureIndexOcclusion = -1;
-    int pad1 = 0;
-    int textureIndexMetallicRoughness = -1;
-    int pad2 = 0;
-    int textureIndexNormal = -1;
-    int pad3 = 0;
-    int firstVertex = 0;
-    int pad4 = 0;
-    int vertexCount = 0;
-    int pad5 = 0;
+    double textureIndexBaseColor = -1;
+    double textureIndexOcclusion = -1;
+    double textureIndexMetallicRoughness = -1;
+    double textureIndexNormal = -1;
+    double firstVertex = 0;
+    double vertexCount = 0;
   };
 
   std::vector<GeometryData> geometryData;
