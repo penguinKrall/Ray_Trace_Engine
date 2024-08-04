@@ -359,6 +359,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\glTFModel.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\json_hpp\json.hpp" />
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\main.hpp" />
+    <None Include="..\..\..\vulkan_raytracing\vulkan_raytracing\shaders\gltf_reflections\gltf_reflections_anyhit.rahit" />
+    <None Include="..\..\..\vulkan_raytracing\vulkan_raytracing\shaders\gltf_reflections\gltf_reflections_bufferreferences.glsl" />
+    <None Include="..\..\..\vulkan_raytracing\vulkan_raytracing\shaders\gltf_reflections\gltf_reflections_closesthit.rchit" />
+    <None Include="..\..\..\vulkan_raytracing\vulkan_raytracing\shaders\gltf_reflections\gltf_reflections_geometrytypes.glsl" />
+    <None Include="..\..\..\vulkan_raytracing\vulkan_raytracing\shaders\gltf_reflections\gltf_reflections_miss.rmiss" />
+    <None Include="..\..\..\vulkan_raytracing\vulkan_raytracing\shaders\gltf_reflections\gltf_reflections_random.glsl" />
+    <None Include="..\..\..\vulkan_raytracing\vulkan_raytracing\shaders\gltf_reflections\gltf_reflections_raygen.rgen" />
+    <None Include="..\..\..\vulkan_raytracing\vulkan_raytracing\shaders\gltf_reflections\gltf_reflections_shadow.rmiss" />
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_anyhit.rahit">
     </None>
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\main_renderer_bufferreferences.glsl">

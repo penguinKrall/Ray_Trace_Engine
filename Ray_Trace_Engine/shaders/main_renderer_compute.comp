@@ -116,11 +116,11 @@ void main() {
     //normal
     v.normal = normalize(transformSSBO.transformMatrices.rotate * boneTransform * v.normal);
     
-    //color
-    int diffuseColorID = int(ubo.geometryData[geometryID].textureIndexBaseColor);
-    vec4 texColor = texture(textures[diffuseColorID], v.uv);
-    
-    v.inColor = texColor;
+    ////color
+    //int diffuseColorID = int(ubo.geometryData[geometryID].textureIndexBaseColor);
+    //vec4 texColor = texture(textures[diffuseColorID], v.uv);
+    //
+    //v.inColor = texColor;
 
     //tangent
     float w = v.tangent.w;

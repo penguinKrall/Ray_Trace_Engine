@@ -8,6 +8,7 @@
 
 class ComputeVertex {
 private:
+  // -- geometry data
   struct Geometry {
     double textureIndexBaseColor = -1;
     double textureIndexOcclusion = -1;
@@ -17,21 +18,14 @@ private:
     double vertexCount = 0;
   };
 
+  // -- geometry buffer data
   struct GeometryBufferData {
-  std::vector<Geometry> geometries;
+    std::vector<Geometry> geometries;
   };
 
   GeometryBufferData geometryBufferData{};
 
-  // struct GeometryBufferData {
-  //   std::vector<GeometryData> geometryData;
-  // };
-  // GeometryBufferData geometryBufferData{};
-
-  // struct GeometryIndexData {
-  //   int geometryCount = 0;
-  // };
-  // GeometryIndexData geometryIndexData{};
+  bool updateTransforms = false;
 
   // -- core pointer
   EngineCore *pEngineCore = nullptr;
@@ -51,9 +45,10 @@ private:
   // -- bone storage buffer
   gtp::Buffer boneBuffer;
 
-  // -- geometry buffer
+  // -- geometry storage buffer
   gtp::Buffer geometryBuffer;
 
+  // -- transform matrix buffer
   gtp::Buffer transformMatrixBuffer;
 
   // -- rotate/translate/scale matrices buffer
@@ -112,14 +107,17 @@ public:
   void UpdateBoneBuffer();
 
   // -- update transforms buffer
-  void
-  UpdateTransformMatrixBuffer(Utilities_UI::TransformMatrices *pTransformMatrices);
+  void UpdateTransformMatrixBuffer(
+      Utilities_UI::TransformMatrices *pTransformMatrices, bool update);
 
   // -- get bone buffer
   gtp::Buffer *GetBoneBuffer();
 
   // -- record compute commands
-  VkCommandBuffer RecordComputeCommands(int frame);
+  VkCommandBuffer RecordComputeCommands(int frame, bool updated);
+
+  // -- get recorder command buffer
+  VkCommandBuffer GetRecordedCommandBuffer(int frame);
 
   // -- destroy
   void Destroy_ComputeVertex();

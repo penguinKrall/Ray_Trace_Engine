@@ -67,7 +67,6 @@ void ComputeVertex::CreateGeometryBuffer() {
                     << std::endl;
 
           ++i;
-          //this->geometryBufferData.geometryCount = static_cast<double>(i);
         }
       }
     }
@@ -80,23 +79,15 @@ void ComputeVertex::CreateGeometryBuffer() {
   // Calculate the total size required for the buffer
   VkDeviceSize totalSize =
       sizeof(Geometry) *
-          static_cast<uint32_t>(geometryBufferData.geometries.size());
-
-  //void *bufferData = malloc(totalSize);
-  // Copy the geometry count to the buffer first
-  //memcpy(bufferData, &geometryBufferData.geometryCount, sizeof(double));
-
-  // Copy the geometry data to the buffer next
-  //memcpy(static_cast<char *>(bufferData) + sizeof(double),
-  //       geometryBufferData.geometries.data(),
-  //       sizeof(Geometry) * geometryBufferData.geometries.size());
+      static_cast<uint32_t>(geometryBufferData.geometries.size());
 
   if (pEngineCore->CreateBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |
                                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                                 &geometryBuffer, totalSize,
-                                geometryBufferData.geometries.data()) != VK_SUCCESS) {
+                                geometryBufferData.geometries.data()) !=
+      VK_SUCCESS) {
     throw std::invalid_argument(
         "failed to create compute vertex geometry buffer!");
   }
@@ -358,7 +349,6 @@ void ComputeVertex::CreateAnimationComputePipeline() {
       VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
   computePipelineCreateInfo.stage = computeShaderStageCreateInfo;
   computePipelineCreateInfo.layout = this->pipelineData.pipelineLayout;
-
   validate_vk_result(vkCreateComputePipelines(
       pEngineCore->devices.logical, VK_NULL_HANDLE, 1,
       &computePipelineCreateInfo, nullptr, &this->pipelineData.pipeline));
@@ -476,6 +466,12 @@ void ComputeVertex::CreateCommandBuffers() {
 
   validate_vk_result(vkAllocateCommandBuffers(
       pEngineCore->devices.logical, &allocInfo, commandBuffers.data()));
+
+  int cmdFrame = 0;
+  for (auto &cmdBuffs : this->commandBuffers) {
+    this->RecordComputeCommands(cmdFrame, true);
+    ++cmdFrame;
+  }
 }
 
 void ComputeVertex::CreateAnimationPipelineDescriptorSet() {
@@ -801,35 +797,44 @@ void ComputeVertex::CreateStaticPipelineDescriptorSet() {
                          writeDescriptorSets.data(), 0, VK_NULL_HANDLE);
 }
 
-VkCommandBuffer ComputeVertex::RecordComputeCommands(int frame) {
+VkCommandBuffer ComputeVertex::RecordComputeCommands(int frame, bool updated) {
 
   // compute command buffer begin info
-  VkCommandBufferBeginInfo computeBeginInfo{};
-  computeBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  if (updated) {
 
-  // reset command buffer
-  validate_vk_result(vkResetCommandBuffer(this->commandBuffers[frame],
-                                          /*VkCommandBufferResetFlagBits*/ 0));
+    VkCommandBufferBeginInfo computeBeginInfo{};
+    computeBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-  // begin command buffer
-  validate_vk_result(
-      vkBeginCommandBuffer(this->commandBuffers[frame], &computeBeginInfo));
+    // reset command buffer
+    validate_vk_result(
+        vkResetCommandBuffer(this->commandBuffers[frame],
+                             /*VkCommandBufferResetFlagBits*/ 0));
 
-  vkCmdBindPipeline(this->commandBuffers[frame], VK_PIPELINE_BIND_POINT_COMPUTE,
-                    this->pipelineData.pipeline);
+    // begin command buffer
+    validate_vk_result(
+        vkBeginCommandBuffer(this->commandBuffers[frame], &computeBeginInfo));
 
-  vkCmdBindDescriptorSets(this->commandBuffers[frame],
-                          VK_PIPELINE_BIND_POINT_COMPUTE,
-                          this->pipelineData.pipelineLayout, 0, 1,
-                          &this->pipelineData.descriptorSet, 0, nullptr);
+    vkCmdBindPipeline(this->commandBuffers[frame],
+                      VK_PIPELINE_BIND_POINT_COMPUTE,
+                      this->pipelineData.pipeline);
 
-  vkCmdDispatch(this->commandBuffers[frame],
-                (static_cast<uint32_t>(this->model->vertexCount) / 256) + 1, 1,
-                1);
+    vkCmdBindDescriptorSets(this->commandBuffers[frame],
+                            VK_PIPELINE_BIND_POINT_COMPUTE,
+                            this->pipelineData.pipelineLayout, 0, 1,
+                            &this->pipelineData.descriptorSet, 0, nullptr);
 
-  // end compute command buffer
-  validate_vk_result(vkEndCommandBuffer(this->commandBuffers[frame]));
+    vkCmdDispatch(this->commandBuffers[frame],
+                  (static_cast<uint32_t>(this->model->vertexCount) / 256) + 1,
+                  1, 1);
 
+    // end compute command buffer
+    validate_vk_result(vkEndCommandBuffer(this->commandBuffers[frame]));
+  }
+
+  return this->commandBuffers[frame];
+}
+
+VkCommandBuffer ComputeVertex::GetRecordedCommandBuffer(int frame) {
   return this->commandBuffers[frame];
 }
 
@@ -880,10 +885,14 @@ void ComputeVertex::UpdateBoneBuffer() {
 }
 
 void ComputeVertex::UpdateTransformMatrixBuffer(
-    Utilities_UI::TransformMatrices *pTransformMatrices) {
+    Utilities_UI::TransformMatrices *pTransformMatrices, bool update) {
   // this->transformMatrices = *pTransformMatrices;
-  this->transformMatrixBuffer.copyTo(pTransformMatrices,
-                                     sizeof(Utilities_UI::TransformMatrices));
+  if (update) {
+    std::cout << "\nupdating compute vertex transform matrix buffer"
+              << std::endl;
+    this->transformMatrixBuffer.copyTo(pTransformMatrices,
+                                       sizeof(Utilities_UI::TransformMatrices));
+  }
 }
 
 gtp::Buffer *ComputeVertex::GetBoneBuffer() { return &this->boneBuffer; }

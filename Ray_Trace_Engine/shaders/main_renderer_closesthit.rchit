@@ -92,16 +92,19 @@ void main() {
     vec4 color = vec4(1.0f);
 
     // Assign texture color if geometry node has texture
-    //if (geometryNode.textureIndexBaseColor > -1) {
-    //    color = texture(textures[nonuniformEXT(geometryNode.textureIndexBaseColor)], tri.uv);
-    //    // Set semi-transparency flag according to base color alpha
-    //    if (color.a < 1.0f) {
-    //        rayPayload.semiTransparentFlag = 1;
-    //    }
-    //} else {
+    if (geometryNode.textureIndexBaseColor > -1) {
+        color = texture(textures[nonuniformEXT(geometryNode.textureIndexBaseColor)], tri.uv);
+        // Set semi-transparency flag according to base color alpha
+        if (color.a < 1.0f) {
+            rayPayload.semiTransparentFlag = 1;
+        }
+    } else {
         // Assign vertex color to color if no texture
-        color = vec4(tri.color.rgb, 1.0f);
-    //}
+        color = vec4(tri.color);
+        if (color.a < 1.0f) {
+            rayPayload.semiTransparentFlag = 1;
+        }
+    }
 
     // Assign occlusion color map if model has one -- currently unused?
     if (geometryNode.textureIndexOcclusion > -1) {
@@ -112,15 +115,15 @@ void main() {
     // Distance used by reflection
     rayPayload.distance = gl_RayTmaxEXT;
 
-    // Use normal map texture if available
-    if (geometryNode.textureIndexNormal > -1) {
-        vec3 normalSample = texture(textures[nonuniformEXT(geometryNode.textureIndexNormal)], tri.uv).rgb;
-        // Convert from [0, 1] to [-1, 1]
-        rayPayload.normal = normalize((normalSample * 2.0f - 1.0f) + tri.normal.xyz);
-    } else {
+    //// Use normal map texture if available
+    //if (geometryNode.textureIndexNormal > -1) {
+    //    vec3 normalSample = texture(textures[nonuniformEXT(geometryNode.textureIndexNormal)], tri.uv).rgb;
+    //    // Convert from [0, 1] to [-1, 1]
+    //    rayPayload.normal = normalize((normalSample * 2.0f - 1.0f));
+    //} else {
         // Assign ray payload normal from tri
-        rayPayload.normal = normalize(tri.normal.xyz);
-    }
+        rayPayload.normal = tri.normal.xyz;
+    //}
 
     // Assign ray payload color
     rayPayload.color = color.rgb;
@@ -158,7 +161,7 @@ void main() {
 
     // Trace shadow ray and offset indices to match shadow hit/miss shader group indices
     traceRayEXT(topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT | gl_RayFlagsSkipClosestHitShaderEXT,
-        0xFF, 0, 0, 1, origin, tmin, shadowLightVector, tmax, 2);
+        0xFF, 0, 0, 1, origin, tmin, shadowLightVector, tmax, 0);
 
     // Blend shadow
     if (shadowed) {

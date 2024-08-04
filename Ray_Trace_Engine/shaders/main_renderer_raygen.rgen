@@ -44,11 +44,11 @@ void main(){
 				vec3 hitValues = vec3(0.0f);
 
 		    // Initialize payload
-		    rayPayload.accumulatedColor = vec4(vec3(0.0f),1.0f);
-		    rayPayload.accumulatedAlpha = 1.0f;
-		    rayPayload.distance = 1.0f;
-		    rayPayload.reflector = 1.0f;
-		    rayPayload.normal = vec3(1.0f);
+		    rayPayload.accumulatedColor = vec4(0.0f);
+		    rayPayload.accumulatedAlpha = 0.0f;
+		    rayPayload.distance = 0.0f;
+		    rayPayload.reflector = 0.0f;
+		    rayPayload.normal = vec3(0.0f);
 				//rayPayload.colorID = 0.0f;
 				bool isColorIDImageStored = false;
 

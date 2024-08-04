@@ -1,8 +1,7 @@
 #version 450
 
 #extension GL_EXT_debug_printf : enable
-
-#define MAX_GEOMETRY 100
+#extension GL_EXT_nonuniform_qualifier : require
 
 //workgroup size
 layout(local_size_x = 256) in;
@@ -27,15 +26,15 @@ struct TransformMatrices{
     mat4 scale;
 };
 
-// Define storage buffer layout for input vertices and joint data
-layout(std140, binding = 0) buffer InputSSBO {
+//model vertex buffer
+layout(std140, binding = 0) buffer ModelVertexBufferWrite {
     Vtx vtx[];
-}inputSSBO;
+}modelVertexBufferWrite;
 
 // Define storage buffer layout for output vertices
-layout(std140, binding = 1) buffer OutputSSBOData {
+layout(std140, binding = 1) buffer LocalVertexBufferRead {
     Vtx vtx[];
-}outputSSBO;
+}localVertexBufferRead;
 
 // Define storage buffer layout for transform matrices
 layout(std140, binding = 2) buffer TransformSSBOData {
@@ -43,16 +42,16 @@ layout(std140, binding = 2) buffer TransformSSBOData {
 }transformSSBO;
 
 struct GeometryData{
-    int textureIndexBaseColor;
-    int textureIndexOcclusion;
-    int textureIndexMetallicRoughness;
-    int textureIndexNormal;
-    int firstVertex;
-    int vertexCount;
+    double textureIndexBaseColor;
+    double textureIndexOcclusion;
+    double textureIndexMetallicRoughness;
+    double textureIndexNormal;
+    double firstVertex;
+    double vertexCount;
 };
 
 layout(std140, binding = 3) buffer UBO {
-   GeometryData geometryData[MAX_GEOMETRY];
+   GeometryData geometryData[];
 }ubo;
 
 layout(binding = 4, set = 0) uniform sampler2D textures[];
@@ -65,12 +64,23 @@ void main() {
     uint vID = gl_GlobalInvocationID.x;
 
     //break if index > vertex buffer length
-    if (vID > inputSSBO.vtx.length()) {
+    if (vID > localVertexBufferRead.vtx.length()) {
         return;
+    }
+        //index for textureIndexBaseColor
+    int geometryID = -1;
+
+    for(int i = 0; i < ubo.geometryData.length(); i++){
+        if(ubo.geometryData[i].firstVertex <= vID){
+            geometryID = i;
+        }
+        else{
+            break;
+        }
     }
 
     //declare vertex struct variable and assign value from vertex buffer
-    Vtx v = outputSSBO.vtx[vID];
+    Vtx v = localVertexBufferRead.vtx[vID];
 
     //position
     vec4 newPosition = vec4(v.position.xyz, 1.0f);
@@ -78,15 +88,33 @@ void main() {
     v.position = vec4(newPosition.x, newPosition.y, newPosition.z, 1.0f);
 
     //normal
-    v.normal = normalize(transformSSBO.transformMatrices.rotate * v.normal);
+    int normalColorID = int(ubo.geometryData[geometryID].textureIndexNormal);
     
+    if(normalColorID != - 1){
+        vec4 normalColor = texture(textures[normalColorID], v.uv);
+        vec4 calculateNormal = normalize(normalColor * 2.0f - 1.0f);
+        v.normal = normalize(transformSSBO.transformMatrices.rotate * calculateNormal);
+    }
+    
+    else{
+            v.normal = normalize(transformSSBO.transformMatrices.rotate * v.normal);
+    }
+
+    //color
+    int diffuseColorID = int(ubo.geometryData[geometryID].textureIndexBaseColor);
+
+    if(diffuseColorID != -1){
+        vec4 texColor = texture(textures[diffuseColorID], v.uv);
+        v.inColor = texColor;
+    }
+
     //tangent
     float w = v.tangent.w;
     v.tangent = normalize((vec4(v.tangent.xyz, 1.0f)));
     v.tangent.w = w;
     
     //assign declared vertex variable data to vertex
-    inputSSBO.vtx[vID] = v;
+    modelVertexBufferWrite.vtx[vID] = v;
 
 
 }

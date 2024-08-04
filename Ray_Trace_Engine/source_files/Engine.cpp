@@ -334,7 +334,6 @@ void Engine::Draw() {
         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT};
 
     //  compute submit info
-
     std::vector<VkSemaphore> computeSemaphores = {
         this->ComputeSemaphore(currentFrame)};
 
@@ -391,7 +390,7 @@ void Engine::Draw() {
         deltaTime, timer, this->UI.rendererData.lightPosition);
 
     for (int i = 0; i < this->UI.modelData.updateBLAS.size(); i++) {
-      this->UI.modelData.updateBLAS[i] = false;
+      this->renderers.defaultRenderer->pModelData()->updateBLAS[i] = false;
     }
 
     /*----------------------------------*/
