@@ -88,50 +88,45 @@ void main() {
     // Set ray payload color ID data
     rayPayload.colorID = vec4(vec3(geometryNode.objectColorID), 1.0f);
 
+        // Assign ray payload index
+    rayPayload.index = float(gl_InstanceCustomIndexEXT);
+
+    /* Color Assignment */
+
     // Default color
     vec4 color = vec4(1.0f);
 
     // Assign texture color if geometry node has texture
     if (geometryNode.textureIndexBaseColor > -1) {
         color = texture(textures[nonuniformEXT(geometryNode.textureIndexBaseColor)], tri.uv);
-        // Set semi-transparency flag according to base color alpha
-        if (color.a < 1.0f) {
-            rayPayload.semiTransparentFlag = 1;
-        }
     } else {
         // Assign vertex color to color if no texture
         color = vec4(tri.color);
-        if (color.a < 1.0f) {
-            rayPayload.semiTransparentFlag = 1;
-        }
     }
 
-    // Assign occlusion color map if model has one -- currently unused?
+    //set semi transparent flag according to color alpha
+    if (color.a < 1.0f) {
+        rayPayload.semiTransparentFlag = 1;
+    }
+
+    //multiply color by occlusion color map if model has one
     if (geometryNode.textureIndexOcclusion > -1) {
         float occlusion = texture(textures[nonuniformEXT(geometryNode.textureIndexOcclusion)], tri.uv).r;
         color *= occlusion;
     }
 
-    // Distance used by reflection
-    rayPayload.distance = gl_RayTmaxEXT;
-
-    //// Use normal map texture if available
-    //if (geometryNode.textureIndexNormal > -1) {
-    //    vec3 normalSample = texture(textures[nonuniformEXT(geometryNode.textureIndexNormal)], tri.uv).rgb;
-    //    // Convert from [0, 1] to [-1, 1]
-    //    rayPayload.normal = normalize((normalSample * 2.0f - 1.0f));
-    //} else {
-        // Assign ray payload normal from tri
-        rayPayload.normal = tri.normal.xyz;
-    //}
-
-    // Assign ray payload color
+    //assign ray payload color
     rayPayload.color = color.rgb;
 
-    // Assign ray payload index - referred to in ray gen?
-    rayPayload.index = float(gl_InstanceCustomIndexEXT);
+    /* Distance, Normals, */
+    //distance used by reflection
+    rayPayload.distance = gl_RayTmaxEXT;
 
-    /* LIGHTING */
+    //normal calculations are handled in compute_vertex class
+    //initialize rayPayload.normal with them
+    rayPayload.normal = tri.normal.xyz;
+
+    /* Lighting Calculations */
     // Sky color
     vec3 skyColor = texture(cubemapTexture, rayPayload.normal.xyz).rgb;
     vec3 tempSpecColor = mix(rayPayload.color.rgb, skyColor, 0.5f);
@@ -144,16 +139,14 @@ void main() {
 
     rayPayload.color = blinnPhong(lightingNormal, lightDir, viewDir, rayPayload.color.rgb, rayPayload.color.rgb, tempSpecColor);
 
-    //rayPayload.color = mix(rayPayload.color, skyColor, 0.05f);
-
-    /* SHADOW CASTING */
+    /* Shadow Casting */
     float tmin = 0.001;
     float tmax = 10000.0;
     float epsilon = 0.001;
     vec3 origin = gl_WorldRayOriginEXT + gl_WorldRayDirectionEXT * gl_HitTEXT + rayPayload.normal.xyz * epsilon;
     shadowed = true;
 
-    // Objects with full white vertex color are treated as reflectors
+    //full white color /either from texture or vertex (although vertex color is nfg at the moment) = reflections
     rayPayload.reflector = ((color.r == 1.0f) && (color.g == 1.0f) && (color.b == 1.0f)) ? 1.0f : 0.0f;
 
     // Shadow trace rays light vector
@@ -161,7 +154,7 @@ void main() {
 
     // Trace shadow ray and offset indices to match shadow hit/miss shader group indices
     traceRayEXT(topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT | gl_RayFlagsSkipClosestHitShaderEXT,
-        0xFF, 0, 0, 1, origin, tmin, shadowLightVector, tmax, 0);
+        0xFF, 0, 0, 1, origin, tmin, shadowLightVector, tmax, 2);
 
     // Blend shadow
     if (shadowed) {
