@@ -84,7 +84,8 @@ void CoreUI::HeaderMenu_Load() {
       if (ImGuiFileDialog::Instance()->IsOk()) {
         this->loadMenuData.loadFilePath =
             ImGuiFileDialog::Instance()->GetFilePathName();
-        std::cout << "load file path: " << this->loadMenuData.loadFilePath
+      this->rendererData.loadPlayer = true;
+      std::cout << "load file path: " << this->loadMenuData.loadFilePath
                   << '\n';
       }
 
@@ -1339,6 +1340,11 @@ void CoreUI::SetModelData(const Utilities_UI::ModelData *pModelData) {
   for (int i = 0; i < this->modelData.modelName.size(); i++) {
     std::cout << "\t" << this->modelData.modelName[i] << std::endl;
   }
+}
+
+std::string CoreUI::GetPlayerCharacterLoadFilepath()
+{
+  return this->loadMenuData.loadFilePath;
 }
 
 void CoreUI::DestroyUI() {

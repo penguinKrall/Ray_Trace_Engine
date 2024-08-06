@@ -17,8 +17,8 @@ VkResult Engine::InitEngine() {
   //// init xy pos
   // this->inputPosition.InitializeMousePosition(800.0f, 600.0f);
 
-  auto uniqueCharacterPtr = std::make_unique<gtp::Player>(this->pEngineCore);
-  this->beings.playerCharacter = uniqueCharacterPtr.release();
+  // auto uniqueCharacterPtr = std::make_unique<gtp::Player>(this->pEngineCore);
+  // this->players.playerCharacter = uniqueCharacterPtr.release();
 
   // init ui
   this->InitUI();
@@ -61,12 +61,12 @@ VkResult Engine::InitEngine() {
   this->HandleResize();
 
   //// Load the model file path from a custom location
-  // beings.playerCharacter->LoadModelFilePath(
+  // players.playerCharacter->LoadModelFilePath(
   //     Utilities_EngCore::BuildPath("character_save/hiElIloveyou.json"));
   //
   //// Save the model file path to a custom location
-  // beings.playerCharacter->modelFilePath = "updatedModel.obj";
-  // beings.playerCharacter->SaveModelFilePath(
+  // players.playerCharacter->modelFilePath = "updatedModel.obj";
+  // players.playerCharacter->SaveModelFilePath(
   //     Utilities_EngCore::BuildPath("character_save/hiElIloveyou.json"));
 
   return VK_SUCCESS;
@@ -183,6 +183,18 @@ void Engine::RetrieveColorID() {
 }
 
 void Engine::LoadModel() {
+
+  if (this->UI.rendererData.loadPlayer && !this->players.playerLoaded) {
+    auto uniqueCharacterPtr = std::make_unique<gtp::Player>(this->pEngineCore);
+    this->players.playerCharacter = uniqueCharacterPtr.release();
+    this->players.playerCharacter->LoadModelFilePath(
+        this->UI.GetPlayerCharacterLoadFilepath());
+    std::cout << "player character model file path: "
+              << this->players.playerCharacter->modelFilePath << std::endl;
+    this->players.playerLoaded = true;
+    this->UI.rendererData.loadPlayer = false;
+  }
+
   // continue if ui load model is true
   if (this->UI.modelData.loadModel) {
     // set main renderer model data to ui model data

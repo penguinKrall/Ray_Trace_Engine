@@ -29,10 +29,11 @@ private:
 
   // -- beings
   struct Players {
+    bool playerLoaded = false;
     gtp::Player *playerCharacter = nullptr;
   };
 
-  Players beings{};
+  Players players{};
 
   // Loading Screen
   gtp::LoadingScreen loadingScreen;

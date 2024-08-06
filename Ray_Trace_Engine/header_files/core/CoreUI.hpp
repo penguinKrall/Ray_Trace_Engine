@@ -188,6 +188,9 @@ public:
   // -- set model data
   void SetModelData(const Utilities_UI::ModelData *pModelData);
 
+  // -- get load character file path
+  std::string GetPlayerCharacterLoadFilepath();
+
   // -- destroy ui
   void DestroyUI();
 };

@@ -60,6 +60,7 @@ public:
   };
 
   struct RenderData {
+    bool loadPlayer = false;
     bool showColorImage = true;
     bool showIDImage = false;
     glm::vec4 lightPosition = glm::vec4(0.0f);
