@@ -17,18 +17,25 @@ void CoreUI::HeaderMenu() {
   // drop down menu bar
   if (ImGui::BeginMenuBar()) {
     if (ImGui::BeginMenu("File", true)) {
+      if (ImGui::MenuItem("Save Character", "")) {
+        this->saveMenuData.saveOpen = true;
+      }
+      if (ImGui::MenuItem("Load Character", "")) {
+        this->loadMenuData.loadOpen = true;
+      }
       if (ImGui::MenuItem("Exit", "")) {
         glfwSetWindowShouldClose(pEngineCore->CoreGLFWwindow(), true);
-      }
-      if (ImGui::MenuItem("Save", "")) {
-        this->saveOpen = true;
       }
       ImGui::EndMenu();
     }
 
-    if (this->saveOpen) {
-      this->HeaderMenu_Save();
-    }
+    // if (this->saveMenuData.saveOpen) {
+    this->HeaderMenu_Save();
+    //}
+
+    // if (this->loadMenuData.loadOpen) {
+    this->HeaderMenu_Load();
+    //}
 
     // render text - frame rate
     ImGui::Text("framerate: %.3f ms/frame (%.1f FPS)",
@@ -43,25 +50,49 @@ void CoreUI::HeaderMenu() {
 }
 
 void CoreUI::HeaderMenu_Save() {
+  if (this->saveMenuData.saveOpen) {
+    IGFD::FileDialogConfig config;
+    config.path = ".";
+    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Save File",
+                                            ".json", config);
 
-  IGFD::FileDialogConfig config;
-  config.path = ".";
-  ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Save File",
-                                          ".json", config);
+    // choose file window
+    if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey")) {
+      if (ImGuiFileDialog::Instance()->IsOk()) {
+        this->saveMenuData.saveFilePath =
+            ImGuiFileDialog::Instance()->GetFilePathName();
+        std::cout << "saved file path: " << this->saveMenuData.saveFilePath
+                  << '\n';
+      }
 
-  // choose file window
-  if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey")) {
-    if (ImGuiFileDialog::Instance()->IsOk()) {
-      std::cout << "saved file path: "
-                << ImGuiFileDialog::Instance()->GetFilePathName() << '\n';
+      // close
+      this->saveMenuData.saveOpen = false;
+      ImGuiFileDialog::Instance()->Close();
     }
-
-    // close
-    this->saveOpen = false;
-    ImGuiFileDialog::Instance()->Close();
-
   }
+}
 
+void CoreUI::HeaderMenu_Load() {
+  if (this->loadMenuData.loadOpen) {
+    IGFD::FileDialogConfig config;
+    config.path = ".";
+    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Load Player",
+                                            ".json", config);
+
+    // choose file window
+    if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey")) {
+      if (ImGuiFileDialog::Instance()->IsOk()) {
+        this->loadMenuData.loadFilePath =
+            ImGuiFileDialog::Instance()->GetFilePathName();
+        std::cout << "load file path: " << this->loadMenuData.loadFilePath
+                  << '\n';
+      }
+
+      // close
+      this->loadMenuData.loadOpen = false;
+      ImGuiFileDialog::Instance()->Close();
+    }
+  }
 }
 
 CoreUI::CoreUI() {}

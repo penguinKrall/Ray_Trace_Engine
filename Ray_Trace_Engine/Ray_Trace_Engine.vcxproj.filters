@@ -61,7 +61,7 @@
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Utilities_UI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\being\Being.cpp">
+    <ClCompile Include="source_files\being\Player.cpp">
       <Filter>Being</Filter>
     </ClCompile>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\core\Camera.cpp">
@@ -189,7 +189,7 @@
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Utilities_UI.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\being\Being.hpp">
+    <ClInclude Include="header_files\being\Player.hpp">
       <Filter>Being</Filter>
     </ClInclude>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\core\Camera.hpp">
@@ -276,30 +276,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\shaders\ui_vertex.vert">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\..\..\vulkan_raytracing\vulkan_raytracing\shaders\gltf_reflections\gltf_reflections_bufferreferences.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\..\..\vulkan_raytracing\vulkan_raytracing\shaders\gltf_reflections\gltf_reflections_geometrytypes.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\..\..\vulkan_raytracing\vulkan_raytracing\shaders\gltf_reflections\gltf_reflections_anyhit.rahit">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\..\..\vulkan_raytracing\vulkan_raytracing\shaders\gltf_reflections\gltf_reflections_closesthit.rchit">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\..\..\vulkan_raytracing\vulkan_raytracing\shaders\gltf_reflections\gltf_reflections_miss.rmiss">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\..\..\vulkan_raytracing\vulkan_raytracing\shaders\gltf_reflections\gltf_reflections_random.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\..\..\vulkan_raytracing\vulkan_raytracing\shaders\gltf_reflections\gltf_reflections_raygen.rgen">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\..\..\vulkan_raytracing\vulkan_raytracing\shaders\gltf_reflections\gltf_reflections_shadow.rmiss">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

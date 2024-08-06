@@ -1,18 +1,17 @@
 #pragma once
 
 #include <CoreUI.hpp>
-#include <EngineCore.hpp>
-#include <Being.hpp>
 #include <DefaultRenderer.hpp>
-#include <LoadingScreen.hpp>
+#include <EngineCore.hpp>
 #include <Input.hpp>
+#include <LoadingScreen.hpp>
+#include <Player.hpp>
 namespace gtp {
 
 // -- engine
 //@brief contains core objects and renderers
 class Engine : private EngineCore {
 private:
-
   uint32_t currentFrame = 0;
 
   float deltaTime = 0.0f;
@@ -20,24 +19,20 @@ private:
   float timer = 0.0f;
 
   // -- input class
-  gtp::Input* pInput = nullptr;
-
-  // mouse clicked on window
-  //bool isLMBPressed = false;
+  gtp::Input *pInput = nullptr;
 
   // -- renderers
   struct Renderers {
-    // MainRenderer mainRenderer;
     DefaultRenderer *defaultRenderer = nullptr;
   };
   Renderers renderers{};
 
   // -- beings
-  struct Beings {
-    gtp::Being *character = nullptr;
+  struct Players {
+    gtp::Player *playerCharacter = nullptr;
   };
 
-  Beings beings{};
+  Players beings{};
 
   // Loading Screen
   gtp::LoadingScreen loadingScreen;

@@ -16,9 +16,21 @@ private:
   };
   RenderDimensions renderDimensions{};
 
-  bool saveOpen = false;
+  struct SaveMenuData {
+    bool saveOpen = false;
+    std::string saveFilePath = "none";
+  };
+  SaveMenuData saveMenuData{};
+
+  struct LoadMenuData {
+    bool loadOpen = false;
+    std::string loadFilePath = "none";
+  };
+  LoadMenuData loadMenuData{};
+
   void HeaderMenu();
   void HeaderMenu_Save();
+  void HeaderMenu_Load();
 
 public:
   // -- core pointer

@@ -17,8 +17,8 @@ VkResult Engine::InitEngine() {
   //// init xy pos
   // this->inputPosition.InitializeMousePosition(800.0f, 600.0f);
 
-  auto uniqueCharacterPtr = std::make_unique<gtp::Being>(this->pEngineCore);
-  this->beings.character = uniqueCharacterPtr.release();
+  auto uniqueCharacterPtr = std::make_unique<gtp::Player>(this->pEngineCore);
+  this->beings.playerCharacter = uniqueCharacterPtr.release();
 
   // init ui
   this->InitUI();
@@ -60,14 +60,14 @@ VkResult Engine::InitEngine() {
   this->camera->framebufferResized = true;
   this->HandleResize();
 
-  // Load the model file path from a custom location
-  beings.character->LoadModelFilePath(
-      Utilities_EngCore::BuildPath("character_save/model_path.json"));
-
-  // Save the model file path to a custom location
-  beings.character->modelFilePath = "updatedModel.obj";
-  beings.character->SaveModelFilePath(
-      Utilities_EngCore::BuildPath("character_save/model_path.json"));
+  //// Load the model file path from a custom location
+  // beings.playerCharacter->LoadModelFilePath(
+  //     Utilities_EngCore::BuildPath("character_save/hiElIloveyou.json"));
+  //
+  //// Save the model file path to a custom location
+  // beings.playerCharacter->modelFilePath = "updatedModel.obj";
+  // beings.playerCharacter->SaveModelFilePath(
+  //     Utilities_EngCore::BuildPath("character_save/hiElIloveyou.json"));
 
   return VK_SUCCESS;
 }

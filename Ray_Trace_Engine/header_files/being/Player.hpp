@@ -7,7 +7,7 @@ using json = nlohmann::json;
 
 namespace gtp {
 
-class Being {
+class Player {
 private:
   // core pointer
   EngineCore *pEngineCore = nullptr;
@@ -18,8 +18,7 @@ private:
   // positiion for character model
   glm::vec4 characterPosition = glm::vec4(0.0f);
 
-  void CreateBeing(std::string filePath);
-
+  void CreatePlayer(std::string filePath);
 
 public:
   std::string modelFilePath = "none";
@@ -29,10 +28,10 @@ public:
   // load modelFilePath from a JSON file
   void LoadModelFilePath(const std::string &filename);
   // default constructor
-  explicit Being();
+  explicit Player();
 
   // create constructor
-  explicit Being(EngineCore *engineCorePtr = nullptr);
+  explicit Player(EngineCore *engineCorePtr = nullptr);
 };
 
 } // namespace gtp

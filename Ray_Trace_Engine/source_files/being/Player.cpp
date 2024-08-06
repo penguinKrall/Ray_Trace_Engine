@@ -1,10 +1,10 @@
-#include "Being.hpp"
+#include "Player.hpp"
 
-void gtp::Being::CreateBeing(std::string filePath) {
+void gtp::Player::CreatePlayer(std::string filePath) {
   this->modelFilePath = filePath;
 }
 
-void gtp::Being::SaveModelFilePath(const std::string &filename) const {
+void gtp::Player::SaveModelFilePath(const std::string &filename) const {
   json j;
   j["modelFilePath"] = modelFilePath;
 
@@ -19,7 +19,7 @@ void gtp::Being::SaveModelFilePath(const std::string &filename) const {
   }
 }
 
-void gtp::Being::LoadModelFilePath(const std::string &filename) {
+void gtp::Player::LoadModelFilePath(const std::string &filename) {
   std::ifstream file(filename);
   if (file.is_open()) {
     json j;
@@ -36,6 +36,6 @@ void gtp::Being::LoadModelFilePath(const std::string &filename) {
   }
 }
 
-gtp::Being::Being() {}
+gtp::Player::Player() {}
 
-gtp::Being::Being(EngineCore *engineCorePtr) : pEngineCore(engineCorePtr) {}
+gtp::Player::Player(EngineCore *engineCorePtr) : pEngineCore(engineCorePtr) {}
