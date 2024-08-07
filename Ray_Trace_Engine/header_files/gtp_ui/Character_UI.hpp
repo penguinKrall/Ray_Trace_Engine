@@ -21,7 +21,10 @@ private:
 
   struct CreateMenuData {
     bool createOpen = false;
+    char input_text[128] = " ";
     std::string modelFilePath = "none";
+    std::string characterSavePath = "none";
+    std::string characterName = "none";
   };
   CreateMenuData createMenuData{};
 
@@ -34,7 +37,7 @@ public:
   std::string GetLoadPath();
   bool GetLoadCharacterFlag();
 
-  void CreateCharacter();
+  // void CreateCharacter();
 
   // -- save menu for character dropdown selection
   void HandleSave();
@@ -44,6 +47,5 @@ public:
 
   // -- handle create
   void HandleCreate();
-
 };
 } // namespace gtp
