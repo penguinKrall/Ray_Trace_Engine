@@ -25,6 +25,11 @@ void CoreUI::HeaderMenu() {
         // this->loadMenuData.loadOpen = true;
         this->characterUI.SetLoadOpenFlag(true);
       }
+
+      if (ImGui::MenuItem("Create Character", "")) {
+        this->characterUI.SetCreateOpenFlag(true);
+      }
+
       if (ImGui::MenuItem("Exit", "")) {
         glfwSetWindowShouldClose(pEngineCore->CoreGLFWwindow(), true);
       }
@@ -38,6 +43,8 @@ void CoreUI::HeaderMenu() {
     this->characterUI.HandleLoad();
     this->rendererData.loadPlayer = this->characterUI.GetLoadCharacterFlag();
     //}
+
+    this->characterUI.HandleCreate();
 
     // render text - frame rate
     ImGui::Text("framerate: %.3f ms/frame (%.1f FPS)",
@@ -1062,9 +1069,6 @@ void CoreUI::Input(Utilities_UI::ModelData *pModelData) {
             !this->modelData.isAnimated[pModelData->modelIndex];
         this->modelData.isUpdated = true;
       }
-
-      // ImGui::Checkbox("Animate",
-      //                 &this->modelData.isAnimated[pModelData->modelIndex].);
 
       // select animation
       if (ImGui::BeginCombo(

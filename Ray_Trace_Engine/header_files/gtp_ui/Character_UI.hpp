@@ -19,19 +19,31 @@ private:
   };
   LoadMenuData loadMenuData{};
 
+  struct CreateMenuData {
+    bool createOpen = false;
+    std::string modelFilePath = "none";
+  };
+  CreateMenuData createMenuData{};
+
 public:
   explicit Character_UI();
 
   void SetSaveOpenFlag(bool saveOpenFlag);
   void SetLoadOpenFlag(bool loadOpenFlag);
+  void SetCreateOpenFlag(bool createOpenFlag);
   std::string GetLoadPath();
   bool GetLoadCharacterFlag();
+
+  void CreateCharacter();
 
   // -- save menu for character dropdown selection
   void HandleSave();
 
   // -- load menu
   void HandleLoad();
+
+  // -- handle create
+  void HandleCreate();
 
 };
 } // namespace gtp

@@ -1392,11 +1392,11 @@ std::vector<VkCommandBuffer> gtp::RenderBase::RecordCompute(int frame) {
   // -- iterate through compute classes
   for (auto &vertexCompute : this->assets.gltfCompute) {
     if (vertexCompute != nullptr) {
-      //update transform matrix buffer
+      // update transform matrix buffer
       vertexCompute->UpdateTransformMatrixBuffer(
           &this->assets.modelData.transformMatrices[modelIdx],
           this->assets.modelData.updateBLAS[modelIdx]);
-      //record compute commands
+      // record compute commands
       computeBuffers.push_back(vertexCompute->RecordComputeCommands(
           frame, this->assets.modelData.updateBLAS[modelIdx]));
     }

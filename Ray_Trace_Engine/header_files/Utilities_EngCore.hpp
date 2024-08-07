@@ -37,14 +37,14 @@
 #include <unordered_map>
 #include <vector>
 
-#define validate_vk_result(f)                                         \
-  do {                                                                \
-    VkResult res = (f);                                               \
-    if (res != VK_SUCCESS) {                                          \
-      std::cout << "error! VkResult == " << res << " in " << __FILE__ \
-                << " at line " << __LINE__ << "\n";                   \
-      assert(res == VK_SUCCESS);                                      \
-    }                                                                 \
+#define validate_vk_result(f)                                                  \
+  do {                                                                         \
+    VkResult res = (f);                                                        \
+    if (res != VK_SUCCESS) {                                                   \
+      std::cout << "error! VkResult == " << res << " in " << __FILE__          \
+                << " at line " << __LINE__ << "\n";                            \
+      assert(res == VK_SUCCESS);                                               \
+    }                                                                          \
   } while (0)
 
 const int frame_draws = 3;
@@ -56,7 +56,7 @@ namespace gtp {
 // -- tools class --
 //@brief static functions used by all levels of program
 class Utilities_EngCore {
- public:
+public:
   // queue family indices
   struct QueueFamilyIndices {
     int graphics = -1;
@@ -78,17 +78,17 @@ class Utilities_EngCore {
   };
 
   // -- get working directory
-  static std::string BuildPath(const std::string& fileName);
+  static std::string BuildPath(const std::string &fileName);
 
-  static std::vector<std::string> ListFilesInDirectory(
-      const std::string& directory) {
+  static std::vector<std::string>
+  ListFilesInDirectory(const std::string &directory) {
     // list of files
     std::vector<std::string> fileList;
 
     // iterate through directory
     std::filesystem::path path(directory);
     if (std::filesystem::exists(path) && std::filesystem::is_directory(path)) {
-      for (const auto& entry : std::filesystem::directory_iterator(path)) {
+      for (const auto &entry : std::filesystem::directory_iterator(path)) {
         std::cout << "ListFilesInDirectory()_\n\tentry.path().string(): "
                   << entry.path().string() << std::endl;
         fileList.push_back(entry.path().string());
@@ -102,31 +102,27 @@ class Utilities_EngCore {
     return fileList;
   }
 
-  // -- create image
-  // static gtp::Utilities_EngCore::ImageData CreateImage(const std::string&
-  // fileName);
-
   // -- get queue family indices
-  static QueueFamilyIndices getQueueFamilyIndices(
-      VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+  static QueueFamilyIndices
+  getQueueFamilyIndices(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
 
   // -- validate queue family indices
   static bool validateQueueFamilyIndices(QueueFamilyIndices queueFamily);
 
   // -- output surface capabilities
   //@brief output surface capabilities data to console for debugging
-  static void outputSurfaceCapabilities(
-      const VkSurfaceCapabilitiesKHR& capabilities);
+  static void
+  outputSurfaceCapabilities(const VkSurfaceCapabilitiesKHR &capabilities);
 
   // -- physical device type to string
   //@brief output device data to console for debugging
   static std::string physicalDeviceTypeString(VkPhysicalDeviceType type);
-  static bool loadFunctionPointer(PFN_vkVoidFunction& functionPointer,
+  static bool loadFunctionPointer(PFN_vkVoidFunction &functionPointer,
                                   VkDevice logicalDevice,
-                                  const char* functionName);
-  static bool loadFunctionPointer(PFN_vkVoidFunction& functionPointer,
+                                  const char *functionName);
+  static bool loadFunctionPointer(PFN_vkVoidFunction &functionPointer,
                                   VkInstance instance,
-                                  const char* functionName);
+                                  const char *functionName);
 
   // -- set image layout
   //@brief create an image memory barrier for changing the layout of brief an
@@ -143,6 +139,8 @@ class Utilities_EngCore {
   // -- aligned size(size_t)
   static size_t alignedSize(size_t value, size_t alignment);
 
+  // copied this direct from sacha to make part of gltf model work when iw as
+  // being tired/lazy fix up to be uniform..
   struct VkInitializers {
     // -- descriptor set layout binding
     //@brief saves some space by returning an initialized struct of
@@ -150,11 +148,12 @@ class Utilities_EngCore {
     static VkDescriptorSetLayoutBinding descriptorSetLayoutBinding(
         uint32_t binding, VkDescriptorType descriptorType,
         uint32_t descriptorCount, VkShaderStageFlags stageFlags,
-        const VkSampler* pImmutableSamplers);
+        const VkSampler *pImmutableSamplers);
   };
 
   static void FlushCommandBuffer(VkDevice logicalDevice,
                                  VkCommandBuffer commandBuffer, VkQueue queue,
                                  VkCommandPool pool, bool free);
 };
-}  // namespace gtp
+
+} // namespace gtp

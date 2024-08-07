@@ -54,7 +54,7 @@ VkResult Engine::InitEngine() {
 
   // set imgui attributes for renderer
   ImGuiStyle &imguiStyle = ImGui::GetStyle();
-  imguiStyle.Colors[ImGuiCol_WindowBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.33f);
+  imguiStyle.Colors[ImGuiCol_WindowBg] = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
 
   // resize window
   this->camera->framebufferResized = true;
@@ -103,7 +103,6 @@ void Engine::Run() {
 
       // load new models
       this->QueryLoad();
-      // this->LoadModel();
 
       // delete model
       this->DeleteModel();
