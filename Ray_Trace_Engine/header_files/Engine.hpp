@@ -98,8 +98,14 @@ public:
   // -- retrieve color id from buffer
   void RetrieveColorID();
 
+  // -- load player
+  void LoadPlayer();
+
   // -- load new models
   void LoadModel();
+
+  // -- query load flags
+  void QueryLoad();
 
   // -- delete models
   void DeleteModel();

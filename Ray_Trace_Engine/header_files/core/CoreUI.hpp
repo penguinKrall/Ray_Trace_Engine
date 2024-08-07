@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Character_UI.hpp>
 #include <Utilities_UI.hpp>
 
 // -- class to contain ui data -- dear_imgui
@@ -16,21 +17,17 @@ private:
   };
   RenderDimensions renderDimensions{};
 
-  struct SaveMenuData {
-    bool saveOpen = false;
-    std::string saveFilePath = "none";
-  };
-  SaveMenuData saveMenuData{};
+  gtp::Character_UI characterUI;
 
-  struct LoadMenuData {
-    bool loadOpen = false;
-    std::string loadFilePath = "none";
-  };
-  LoadMenuData loadMenuData{};
+  //struct LoadMenuData {
+  //  bool loadOpen = false;
+  //  std::string loadFilePath = "none";
+  //};
+  //LoadMenuData loadMenuData{};
 
   void HeaderMenu();
-  void HeaderMenu_Save();
-  void HeaderMenu_Load();
+  //void HeaderMenu_Save();
+  //void HeaderMenu_Load();
 
 public:
   // -- core pointer

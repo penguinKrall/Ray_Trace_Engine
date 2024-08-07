@@ -61,7 +61,7 @@
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\Utilities_UI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source_files\being\Player.cpp">
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\being\Player.cpp">
       <Filter>Being</Filter>
     </ClCompile>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\core\Camera.cpp">
@@ -99,6 +99,9 @@
     </ClCompile>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\glTFModel.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\gtp_ui\Character_UI.cpp">
+      <Filter>gtp_ui</Filter>
     </ClCompile>
     <ClCompile Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\source_files\imguiFileDialogue\ImGuiFileDialog.cpp">
       <Filter>Source Files\dearImGui\ImGuiFileDialogue</Filter>
@@ -189,7 +192,7 @@
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\Utilities_UI.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="header_files\being\Player.hpp">
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\being\Player.hpp">
       <Filter>Being</Filter>
     </ClInclude>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\core\Camera.hpp">
@@ -224,6 +227,9 @@
     </ClInclude>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\glTFModel.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\gtp_ui\Character_UI.hpp">
+      <Filter>gtp_ui</Filter>
     </ClInclude>
     <ClInclude Include="C:\Users\akral\projects\Ray_Trace_Engine\Ray_Trace_Engine\header_files\json_hpp\json.hpp">
       <Filter>Header Files\json header</Filter>
@@ -312,6 +318,9 @@
     </Filter>
     <Filter Include="Source Files\dearImGui\ImGuiZMO">
       <UniqueIdentifier>{B80D4EC0-5BA8-392E-9012-31339C5B0653}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gtp_ui">
+      <UniqueIdentifier>{E492BBA7-E219-38F8-9ACA-F0B0C26B4050}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -102,7 +102,8 @@ void Engine::Run() {
       this->RetrieveColorID();
 
       // load new models
-      this->LoadModel();
+      this->QueryLoad();
+      // this->LoadModel();
 
       // delete model
       this->DeleteModel();
@@ -184,17 +185,6 @@ void Engine::RetrieveColorID() {
 
 void Engine::LoadModel() {
 
-  if (this->UI.rendererData.loadPlayer && !this->players.playerLoaded) {
-    auto uniqueCharacterPtr = std::make_unique<gtp::Player>(this->pEngineCore);
-    this->players.playerCharacter = uniqueCharacterPtr.release();
-    this->players.playerCharacter->LoadModelFilePath(
-        this->UI.GetPlayerCharacterLoadFilepath());
-    std::cout << "player character model file path: "
-              << this->players.playerCharacter->modelFilePath << std::endl;
-    this->players.playerLoaded = true;
-    this->UI.rendererData.loadPlayer = false;
-  }
-
   // continue if ui load model is true
   if (this->UI.modelData.loadModel) {
     // set main renderer model data to ui model data
@@ -238,6 +228,19 @@ void Engine::DeleteModel() {
   }
 }
 
+void Engine::LoadPlayer() {
+  if (this->UI.rendererData.loadPlayer && !this->players.playerLoaded) {
+    auto uniqueCharacterPtr = std::make_unique<gtp::Player>(this->pEngineCore);
+    this->players.playerCharacter = uniqueCharacterPtr.release();
+    this->players.playerCharacter->LoadModelFilePath(
+        this->UI.GetPlayerCharacterLoadFilepath());
+    std::cout << "player character model file path: "
+              << this->players.playerCharacter->modelFilePath << std::endl;
+    this->players.playerLoaded = true;
+    this->UI.rendererData.loadPlayer = false;
+  }
+}
+
 void Engine::UpdateRenderer() {
   if (this->UI.modelData.isUpdated) {
     // -- update renderer model data struct with ui
@@ -259,18 +262,25 @@ void Engine::HandleResize() {
     RecreateSyncObjects();
     // recreate swapchain, swapchain images/views
     RecreateCoreSwapchain();
-    // recreate god knows what
-    // renderers.mainRenderer.HandleResize();
     // default renderer resize
     this->renderers.defaultRenderer->Resize();
     // recreate ui framebuffers
     UI.RecreateFramebuffers();
-    // Flaggy McFlaggerson
+    // camera fb flag
     camera->framebufferResized = false;
     // ret
     return;
   }
   //}
+}
+
+void Engine::QueryLoad() {
+
+  //
+  this->LoadPlayer();
+
+  //
+  this->LoadModel();
 }
 
 void Engine::InitRenderers() {

@@ -22,11 +22,13 @@ private:
 
 public:
   std::string modelFilePath = "none";
+
   // save modelFilePath to a JSON file
   void SaveModelFilePath(const std::string &filename) const;
 
   // load modelFilePath from a JSON file
   void LoadModelFilePath(const std::string &filename);
+
   // default constructor
   explicit Player();
 

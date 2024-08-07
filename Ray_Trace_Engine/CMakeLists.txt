@@ -63,6 +63,10 @@ link_directories(source_files/core)
 include_directories(header_files/being)
 link_directories(source_files/being)
 
+# gtp ui Files
+include_directories(header_files/gtp_ui)
+link_directories(source_files/gtp_ui)
+
 # Vulkan
 include_directories(dependencies/VULKAN/Include)
 link_directories(dependencies/VULKAN/Lib)
@@ -131,7 +135,14 @@ file(GLOB BEING
     source_files/being/*.cpp
     header_files/being/*.hpp
 )
-# character files
+
+# core_ui files
+file(GLOB GTP_UI 
+    source_files/gtp_ui/*.cpp
+    header_files/gtp_ui/*.hpp
+)
+
+# core header files
 file(GLOB CORE_HEADERS
     header_files/core/*.hpp
 )
@@ -153,6 +164,8 @@ file(GLOB SOURCES
     source_files/*.cpp
     header_files/being/*.hpp
     source_files/being/*.cpp
+    header_files/gtp_ui/*.hpp
+    source_files/gtp_ui/*.cpp
     header_files/core/*.hpp
     source_files/core/*.cpp
     header_files/json_hpp/*.hpp
@@ -199,6 +212,7 @@ source_group("Source Files\\dearImGui\\ImGuiFileDialogue" FILES ${IMGUI_FILE_DIA
 source_group("Source Files\\GLTF" FILES ${GLTF_SOURCES})
 source_group("Shaders" FILES ${SHADERS_LIST})
 source_group("Being" FILES ${BEING})
+source_group("gtp_ui" FILES ${GTP_UI})
 source_group("Source Files" FILES ${SOURCE_FILES})
 source_group("Source Files\\Core" FILES ${CORE_SOURCES})
 source_group("Header Files" FILES ${HEADER_FILES})
