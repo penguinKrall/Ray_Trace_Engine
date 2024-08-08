@@ -233,7 +233,7 @@ void Engine::LoadPlayer() {
     this->players.playerCharacter = uniqueCharacterPtr.release();
     this->players.playerCharacter->LoadModelFilePath(
         this->UI.GetPlayerCharacterLoadFilepath());
-    std::cout << "player character model file path: "
+    std::cout << "engine.cpp _LoadPlayer()_ model file path: "
               << this->players.playerCharacter->modelFilePath << std::endl;
     this->players.playerLoaded = true;
     this->UI.rendererData.loadPlayer = false;
@@ -253,19 +253,16 @@ void Engine::CreatePlayerCharacter() {
     std::cout << "create character model file path: " << modelPath << std::endl;
 
     this->players.playerCharacter->CreatePlayer(savePath, modelPath);
-
+    this->players.playerCharacter->SaveModelFilePath(savePath);
     this->UI.SetPlayerCharacterCreateFlag(false);
+    this->LoadModel();
   }
 }
 
 void Engine::UpdateRenderer() {
   if (this->UI.modelData.isUpdated) {
     // -- update renderer model data struct with ui
-    // this->renderers.mainRenderer.SetModelData(&this->UI.modelData);
     this->renderers.defaultRenderer->ModelDataSet(&this->UI.modelData);
-    // this->renderers.mainRenderer.assets.modelData.isUpdated = false;
-    //  -- update ui data to updated renderer model data with updated flags
-    // this->UI.SetModelData(this->renderers.mainRenderer.GetModelData());
     this->UI.SetModelData(this->renderers.defaultRenderer->pModelData());
   }
 }
@@ -304,9 +301,9 @@ void Engine::QueryLoad() {
 }
 
 void Engine::InitRenderers() {
-  std::cout << "\ninitializing MainRenderer "
-               "class\n'''''''''''''''''''''''''''''''''''''''''''''''\n"
-            << std::endl;
+  // std::cout << "\ninitializing MainRenderer "
+  //              "class\n'''''''''''''''''''''''''''''''''''''''''''''''\n"
+  //           << std::endl;
 
   std::cout << "\ninitializing RenderBase "
                "class\n'''''''''''''''''''''''''''''''''''''''''''''''\n"

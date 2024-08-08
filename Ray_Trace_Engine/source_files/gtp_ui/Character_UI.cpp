@@ -132,11 +132,15 @@ void gtp::Character_UI::HandleCreate() {
 
     if (ImGui::Button("Save and Continue")) {
       std::filesystem::path current_path = std::filesystem::current_path();
-      std::string pathToCharacterSaveFolder = current_path.string();
-      this->createMenuData.characterSavePath = pathToCharacterSaveFolder;
-      std::cout << "this->createMenuData.characterSavePath: " << this->createMenuData.characterSavePath << std::endl;
-          // this->createMenuData.characterSavePath =
-          this->createMenuData.createReady = true;
+      std::string pathToCharacterSaveFolder =
+          current_path.string() + "/character_save/";
+      this->createMenuData.characterSavePath =
+          pathToCharacterSaveFolder + this->createMenuData.characterName +
+          ".json";
+      std::cout << "this->createMenuData.characterSavePath: "
+                << this->createMenuData.characterSavePath << std::endl;
+      // this->createMenuData.characterSavePath =
+      this->createMenuData.createReady = true;
     }
 
     /* end menu */

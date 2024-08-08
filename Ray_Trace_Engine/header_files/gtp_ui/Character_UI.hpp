@@ -22,7 +22,7 @@ private:
   struct CreateMenuData {
     bool createReady = false;
     bool createOpen = false;
-    char input_text[128] = " ";
+    char input_text[128] = "";
     std::string modelFilePath = "none";
     std::string characterSavePath = "none";
     std::string characterName = "none";
