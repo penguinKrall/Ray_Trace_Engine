@@ -189,14 +189,15 @@ void Engine::LoadModel(std::string newModelFilePath) {
     // set main renderer model data to ui model data
     this->renderers.defaultRenderer->ModelDataSet(&this->UI.modelData);
     // set file loading flags
-    gtp::FileLoadingFlags loadingFlags =
-        this->UI.loadModelFlags.flipY ? gtp::FileLoadingFlags::FlipY
-        : gtp::FileLoadingFlags::None |
-                this->UI.loadModelFlags.preMultiplyColors
-            ? gtp::FileLoadingFlags::PreMultiplyVertexColors
-        : gtp::FileLoadingFlags::None | this->UI.loadModelFlags.preTransform
-            ? gtp::FileLoadingFlags::PreTransformVertices
-            : gtp::FileLoadingFlags::None;
+    gtp::FileLoadingFlags loadingFlags = static_cast<gtp::FileLoadingFlags>(
+        (this->UI.loadModelFlags.flipY ? gtp::FileLoadingFlags::FlipY
+                                       : gtp::FileLoadingFlags::None) |
+        (this->UI.loadModelFlags.preMultiplyColors
+             ? gtp::FileLoadingFlags::PreMultiplyVertexColors
+             : gtp::FileLoadingFlags::None) |
+        (this->UI.loadModelFlags.preTransform
+             ? gtp::FileLoadingFlags::PreTransformVertices
+             : gtp::FileLoadingFlags::None));
 
     // handle renderer part of load model
     // this->renderers.mainRenderer.HandleLoadModel(loadingFlags);

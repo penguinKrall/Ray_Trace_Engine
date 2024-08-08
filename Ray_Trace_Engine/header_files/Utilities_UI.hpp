@@ -40,7 +40,7 @@ public:
 
     int modelIndex = 0;
 
-    std::string loadModelFilepath;
+    std::string loadModelFilepath = "none";
     std::vector<std::string> modelName;
     std::vector<TransformMatrices> transformMatrices{};
     std::vector<TransformValues> transformValues{};

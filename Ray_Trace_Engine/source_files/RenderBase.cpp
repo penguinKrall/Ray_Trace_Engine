@@ -800,116 +800,6 @@ void gtp::RenderBase::CreateDefaultCommandBuffers() {
   }
 }
 
-void gtp::RenderBase::RebuildCommandBuffers(int frame, bool showObjectColorID) {
-  // subresource range
-  VkImageSubresourceRange subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1,
-                                              0, 1};
-
-  VkStridedDeviceAddressRegionKHR emptySbtEntry{};
-
-  // dispatch the ray tracing commands
-  vkCmdBindPipeline(pEngineCore->commandBuffers.graphics[frame],
-                    VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
-                    pipelineData.pipeline);
-
-  vkCmdBindDescriptorSets(pEngineCore->commandBuffers.graphics[frame],
-                          VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
-                          pipelineData.pipelineLayout, 0, 1,
-                          &pipelineData.descriptorSet, 0, 0);
-
-  pEngineCore->coreExtensions->vkCmdTraceRaysKHR(
-      pEngineCore->commandBuffers.graphics[frame],
-      &this->tools.shaderBindingTableData.raygenStridedDeviceAddressRegion,
-      &this->tools.shaderBindingTableData.missStridedDeviceAddressRegion,
-      &this->tools.shaderBindingTableData.hitStridedDeviceAddressRegion,
-      &emptySbtEntry, pEngineCore->swapchainData.swapchainExtent2D.width,
-      pEngineCore->swapchainData.swapchainExtent2D.height, 1);
-
-  // copy ray tracing output to swap chain image
-  // prepare current swap chain image as transfer destination
-  gtp::Utilities_EngCore::setImageLayout(
-      pEngineCore->commandBuffers.graphics[frame],
-      pEngineCore->swapchainData.swapchainImages.image[frame],
-      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-      subresourceRange);
-
-  ////std::cout << "test"<< std::endl;
-  // prepare ray tracing output image as transfer source
-
-  if (!showObjectColorID) {
-    gtp::Utilities_EngCore::setImageLayout(
-        pEngineCore->commandBuffers.graphics[frame],
-        storageImages->defaultColor_1_bit->image, VK_IMAGE_LAYOUT_GENERAL,
-        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresourceRange);
-
-    VkImageCopy copyRegion{};
-    copyRegion.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-    copyRegion.srcOffset = {0, 0, 0};
-    copyRegion.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-    copyRegion.dstOffset = {0, 0, 0};
-    copyRegion.extent = {pEngineCore->swapchainData.swapchainExtent2D.width,
-                         pEngineCore->swapchainData.swapchainExtent2D.height,
-                         1};
-
-    vkCmdCopyImage(pEngineCore->commandBuffers.graphics[frame],
-                   storageImages->defaultColor_1_bit->image,
-                   VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                   pEngineCore->swapchainData.swapchainImages.image[frame],
-                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
-
-    // transition swap chain image back for presentation
-    gtp::Utilities_EngCore::setImageLayout(
-        pEngineCore->commandBuffers.graphics[frame],
-        pEngineCore->swapchainData.swapchainImages.image[frame],
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-        subresourceRange);
-
-    // transition ray tracing output image back to general layout
-    gtp::Utilities_EngCore::setImageLayout(
-        pEngineCore->commandBuffers.graphics[frame],
-        storageImages->defaultColor_1_bit->image,
-        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
-        subresourceRange);
-  }
-
-  else {
-    gtp::Utilities_EngCore::setImageLayout(
-        pEngineCore->commandBuffers.graphics[frame],
-        this->tools.objectMouseSelect->GetIDImage().image,
-        VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-        subresourceRange);
-
-    VkImageCopy copyRegion{};
-    copyRegion.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-    copyRegion.srcOffset = {0, 0, 0};
-    copyRegion.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-    copyRegion.dstOffset = {0, 0, 0};
-    copyRegion.extent = {pEngineCore->swapchainData.swapchainExtent2D.width,
-                         pEngineCore->swapchainData.swapchainExtent2D.height,
-                         1};
-
-    vkCmdCopyImage(pEngineCore->commandBuffers.graphics[frame],
-                   this->tools.objectMouseSelect->GetIDImage().image,
-                   VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                   pEngineCore->swapchainData.swapchainImages.image[frame],
-                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
-
-    // transition swap chain image back for presentation
-    gtp::Utilities_EngCore::setImageLayout(
-        pEngineCore->commandBuffers.graphics[frame],
-        pEngineCore->swapchainData.swapchainImages.image[frame],
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-        subresourceRange);
-
-    // transition ray tracing output image back to general layout
-    gtp::Utilities_EngCore::setImageLayout(
-        pEngineCore->commandBuffers.graphics[frame],
-        this->tools.objectMouseSelect->GetIDImage().image,
-        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
-        subresourceRange);
-  }
-}
-
 void gtp::RenderBase::SetupModelDataTransforms(
     Utilities_UI::TransformMatrices *pTransformMatrices) {
 
@@ -1186,6 +1076,116 @@ gtp::RenderBase::RenderBase(EngineCore *engineCorePtr)
   this->InitializeRenderBase(engineCorePtr);
 }
 
+void gtp::RenderBase::RebuildCommandBuffers(int frame, bool showObjectColorID) {
+  // subresource range
+  VkImageSubresourceRange subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1,
+                                              0, 1};
+
+  VkStridedDeviceAddressRegionKHR emptySbtEntry{};
+
+  // dispatch the ray tracing commands
+  vkCmdBindPipeline(pEngineCore->commandBuffers.graphics[frame],
+                    VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
+                    pipelineData.pipeline);
+
+  vkCmdBindDescriptorSets(pEngineCore->commandBuffers.graphics[frame],
+                          VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
+                          pipelineData.pipelineLayout, 0, 1,
+                          &pipelineData.descriptorSet, 0, 0);
+
+  pEngineCore->coreExtensions->vkCmdTraceRaysKHR(
+      pEngineCore->commandBuffers.graphics[frame],
+      &this->tools.shaderBindingTableData.raygenStridedDeviceAddressRegion,
+      &this->tools.shaderBindingTableData.missStridedDeviceAddressRegion,
+      &this->tools.shaderBindingTableData.hitStridedDeviceAddressRegion,
+      &emptySbtEntry, pEngineCore->swapchainData.swapchainExtent2D.width,
+      pEngineCore->swapchainData.swapchainExtent2D.height, 1);
+
+  // copy ray tracing output to swap chain image
+  // prepare current swap chain image as transfer destination
+  gtp::Utilities_EngCore::setImageLayout(
+      pEngineCore->commandBuffers.graphics[frame],
+      pEngineCore->swapchainData.swapchainImages.image[frame],
+      VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      subresourceRange);
+
+  ////std::cout << "test"<< std::endl;
+  // prepare ray tracing output image as transfer source
+
+  if (!showObjectColorID) {
+    gtp::Utilities_EngCore::setImageLayout(
+        pEngineCore->commandBuffers.graphics[frame],
+        storageImages->defaultColor_1_bit->image, VK_IMAGE_LAYOUT_GENERAL,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresourceRange);
+
+    VkImageCopy copyRegion{};
+    copyRegion.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    copyRegion.srcOffset = {0, 0, 0};
+    copyRegion.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    copyRegion.dstOffset = {0, 0, 0};
+    copyRegion.extent = {pEngineCore->swapchainData.swapchainExtent2D.width,
+                         pEngineCore->swapchainData.swapchainExtent2D.height,
+                         1};
+
+    vkCmdCopyImage(pEngineCore->commandBuffers.graphics[frame],
+                   storageImages->defaultColor_1_bit->image,
+                   VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                   pEngineCore->swapchainData.swapchainImages.image[frame],
+                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+
+    // transition swap chain image back for presentation
+    gtp::Utilities_EngCore::setImageLayout(
+        pEngineCore->commandBuffers.graphics[frame],
+        pEngineCore->swapchainData.swapchainImages.image[frame],
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        subresourceRange);
+
+    // transition ray tracing output image back to general layout
+    gtp::Utilities_EngCore::setImageLayout(
+        pEngineCore->commandBuffers.graphics[frame],
+        storageImages->defaultColor_1_bit->image,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
+        subresourceRange);
+  }
+
+  else {
+    gtp::Utilities_EngCore::setImageLayout(
+        pEngineCore->commandBuffers.graphics[frame],
+        this->tools.objectMouseSelect->GetIDImage().image,
+        VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        subresourceRange);
+
+    VkImageCopy copyRegion{};
+    copyRegion.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    copyRegion.srcOffset = {0, 0, 0};
+    copyRegion.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    copyRegion.dstOffset = {0, 0, 0};
+    copyRegion.extent = {pEngineCore->swapchainData.swapchainExtent2D.width,
+                         pEngineCore->swapchainData.swapchainExtent2D.height,
+                         1};
+
+    vkCmdCopyImage(pEngineCore->commandBuffers.graphics[frame],
+                   this->tools.objectMouseSelect->GetIDImage().image,
+                   VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                   pEngineCore->swapchainData.swapchainImages.image[frame],
+                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+
+    // transition swap chain image back for presentation
+    gtp::Utilities_EngCore::setImageLayout(
+        pEngineCore->commandBuffers.graphics[frame],
+        pEngineCore->swapchainData.swapchainImages.image[frame],
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        subresourceRange);
+
+    // transition ray tracing output image back to general layout
+    gtp::Utilities_EngCore::setImageLayout(
+        pEngineCore->commandBuffers.graphics[frame],
+        this->tools.objectMouseSelect->GetIDImage().image,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
+        subresourceRange);
+  }
+}
+
 void gtp::RenderBase::UpdateDefaultUniformBuffer(float deltaTime,
                                                  glm::vec4 lightPosition) {
   float rotationTime = deltaTime * 0.10f;
@@ -1340,11 +1340,23 @@ void gtp::RenderBase::LoadModel(
 
 void gtp::RenderBase::HandleLoadModel(gtp::FileLoadingFlags loadingFlags,
                                       std::string newModelFilePath) {
-  // call main renderer load model function
+
+  // check new model file path first
   if (newModelFilePath != "none") {
+    // call load model function
     this->LoadModel(newModelFilePath, loadingFlags);
-  } else {
-    this->LoadModel(this->assets.modelData.loadModelFilepath, loadingFlags);
+  }
+
+  // check model data struct model file path
+  else {
+    if (this->assets.modelData.loadModelFilepath != "none") {
+      this->LoadModel(this->assets.modelData.loadModelFilepath, loadingFlags);
+    }
+
+    // return if that is "none" as well
+    else {
+      return;
+    }
   }
 
   // acceleration structure class rebuild geometry buffer
@@ -1367,7 +1379,7 @@ void gtp::RenderBase::HandleLoadModel(gtp::FileLoadingFlags loadingFlags,
   this->assets.modelData.loadModelSemiTransparent = false;
 
   // set main renderer model data load model file path to " "
-  this->assets.modelData.loadModelFilepath = " ";
+  this->assets.modelData.loadModelFilepath = "none";
 }
 
 void gtp::RenderBase::HandleResize() {
@@ -1767,6 +1779,11 @@ void gtp::RenderBase::Assets::DestroyDefaultAssets(EngineCore *engineCorePtr) {
 
   // ktx texture
   this->coloredGlassTexture.DestroyTextureLoader();
+}
+
+gtp::RenderBase::StorageImages::StorageImages(EngineCore *engineCorePtr) {
+  this->pEngineCore = engineCorePtr;
+  this->CreateStorageImages();
 }
 
 void gtp::RenderBase::StorageImages::CreateDefaultColorStorageImage() {

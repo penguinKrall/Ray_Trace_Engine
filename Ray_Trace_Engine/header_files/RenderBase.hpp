@@ -17,25 +17,54 @@
 namespace gtp {
 class RenderBase : private AccelerationStructures {
 private:
-
-
   /*	base class private variables	and data structures*/
-  // -- uniform data
-  Utilities_Renderer::UniformData uniformData{};
-
   // -- buffers
   struct Buffers {
     gtp::Buffer ubo{};
   };
-
   Buffers buffers{};
 
   // core pointer
   EngineCore *pEngineCore = nullptr;
 
+  // -- uniform data
+  Utilities_Renderer::UniformData uniformData{};
+
+  // -- pipeline data
+  Utilities_Renderer::PipelineData pipelineData{};
+
   /*	base class private functions	*/
   // initialize function
   void InitializeRenderBase(EngineCore *engineCorePtr);
+
+  // create default pipeline
+  void CreateDefaultRayTracingPipeline();
+
+  // create shader binding table
+  void CreateShaderBindingTable();
+
+  // create default uniform buffer
+  void CreateDefaultUniformBuffer();
+
+  // create default descriptor set
+  void CreateDefaultDescriptorSet();
+
+  // setup buffer region device addresses
+  void SetupBufferRegionAddresses();
+
+  // build command buffers
+  void CreateDefaultCommandBuffers();
+
+  // set up model data transforms
+  void
+  SetupModelDataTransforms(Utilities_UI::TransformMatrices *pTransformMatrices);
+
+  // create compute vertex instance
+  void LoadGltfCompute(gtp::Model *pModel);
+
+  void UpdateDefaultRayTracingPipeline();
+
+  void UpdateDefaultDescriptorSet();
 
   // class tools
   struct Tools {
@@ -95,10 +124,7 @@ private:
     Utilities_Renderer::StorageImage multisampleImageResolve_1_bit{};
 
     // default constructor
-    explicit StorageImages(EngineCore *engineCorePtr) {
-      this->pEngineCore = engineCorePtr;
-      this->CreateStorageImages();
-    }
+    explicit StorageImages(EngineCore* engineCorePtr);
 
     // color storage image for ray trace pipeline
     void CreateDefaultColorStorageImage();
@@ -113,49 +139,16 @@ private:
 
   StorageImages *storageImages;
 
-  // -- pipeline data
-  Utilities_Renderer::PipelineData pipelineData{};
-
-  // create default pipeline
-  void CreateDefaultRayTracingPipeline();
-
-  // create shader binding table
-  void CreateShaderBindingTable();
-
-  // create default uniform buffer
-  void CreateDefaultUniformBuffer();
-
-  // create default descriptor set
-  void CreateDefaultDescriptorSet();
-
-  // setup buffer region device addresses
-  void SetupBufferRegionAddresses();
-
-  // build command buffers
-  void CreateDefaultCommandBuffers();
-
-  void
-  SetupModelDataTransforms(Utilities_UI::TransformMatrices *pTransformMatrices);
-
-  void LoadGltfCompute(gtp::Model *pModel);
-
-  void UpdateDefaultRayTracingPipeline();
-
-  void UpdateDefaultDescriptorSet();
-
-
 public:
-  /*	base class public variables	*/
-
   /*	base class public functions	*/
   // default constructor
   explicit RenderBase(EngineCore *engineCorePtr);
 
-  // update default uniform buffer
-  void UpdateDefaultUniformBuffer(float deltaTime, glm::vec4 lightPosition);
-
   // rebuild command buffers
   void RebuildCommandBuffers(int frame, bool showObjectColorID);
+
+  // update default uniform buffer
+  void UpdateDefaultUniformBuffer(float deltaTime, glm::vec4 lightPosition);
 
   // destroy render base class and resources
   void DestroyRenderBase();
@@ -172,13 +165,14 @@ public:
   void RetrieveObjectID(int posX, int posY);
 
   // load model
-  void LoadModel(std::string filename, uint32_t fileLoadingFlags = 0,
-                 uint32_t modelLoadingFlags =
-                     Utilities_Renderer::ModelLoadingFlags::None,
-                 Utilities_UI::TransformMatrices *pTransformMatrices = nullptr);
+  void LoadModel(
+      std::string filename, uint32_t fileLoadingFlags = 0,
+      uint32_t modelLoadingFlags = Utilities_Renderer::ModelLoadingFlags::None,
+      Utilities_UI::TransformMatrices *pTransformMatrices = nullptr);
 
   // handle load model
-  void HandleLoadModel(gtp::FileLoadingFlags loadingFlags, std::string newModelFilePath);
+  void HandleLoadModel(gtp::FileLoadingFlags loadingFlags,
+                       std::string newModelFilePath);
 
   // handle resize
   void HandleResize();
