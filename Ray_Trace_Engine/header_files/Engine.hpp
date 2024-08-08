@@ -98,6 +98,9 @@ public:
   // -- retrieve color id from buffer
   void RetrieveColorID();
 
+  // -- create player character
+  void CreatePlayerCharacter();
+
   // -- load player
   void LoadPlayer();
 

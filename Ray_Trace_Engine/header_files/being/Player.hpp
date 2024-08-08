@@ -12,16 +12,21 @@ private:
   // core pointer
   EngineCore *pEngineCore = nullptr;
 
+  // create player
+  bool createPlayer = false;
+
   // character model
   gtp::Model *defaultModel = nullptr;
 
   // positiion for character model
   glm::vec4 characterPosition = glm::vec4(0.0f);
 
-  void CreatePlayer(std::string filePath);
+  std::string savePath = "none";
 
 public:
   std::string modelFilePath = "none";
+
+  void CreatePlayer(std::string newSaveFilePath, std::string newModelFilePath);
 
   // save modelFilePath to a JSON file
   void SaveModelFilePath(const std::string &filename) const;

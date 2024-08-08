@@ -240,6 +240,24 @@ void Engine::LoadPlayer() {
   }
 }
 
+void Engine::CreatePlayerCharacter() {
+  if (this->UI.GetPlayerCharacterCreateFlag()) {
+
+    auto uniqueCharacterPtr = std::make_unique<gtp::Player>(this->pEngineCore);
+    this->players.playerCharacter = uniqueCharacterPtr.release();
+
+    std::string savePath = this->UI.GetCreateCharacterSaveFilePath();
+    std::cout << "create character save file path: " << savePath << std::endl;
+
+    std::string modelPath = this->UI.GetCreateCharacterModelFilePath();
+    std::cout << "create character model file path: " << modelPath << std::endl;
+
+    this->players.playerCharacter->CreatePlayer(savePath, modelPath);
+
+    this->UI.SetPlayerCharacterCreateFlag(false);
+  }
+}
+
 void Engine::UpdateRenderer() {
   if (this->UI.modelData.isUpdated) {
     // -- update renderer model data struct with ui
@@ -274,6 +292,9 @@ void Engine::HandleResize() {
 }
 
 void Engine::QueryLoad() {
+
+  //
+  this->CreatePlayerCharacter();
 
   //
   this->LoadPlayer();

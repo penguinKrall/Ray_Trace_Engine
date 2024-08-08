@@ -1350,7 +1350,24 @@ void CoreUI::SetModelData(const Utilities_UI::ModelData *pModelData) {
 }
 
 std::string CoreUI::GetPlayerCharacterLoadFilepath() {
-  return this->characterUI.GetLoadPath();
+  return this->characterUI.GetCharacterLoadPath();
+}
+
+std::string CoreUI::GetCreateCharacterSaveFilePath() {
+  return this->characterUI.GetCreateCharacterSavePath();
+}
+
+std::string CoreUI::GetCreateCharacterModelFilePath() {
+  return this->characterUI.GetCreateCharacterModelFilePath();
+}
+
+bool CoreUI::GetPlayerCharacterCreateFlag() {
+  return this->characterUI.GetCreateCharacterFlag();
+}
+
+void CoreUI::SetPlayerCharacterCreateFlag(bool createReadyFlag) {
+  this->characterUI.SetCreateReadyFlag(createReadyFlag);
+  // this->characterUI.SetCreateOpenFlag(createReadyFlag);
 }
 
 void CoreUI::DestroyUI() {

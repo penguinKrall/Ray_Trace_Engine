@@ -1,7 +1,12 @@
 #include "Player.hpp"
 
-void gtp::Player::CreatePlayer(std::string filePath) {
-  this->modelFilePath = filePath;
+void gtp::Player::CreatePlayer(std::string newSaveFilePath,
+                               std::string newModelFilePath) {
+  this->modelFilePath = newModelFilePath;
+  this->savePath = newSaveFilePath;
+  std::cout << "player.hpp create player function: save file path: "
+            << this->savePath << std::endl;
+  // this->SaveModelFilePath(saveFilePath);
 }
 
 void gtp::Player::SaveModelFilePath(const std::string &filename) const {
@@ -12,7 +17,7 @@ void gtp::Player::SaveModelFilePath(const std::string &filename) const {
   if (file.is_open()) {
     file << j.dump(4); // Pretty print with 4 spaces
     file.close();
-    std::cout << "Saved model file path '" << modelFilePath
+    std::cout << "Saved Character: model file path '" << modelFilePath
               << "'  to: " << filename << '\n';
   } else {
     throw std::runtime_error("Unable to open file for writing: " + filename);

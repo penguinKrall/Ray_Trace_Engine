@@ -3,22 +3,38 @@
 gtp::Character_UI::Character_UI() {}
 
 void gtp::Character_UI::SetSaveOpenFlag(bool saveOpenFlag) {
-  this->saveMenuData.saveOpen = true;
+  this->saveMenuData.saveOpen = saveOpenFlag;
 }
 
 void gtp::Character_UI::SetLoadOpenFlag(bool loadOpenFlag) {
-  this->loadMenuData.loadOpen = true;
+  this->loadMenuData.loadOpen = loadOpenFlag;
 }
 
 void gtp::Character_UI::SetCreateOpenFlag(bool createOpenFlag) {
   this->createMenuData.createOpen = createOpenFlag;
 }
 
-std::string gtp::Character_UI::GetLoadPath() {
+void gtp::Character_UI::SetCreateReadyFlag(bool createReadyFlag) {
+  this->createMenuData.createReady = createReadyFlag;
+}
+
+std::string gtp::Character_UI::GetCreateCharacterModelFilePath() {
+  return this->createMenuData.modelFilePath;
+}
+
+std::string gtp::Character_UI::GetCreateCharacterSavePath() {
+  return this->createMenuData.characterSavePath;
+}
+
+std::string gtp::Character_UI::GetCharacterLoadPath() {
   return this->loadMenuData.loadFilePath;
 }
 
 bool gtp::Character_UI::GetLoadCharacterFlag() { return this->loadCharacter; }
+
+bool gtp::Character_UI::GetCreateCharacterFlag() {
+  return this->createMenuData.createReady;
+}
 
 void gtp::Character_UI::HandleSave() {
 
@@ -72,17 +88,18 @@ void gtp::Character_UI::HandleLoad() {
 void gtp::Character_UI::HandleCreate() {
   // if "create character" from header drop down menu selected
   if (this->createMenuData.createOpen) {
+    /* begin menu */
     ImGui::Begin("Create Character Menu", &this->createMenuData.createOpen);
     // output character name from the input text box below
     ImGui::Text("Character Name: %s",
                 this->createMenuData.characterName.data());
-    ImGui::PushStyleColor(
-        ImGuiCol_FrameBg,
-        ImVec4(0.2f, 0.3f, 0.4f, 1.0f)); // change color to blue
+    // change input text bg to blue
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.2f, 0.3f, 0.4f, 1.0f));
     // character name input text box
     ImGui::InputText(" ", this->createMenuData.input_text,
                      IM_ARRAYSIZE(this->createMenuData.input_text));
-    ImGui::PopStyleColor(); // change color back to settings color
+    // change input text bg color back to settings color
+    ImGui::PopStyleColor();
 
     // assign entered chars to character name string
     this->createMenuData.characterName =
@@ -103,16 +120,26 @@ void gtp::Character_UI::HandleCreate() {
     // select model file dialogue window
     if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey")) {
       if (ImGuiFileDialog::Instance()->IsOk()) {
+        // assign selected model file path to create menu data struct variable
+        // 'modelFilPath'
         this->createMenuData.modelFilePath =
             ImGuiFileDialog::Instance()->GetFilePathName();
-        // this->loadModelFlags.loadModelName =
-        //   ImGuiFileDialog::Instance()->GetFilePathName();
-        //  this->modelData.loadModel = true;
       }
 
       // close select model file dialogue window
       ImGuiFileDialog::Instance()->Close();
     }
+
+    if (ImGui::Button("Save and Continue")) {
+      std::filesystem::path current_path = std::filesystem::current_path();
+      std::string pathToCharacterSaveFolder = current_path.string();
+      this->createMenuData.characterSavePath = pathToCharacterSaveFolder;
+      std::cout << "this->createMenuData.characterSavePath: " << this->createMenuData.characterSavePath << std::endl;
+          // this->createMenuData.characterSavePath =
+          this->createMenuData.createReady = true;
+    }
+
+    /* end menu */
     ImGui::End();
   }
 }

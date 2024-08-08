@@ -188,6 +188,18 @@ public:
   // -- get load character file path
   std::string GetPlayerCharacterLoadFilepath();
 
+  // -- get create character save file path
+  std::string GetCreateCharacterSaveFilePath();
+
+  // -- get create character model file path
+  std::string GetCreateCharacterModelFilePath();
+
+  // -- get player create flag
+  bool GetPlayerCharacterCreateFlag();
+
+  // -- set player create flag
+  void SetPlayerCharacterCreateFlag(bool createReadyFlag);
+
   // -- destroy ui
   void DestroyUI();
 };

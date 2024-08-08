@@ -20,6 +20,7 @@ private:
   LoadMenuData loadMenuData{};
 
   struct CreateMenuData {
+    bool createReady = false;
     bool createOpen = false;
     char input_text[128] = " ";
     std::string modelFilePath = "none";
@@ -34,8 +35,14 @@ public:
   void SetSaveOpenFlag(bool saveOpenFlag);
   void SetLoadOpenFlag(bool loadOpenFlag);
   void SetCreateOpenFlag(bool createOpenFlag);
-  std::string GetLoadPath();
+  void SetCreateReadyFlag(bool createReadyFlag);
+
+  std::string GetCreateCharacterModelFilePath();
+  std::string GetCreateCharacterSavePath();
+
+  std::string GetCharacterLoadPath();
   bool GetLoadCharacterFlag();
+  bool GetCreateCharacterFlag();
 
   // void CreateCharacter();
 
