@@ -178,7 +178,7 @@ public:
                  Utilities_UI::TransformMatrices *pTransformMatrices = nullptr);
 
   // handle load model
-  void HandleLoadModel(gtp::FileLoadingFlags loadingFlags);
+  void HandleLoadModel(gtp::FileLoadingFlags loadingFlags, std::string newModelFilePath);
 
   // handle resize
   void HandleResize();

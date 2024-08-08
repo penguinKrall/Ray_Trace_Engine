@@ -105,7 +105,7 @@ public:
   void LoadPlayer();
 
   // -- load new models
-  void LoadModel();
+  void LoadModel(std::string newModelFilePath = "none");
 
   // -- query load flags
   void QueryLoad();

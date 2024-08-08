@@ -182,10 +182,10 @@ void Engine::RetrieveColorID() {
   }
 }
 
-void Engine::LoadModel() {
+void Engine::LoadModel(std::string newModelFilePath) {
 
   // continue if ui load model is true
-  if (this->UI.modelData.loadModel) {
+  if (this->UI.modelData.loadModel || this->UI.GetPlayerCharacterCreateFlag()) {
     // set main renderer model data to ui model data
     this->renderers.defaultRenderer->ModelDataSet(&this->UI.modelData);
     // set file loading flags
@@ -200,7 +200,12 @@ void Engine::LoadModel() {
 
     // handle renderer part of load model
     // this->renderers.mainRenderer.HandleLoadModel(loadingFlags);
-    this->renderers.defaultRenderer->LoadNewModel(loadingFlags);
+    if (newModelFilePath != "none") {
+      this->renderers.defaultRenderer->LoadNewModel(loadingFlags,
+                                                    newModelFilePath);
+    } else {
+      this->renderers.defaultRenderer->LoadNewModel(loadingFlags);
+    }
 
     this->UI.loadModelFlags.flipY = false;
     this->UI.loadModelFlags.preMultiplyColors = false;
@@ -254,8 +259,8 @@ void Engine::CreatePlayerCharacter() {
 
     this->players.playerCharacter->CreatePlayer(savePath, modelPath);
     this->players.playerCharacter->SaveModelFilePath(savePath);
+    this->LoadModel(modelPath);
     this->UI.SetPlayerCharacterCreateFlag(false);
-    this->LoadModel();
   }
 }
 

@@ -23,10 +23,15 @@ void gtp::DefaultRenderer::ObjectID(int mousePosX, int mousePosY)
   this->RetrieveObjectID(mousePosX, mousePosY);
 }
 
-void gtp::DefaultRenderer::LoadNewModel(gtp::FileLoadingFlags loadingFlags)
+void gtp::DefaultRenderer::LoadNewModel(gtp::FileLoadingFlags loadingFlags, std::string newModelFilePath)
 {
-  this->HandleLoadModel(loadingFlags);
+  this->HandleLoadModel(loadingFlags, newModelFilePath);
 }
+
+//void gtp::DefaultRenderer::LoadCharacterModel(gtp::FileLoadingFlags loadingFlags, std::string newModelFilePath)
+//{
+//
+//}
 
 void gtp::DefaultRenderer::HandleDeleteModel()
 {

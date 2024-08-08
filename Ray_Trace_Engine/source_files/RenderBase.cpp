@@ -1338,9 +1338,14 @@ void gtp::RenderBase::LoadModel(
   this->assets.particle.push_back(nullptr);
 }
 
-void gtp::RenderBase::HandleLoadModel(gtp::FileLoadingFlags loadingFlags) {
+void gtp::RenderBase::HandleLoadModel(gtp::FileLoadingFlags loadingFlags,
+                                      std::string newModelFilePath) {
   // call main renderer load model function
-  this->LoadModel(this->assets.modelData.loadModelFilepath, loadingFlags);
+  if (newModelFilePath != "none") {
+    this->LoadModel(newModelFilePath, loadingFlags);
+  } else {
+    this->LoadModel(this->assets.modelData.loadModelFilepath, loadingFlags);
+  }
 
   // acceleration structure class rebuild geometry buffer
   this->RebuildGeometryBuffer(

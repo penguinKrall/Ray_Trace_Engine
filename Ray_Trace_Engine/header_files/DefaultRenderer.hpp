@@ -20,7 +20,9 @@ class DefaultRenderer : private RenderBase {
 
   void ObjectID(int mousePosX, int mousePosY);
 
-  void LoadNewModel(gtp::FileLoadingFlags loadingFlags);
+  void LoadNewModel(gtp::FileLoadingFlags loadingFlags, std::string newModelFilePath = "none");
+
+  //void LoadCharacterModel(gtp::FileLoadingFlags loadingFlags, std::string newModelFilePath);
 
   void HandleDeleteModel();
 
